@@ -1,0 +1,558 @@
+---
+title: "FISH 558 Homework 3 - Bowhead Whale Assessment and Decision Analysis"
+author: "M Kapur maia.kapur@noaa.gov"
+date: "Fall 2017"
+output:
+  # html_notebook:
+  #   toc: yes
+  #   toc_depth: 3
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+    highlight: pygments
+---
+
+```{r load Packages, echo = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+require(latex2exp, quietly = T)
+require(dplyr, quietly = T)
+require(tidyr, quietly = T)
+require(ggplot2, quietly = T)
+require(reshape2, quietly = T)
+require(RColorBrewer, quietly = T)
+set.seed(215)
+setwd("~/GitHub/FISH-558/Homework/2019/HW3")
+```
+
+# Part A - Bayesian Assessment
+
+## Task A1: Analytical sol. for $f_0$
+
+Equilibrium conditions imply that the number of calves that are born $N_{y,x}(f_{0})$ and survive to be come reproductively mature adults is in equilibrium with the death of adults. Using Eq (1b), the number of calves surviving to mature age is given by:
+$$
+\begin{array}{rr}
+N_{y,0}S_{0}\times f_{0}S_a^{x-1}S_a^{x} \\
+N_{13} = \frac{S}{1-S}N_{12} \\
+N_{13} = \frac{S}{1-S}N_0 S_0 S^{11} & (a) \\
+\end{array}
+$$
+At equilibrium:
+$$
+N_0 = f_0N_{13} \\
+f_0 = \frac{N_0}{N_{13}}
+$$
+
+We can rearrange (a) as follows
+
+$$
+\frac{N_0}{N_{13}} =\frac{1}{\frac{S}{1-S}S_0S^{11}} \\
+\frac{N_0}{N_{13}} = \frac{1-S}{S_0S^{12}} = f_0
+$$
+
+ We could also shortcut to equilibrium recruitment via $K/ \sum{N_{eq}}$. Because we want $f_0$ without units, we can divide this by the number of mature adults $N_{eq}^{13+}$. I use the latter in my model.
+$$
+\begin{array}{rr}
+f_0 = \frac{R_0} {N_{eq}^{13+} }\\
+R_0 = K/ \sum{N_{eq}}
+\end{array}
+$$
+We will use this in our population model to calculate $f_0$. 
+
+
+\newpage
+
+
+
+Below is code to generate the population with either no catches at all, catches from the data or catches from the data plus 20 years of projections. 
+
+```{r setup functions, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+# rm(list = ls())
+
+readDat <- function(){ ## load data
+  rm(list = ls())
+  catch <- read.csv('Hwk3.csv', header = F) 
+  names(catch) <- c('year','catch')
+  abund <- read.csv('HWK3B.csv',header=F)
+  names(abund) <- c('year','abundance','abundance.cv')
+  df <- full_join(na.omit(catch), abund, by = 'year')
+  return(df)
+}
+
+
+whalePop <- function(S0, S1, K, FMAX, inputCatch = 0, project = F) {
+
+  df <- readDat()
+  z <- 2.39
+
+  ## first find equil values
+  EQ <- matrix(NA, nrow = 1, ncol = 14) #
+  EQ[1] <- 1; EQ[2] <- S0
+  for(i in 3:ncol(EQ)){
+    EQ[i] <- EQ[i-1]*S1 
+  }
+  EQ[ncol(EQ)] <- EQ[ncol(EQ)]/(1-S1) 
+  
+  ## empty matrix for pop, first column is year, column 2 is A0, column 15 is A13+
+  N <- matrix(NA, nrow = length(df$year)+1, ncol = 15)
+  N[, 1]  <-  c(0,df$year)
+  N[1,2:ncol(N)] <- EQ*K/sum(EQ[2:ncol(EQ)]) ## all inits
+  F0 <-    K / sum(c(S0 * S1 ^ (0:10), (S0 * S1 ^ 11) / (1 - S1)))/N[1,ncol(N)]
+  # (1-S1)/(S0*(S1*S1)) ## original analytical sol
+  
+  ## data + projected catch - these values are not age-specific yet
+  catchvec <- c(df$catch, rep(inputCatch,20))
+  if(is.na(inputCatch))  catchvec <- rep(0, length(catchvec)) ## set to zero for task A
+  
+  ## now move dynamics thru 2002
+  for (y in 1:(nrow(N)-1)) {
+    
+    ## compute catch for all age classes this year
+    catchYr <-  catchvec[y] * N[y, 3:ncol(N)]/ sum(N[y, 3:ncol(N)])
+    
+    ## A1
+    N[y + 1, 3] <- N[y,2]*S0 
+    ## A2:AX
+    for(a in 4:(ncol(N)-1)){
+      N[y + 1, a] <-  pmax((N[y, a - 1] - catchYr[a - 1]) * S1, 1E-3)
+    }
+    ## A13+
+    N[y + 1, ncol(N)] <- pmax(S1*((N[y, (ncol(N) - 1)] - catchYr[length(catchYr) - 1]) + 
+                                    (N[y, ncol(N)] - catchYr[length(catchYr)])),
+                              1E-3) ## terminal age
+    
+    ## A0 [need A1:X]
+    N[y+1,2] <-   N[y+1, ncol(N)]*(F0+(FMAX-F0)*(1-(sum(N[y+1, 3:ncol(N)])/K)^z))
+  } ## end year loop
+  
+ 
+  if(project == T){
+    N <- rbind(N, matrix(data=NA, ncol=ncol(N), nrow=20)) 
+    N[156:176,1] <- seq(2003, 2023, 1)
+    
+    for (y in 155:(nrow(N) - 1)) {
+      catchYr <-  catchvec[y] * N[y, 3:ncol(N)]/ sum(N[y, 3:ncol(N)])
+      ## A1
+      N[y + 1, 3] <- N[y,2]*S0 
+      ## A2:AX
+      for(a in 4:(ncol(N)-1)){
+        N[y + 1, a] <-  pmax((N[y, a - 1] - catchYr[a - 1]) * S1, 1E-3)
+      }
+      ## A13+
+      N[y + 1, ncol(N)] <- pmax(S1*((N[y, (ncol(N) - 1)] - catchYr[length(catchYr) - 1]) + 
+                                      (N[y, ncol(N)] - catchYr[length(catchYr)])),
+                                1E-3) ## terminal age
+      
+      ## A0 [need A1:X]
+      N[y+1,2] <-   N[y+1, ncol(N)]*(F0+(FMAX-F0)*(1-(sum(N[y+1, 3:ncol(N)])/K)^z))
+    } ## end year loop for projections
+  } ## end if project == T
+  return(round(N[2:nrow(N),]))
+} ## end whalePop
+
+
+whale.NLL <- function(pop) {
+  ## computes output from whalePop()
+  
+  df0 <- readDat()
+  
+  ## sum all #s greater than calves (column 3 +)
+  df <- df0 %>% 
+    mutate(TOTAL = rowSums(pop[,3:ncol(pop)])) %>% 
+    subset(!is.na(df0$abundance))
+  
+  ## calc NLL. note that sd is log(abundance * cv)
+  # NLL = with(df, -sum(dnorm(
+  #   log(abundance),
+  #   log(TOTAL),
+  #   sd = log(abundance.cv*abundance),
+  #   log = T)))
+  
+  NLL <-  with(df, sum((log(TOTAL) - log(abundance)) ^ 2 / (2 * ( log(abundance * abundance.cv)) ^  2)))
+  return(NLL)
+}
+
+```
+
+## Task A2: Nos, NLL in 2002
+
+Report the numbers in 2002 and negative log-likelihood for S0 =0.9, S1 =0.95, K1+=15000, and  FMAX =0.29. This involve projecting the model forward and computing the negative log-likelihood. 
+When I specify `inputCatch = 0` it will use the *catch data* for 155 years (the input applies only to projection years, which aren't implemented here).
+
+```{r Task A2 Numbers and NLL for fixed values}
+## project the model forward
+TA2.pop <- whalePop(
+    S0 =  0.9,
+    S1 = 0.95,
+    K = 15000,
+    FMAX = 0.29,
+    inputCatch  = 0,
+    project = F
+  )
+
+## print terminal year.
+TA2.pop[nrow(TA2.pop),]
+
+## get NLL
+whale.NLL(TA2.pop)
+```
+
+
+```{r test stability, include = F, message = F, warning = F, tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+test.stability = data.frame("year" = NA,"total" = NA,"sim" = NA)
+
+for(s in 1:100){
+  temp <-  as.data.frame(whalePop(
+    S0 =  runif(1, 0.8, 1),
+    S1 = runif(1, 0.9, 1),
+    K = runif(1, 10000, 20000), 
+    FMAX = runif(1, 0.25, 0.33),
+    inputCatch = NA, ## run with no catch data
+    project = F
+  ))[1:156,] %>% mutate('year' = V1, "total" = rowSums(.)-V1, "sim" = s) %>% select(year, total,sim)
+  test.stability = na.omit(rbind(test.stability, temp))
+}
+
+ggplot(test.stability, aes(x = year,
+                           y = total,
+                           color = as.factor(sim)))  +  theme_bw() + ylim(0, 21000) +
+  scale_color_grey() +
+  theme(legend.position = "none") +  ggtitle("Figure 1: Estimated population without catches, 100 sims") +
+  xlab("year") + ylab("estimated population, nos.") +
+  geom_line() +
+  geom_point(data = readDat(), aes(x = year, y = abundance), col = 'black')
+
+# The population appears stable when generated 100x with random values from the priors. Now we introduce the SIR method and run the model using catches from the data
+
+```
+
+
+\newpage
+
+## Task A3: Sample 1000 with SIR (extinction)
+
+Use the SIR algorithm to sample 1,000 parameter vectors from the post-model-pre-data distribution (i.e. the distribution when the only contribution to the likelihood function is whether the population is rendered extinct [0] or not [1]).
+
+I modified the SIR algorithm below so that the likelihood is (optionally) defined by whether or not, during a given simulation run, at least 1 year obtained an estimated total whale population < 1 (i.e. the population went extinct). The baseline threshold is `r exp(0)`. It did not seem able to produce any extinctions (my criterion was that the entire population of whales was greater than 1, which was hard to fail).
+
+Instead of writing other functions, I made the SIR record the population trajectory and parameter estimations for each iteration that met the threshold criteria.
+
+```{r SIR function, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+
+whaleSIR <- function(Nout, task = "gen"){
+  # pb = txtProgressBar(min = 0, max = Nout, style = 3) ## monitor overall progress
+  # Storage for the parameters and the final depletion
+  Vals <- matrix(0,ncol=6,nrow=Nout)
+  # popts = list()
+  popts = matrix(NA, nrow = 155, ncol = Nout)
+  # Storage for the total likelihood encountered in the first stage sampling
+  # and the number of draws
+  AveLike <- 0
+  Ntest <- 0
+  
+  # Reset parameters for SIR
+  Threshold <- exp(0)   ## 2.22 is given in assignment
+  Cumu <- 0 
+  Ndone <- 0
+
+ while (Ndone < Nout)
+  {
+   # Generate from priors - on the fly each time
+   S0 = runif(1,0.8,1)
+   S1 = runif(1,0.9,1)
+   K = runif(1, 10000, 20000)
+   FMAX = runif(1,0.25,0.33)
+   
+   # Call the population model without projection
+   pop <- whalePop(S0,S1,K,FMAX,
+                   inputCatch = 0,
+                   project = F)
+   
+   ## choose how to eval likelihood
+   if (task == 'extinct') {
+     ## check if any pop years are extinct - an extinction of 1+ generates a 0 (false)
+     TheLike <- as.numeric(all(rowSums(pop[, 3:ncol(pop)]) >= 1))
+   }
+   if (task == 'gen') {
+     ## calculate NLL, scale as Andre does, and convert to likelihood
+     TheLike <- exp(-1 * (whale.NLL(pop)) - 2.22)
+     
+   }
+   
+
+   AveLike = AveLike + TheLike # numerator of importance factor - accumulates over time
+   # print(AveLike)
+   Ntest = Ntest + 1 # denom
+   
+   # Determine if a parameter vector is to be saved
+   Cumu <- Cumu + TheLike
+  
+   # print(paste0(Cumu," ",Cumu>Threshold))
+   while (Cumu > Threshold & Ndone < Nout)
+    {
+     Ndone <- Ndone + 1
+     # setTxtProgressBar(pb, Ndone)
+     Cumu <- Cumu - Threshold ## reset cumu
+     popts[,Ndone] = rowSums(pop[,2:ncol(pop)]) ## store the 1+ pop size time series for each sim
+     Vals[Ndone,1] = S0
+     Vals[Ndone,2] = S1
+     Vals[Ndone,3] = K
+     Vals[Ndone,4] = FMAX
+     Vals[Ndone,5] = as.numeric(all(rowSums(pop[,3:ncol(pop)])>=1)) ## check if any pop years are extinct [0 if extinct]
+     Vals[Ndone,6] = sum(pop[nrow(pop),3:ncol(pop)]) ## retain estimated population size of adults at final year
+    } 
+  }
+return(list('TheLike' = TheLike, 'Vals' = Vals, 'AveLike' = AveLike/Ntest, "PopTS" = popts))
+}
+```
+
+\newpage
+
+Execute the SIR run and tabulate extinction proportions. I observe no extinctions, since there wasn't a single simulation where the population was <1 individual in total.
+
+```{r SIR Extinction, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+extinctSIR <- whaleSIR(Nout = 1000, task = "extinct")
+hist(extinctSIR$Vals[,6], main = "Fig. 2: estimated adult population size at final year", col = 'skyblue', border = 'white', xlab = 'estimated population size, 2003')
+text(5000,145, label = paste0("n = ",nrow(extinctSIR$Vals)))
+text(5000,135, label = paste0("extinctions = ",sum(extinctSIR$Vals[,5]==0)))   
+```
+
+\newpage 
+
+## Task A4: Sample 200 from SIR posterior
+
+Use the SIR algorithm to sample 200 parameter vectors from the posterior distribution.
+
+I repeat the same step from above with only 200 resamples. This time we are interested in the distributions for the sampled parameters and the time series trajectory. I implement the "generic" version of the likelihood function, which is based on the observations.
+
+```{r A2 sim 200, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+demogSIR <- whaleSIR(Nout=200, task = "gen")
+```
+
+## Task A5: Posterior histograms and time trajectory
+
+Summarize the results of 1) and 2) by plots of distributions for  $S_0$, $S^{1+}$, $K$, and $f_{max}$. 
+
+The density plots below compare the parameter estimates from the extinction (Task A3, 1000 simulations) and demographic (A4, 200 simulations) outcomes. During some testing, it seemed implementing the survey data trends towards higher values of $K$ (whene they were \textbf{not} coerced below the given prior), which would suggest a more resilient population than values estimated from the extinction-based SIR alone. However, the overall shape of these plots suggests there is not much information added from the data.
+
+
+```{r param histograms, echo = F, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+par(mfrow = c(2,2))
+colnames = c("S0","S1","K","FMAX")
+demogSIR$Vals %>% 
+  as.data.frame() %>% 
+  plyr::rename(.,c( "V1" = colnames[1], "V2" = colnames[2],"V3" = colnames[3],"V4" = colnames[4] )) %>% 
+  mutate(mod = 'abund. data') %>% select(S0, S1, K, FMAX, mod) %>% 
+  melt(id = 'mod') %>% 
+  rbind(.,extinctSIR$Vals %>% 
+          as.data.frame() %>%  
+          plyr::rename(.,c("V1" = colnames[1],"V2" = colnames[2], "V3" = colnames[3], "V4" = colnames[4])) %>%
+          mutate(mod = 'extinction') %>%
+          select(S0, S1, K, FMAX, mod) %>% melt(id = 'mod')) %>%
+  ggplot(aes(value, fill = mod)) +
+  theme_bw() +
+  theme(title = element_text(size = 10)) +
+  ggtitle("Fig. 3: parameter estimates from two model approaches") +
+  
+  scale_fill_brewer(palette = 'Greens') +
+  geom_histogram(alpha = 0.75) +
+  
+  facet_wrap( ~ variable, scales = 'free') #+
+  # geom_text(data = data.frame(variable = "K", value = 5000, mod = NA), 
+  #           aes(x = 7000 , y=30), label = "Wider K priors exaggerated these trends", cex = 2) +
+  # geom_text(data = data.frame(variable = "K", value = 5000, mod = NA), 
+  #           aes(x = 7000 , y=20), label = "(But pops. fell outside decision analysis)", cex = 2) +
+  # geom_segment(data = data.frame(variable = "K", value = NA, mod = NA),
+  #              aes(x=4000, xend=5000, y=4, yend=11), color = "red",
+  #              arrow = arrow(length = unit(0.5, "cm"))) +
+  # geom_segment(data = data.frame(variable = "K", value = NA, mod = NA),
+  #              aes(x=10000, xend=10500, y=4, yend=10), color = "red",
+  #              arrow = arrow(length = unit(0.5, "cm")))
+
+
+```
+
+...as well as by the posterior for the time-trajectory of 1+ population size from 1848 to 2002 (you can summarize the distribution of 1+ population size for each year by its 5th, median and 95th percentiles). The shaded grey area represents the 90% CI. I've printed the values for years 1848:1852 and 1997:2002 below the figure.
+
+```{r Posterior Trajectory, echo = F, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+## extract population matrix
+pops0 <- data.frame(cbind("Year" = seq(1848,2002,1), demogSIR$PopTS[1:155,]))
+
+## extract 5th & 95th percentiles and median
+pops0 %>% mutate("MEAN" = apply(pops0[,2:201], 1,mean), "MED" = apply(pops0[,2:201], 1,median), "SD" = apply(pops0[,2:201], 1,sd), "LCI" = apply(pops0[,2:201], 1, quantile, probs = c(0.05),  na.rm = TRUE) , "UCI" = apply(pops0[,2:201], 1, quantile, probs = c(0.95),  na.rm = TRUE)) %>%
+  ggplot(aes(x = Year))+
+  theme_bw() +
+  theme(legend.title = element_blank(), title = element_text(size = 10)) +
+  ggtitle("Fig. 4: Posterior Time Trajectory of 1+ Pop Size, 200 iter") +
+  ylab('Projected Population Size, Nos.') +
+  scale_color_manual(values = c("blue","black"), labels = c("median","observed"))+
+  scale_x_continuous(breaks = seq(1848,2002,24)) +
+  geom_line(aes(y = MED, col = "median"), lwd = 1.2) +
+   geom_ribbon(aes(ymin=LCI, ymax=UCI), alpha=0.2) +
+  geom_point(data = readDat(), aes(x = year, y = abundance, col = 'observed'))
+
+
+# pops0 %>%
+#   mutate("MEAN" = apply(pops0[,2:201], 1,mean),
+#          "MED" = apply(pops0[,2:201], 1,median), 
+#          "SD" = apply(pops0[,2:201], 1,sd), 
+#          "LCI" = apply(pops0[,2:201], 1, quantile, probs = c(0.05),  na.rm = TRUE) , 
+#          "UCI" = apply(pops0[,2:201], 1, quantile, probs = c(0.95),  na.rm = TRUE)) %>%
+#   select(Year, "5th Percentile" = LCI, "Median 1+ Population" = MED, "95th Percentile" = UCI ) %>%
+#   filter(row_number() %in% c(1:5,150:155))
+```
+
+\newpage
+
+# Part B - Decision Analysis
+
+You need to submit the code used for the analyses as well as the decision table.
+
+## Task B1: Decision table comparing N 2003 and N 2023
+
+Construct a decision table which could be used to evaluate the consequences of harvests from 2003-2022 of 67, 134 and 201 animals in terms of the probability that the number of mature animals at the start of 2023 exceeds that at the start of 2003 (which captures the desire that this once-highly-depleted population continues to recover). Base your analyses on three states of nature related to the 2003 (1+) population size and calculate the expected probability over all states of nature. Summarize your results in a decision table of the form [see document].
+
+For this step, I run the population trajectory forward under three different harvest scenarios, similar to Workshop EX4. Instead of performing a single projection for each of the three scenarios, I performed 1000 for each, with the parameters used in the projection for  $S_0$, $S^{1+}$, $K$, and $f_{max}$ sampled from the posterior generated in Part A (object `demogSIR`, which had 200 simulations). While these could be set at the posterior medians, I wanted to retain some uncertainty for the decision table exercise. 
+
+
+```{r effort sim, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+effvect <- c(0, 67,134,201) ## zero gets filled later
+
+temp <- data.frame()
+for (i in 1:length(effvect)) {
+  for (n in 1:200) { #
+    ## run thru each row
+    S0 <- demogSIR$Vals[n,1]  #sample(demogSIR$Vals[, 1], 1)
+    S1 <- demogSIR$Vals[n,2] 
+    K <- demogSIR$Vals[n,3] 
+    FMAX <- demogSIR$Vals[n,4] 
+    ## run model with projections,save observations for 2003, continue to bind 2003 row for each
+    ## the 2003 row stores whether it was larger/smaller than 2023
+    ## note that SON and depletion are T/F
+    temp <- rbind(temp, 
+                 as.data.frame(whalePop(S0, S1, K, 
+                                        FMAX, 
+                                        inputCatch = effvect[i],
+                                              project = T)[, c(1, 3:14)]) %>%
+                   subset(., V1 == 2003 | V1 == 2023) %>%
+                   mutate("RunNo" = n,
+                     "catch" = effvect[i], 
+                          "total" = rowSums(.)-V1,
+                          "size" = cut(total, breaks = c(0,7000,8000,Inf), 
+                                       labels = c('<7000','7000-8000','>8000')), 
+                          "SON" = as.numeric(total[2] > total[1]),
+                          "depletion" = total[1]/K,
+                          "depletion.2023" = as.numeric(total[2]/K < 0.5),
+                          "depletion.vs" = as.numeric(total[2]/K < 0.5 & total[1]/K < 0.5)
+                          ) %>% 
+                   select(RunNo, catch,total,size,SON,depletion,depletion.vs,depletion.2023) %>%
+                
+                   filter(row_number()==2))
+  }
+}
+```
+
+\newpage
+
+```{r decision table i, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+## summarise and rearrange decision table. 
+
+temp1 <- temp %>%
+  group_by(catch, size, SON) %>%
+  summarise(n = n()) %>%
+  ungroup() %>%
+  group_by(catch) %>%
+  mutate(freq = n/sum(n)) %>% ## the proportion for each unique category over category totals
+  filter(SON == 1) %>%  ## only look at those for which 2023 > 2003
+  dcast(., catch ~ size, value.var= "freq") %>%
+  select(-catch)
+  
+row.names(temp1) <- c("p(State of Nature)","Catch = 67", "Catch = 134", "Catch = 201")
+  
+
+## for each size bin, compute the proportion of runs
+## which obtained N2023 > N2003 (SON variable)
+probs <- temp  %>%
+  group_by(size) %>%
+  summarise(n = n()) %>%
+  mutate(freq = n/sum(n)) %>%
+  select(freq) %>%
+  t() %>%
+  data.frame() 
+
+temp1[1,] <- probs
+
+EV <- NULL
+EV[1] <- NA
+for(i in 2:nrow(temp1)){
+  # for(j in 1:ncol(temp1))
+  EV <- append(EV,temp1[i,1]*probs[1]+ temp1[i,2]*probs[2]+temp1[i,3]*probs[3])
+}
+
+temp1$EV <- unlist(EV)
+
+print(round(temp1,2))
+
+```
+
+### Decision Table B1: Probability that the total number of 1+ Animals in 2023 exceeds that in 2003 under three catch scenarios. Column headers indicate adult population sizes in 2003. The expected value is average of the outcomes, weighted by the probabilities in row 1. The "outcomes" are the proportion of $Pop_{2003}$/catch combinations which yielded  $Pop_{2023} > Pop_{2003}$.
+
+We would generally expect the lower catch values to have higher probabilities of population increase, as we observe. In terms of the 2003 population size, it's possible that the larger populations are actually high outliers and generally preclude the 2023 population being "larger", even if the population is stable. The inverse could apply for small population sizes. Thus the absolute nature of this metric is problematic; see Task B2 below.
+
+## Task B2: Alternative performance measures
+
+Comment on the choice of performance measure and suggest alternative performance measures and why you consider your performance measures to be more appropriate than the probability that the number of mature animals at the start of 2023 exceeds that at the start of 2003.
+
+I  decided to see if the 2023 adult population size  was greater than 50% K, particularly since I'd manipulated the K value and thus the answers in Decision Table A could vary from others' simulations using the same data and model structure.  The choice of 2023 as the year of interest is, in both cases, arbitrary, but I'd like to think that the depletion angle will be more indicative of the population's status than whether there were  just one more whale in 2023 than 2003.  "Depletion" has the advantage of encompassing a wide range of population sizes. We observe that all scenarios yield depletion values < 50%.
+
+
+```{r decision table ii, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+temp2 <- temp %>%
+  group_by(catch, size) %>%
+summarise("meanDepl" = mean(depletion)) %>%   ungroup() %>%
+  dcast(., catch ~ size, value.var= "meanDepl") %>%
+  select(-catch)
+  
+row.names(temp2) <- c("p(State of Nature)","Catch = 67", "Catch = 134", "Catch = 201")
+
+
+temp2[1,] <- probs
+
+EV <- NULL
+EV[1] <- NA
+for(i in 2:nrow(temp2)){
+  # for(j in 1:ncol(temp2))
+  EV <- append(EV,temp2[i,1]*probs[1]+ temp2[i,2]*probs[2]+temp2[i,3]*probs[3])
+}
+
+temp2$EV <- unlist(EV)
+
+print(round(temp2,2))
+```
+
+A final check was to inspect the probability of a population being depleted (< 50% K) in 2003 and remaining so in 2023. For most simulations, the population retains whatever status it had in 2003 regardless of catch. The "disagreement" between 2003 and 2023 only is more pronounced in scenarios where the population was >8000 in 2003. As we would expect, the change of both timepoints being depleted is highest when catch is highest.
+
+Overall, this depletion approach better suits the desire to avoid re-depleting this population, and helps us identify catch scenarios which pose the risk of doing so.
+
+
+```{r decision table iii, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=84)}
+temp3 <- temp %>%
+  group_by(catch, size) %>%
+summarise("probDepl" = mean(depletion.vs)) %>%   ungroup() %>%
+  dcast(., catch ~ size, value.var= "probDepl") %>%
+  select(-catch)
+  
+row.names(temp3) <- c("p(State of Nature)","Catch = 67", "Catch = 134", "Catch = 201")
+
+
+temp3[1,] <- probs
+
+EV <- NULL
+EV[1] <- NA
+for(i in 2:nrow(temp3)){
+  EV <- append(EV,temp3[i,1]*probs[1]+ temp3[i,2]*probs[2]+temp3[i,3]*probs[3])
+}
+
+temp3$EV <- unlist(EV)
+
+print(round(temp3,2))
+```
+Decision Table B2: Probability that the population is depleted in both 2003 and 2023, across three catch scenarios. Column headers indicate adult population sizes in 2003. The expected value is the mean probability that both 2003 and 2023 will be depleted (N/K < 50%) for that catch level across all simulations.

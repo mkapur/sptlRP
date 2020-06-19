@@ -1,0 +1,8 @@
+"0","rm(list = ls())"
+"0","options(scipen = 0)"
+"0","require(ggplot2, quietly = T)"
+"0","require(TMB, quietly = T)"
+"0","require(reshape)"
+"0","require(dplyr, quietly = T)"
+"0","library(knitr)"
+"0","opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)"

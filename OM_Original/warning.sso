@@ -1,0 +1,10 @@
+SS-V3.24Z-safe;_05/18/2016;_Stock_Synthesis_by_Richard_Methot_(NOAA)_using_ADMB_11.2x64
+Thu Jun 18 14:08:12 2020
+
+ Main recdev biasadj is >2 times ratio of rmse to sigmaR
+ Early recdev biasadj is >2 times ratio of rmse to sigmaR
+Final gradient: 1.36035 is larger than final_conv: 1e-005
+ Main recdev biasadj is >2 times ratio of rmse to sigmaR
+ Early recdev biasadj is >2 times ratio of rmse to sigmaR
+ N warnings: 5
+Number_of_active_parameters_on_or_near_bounds: 0

@@ -1,0 +1,421 @@
+---
+title: "Homework 3 - Root Finding"
+author: "M Kapur kapurm@uw.edu"
+date: "09 Nov 2018"
+output: 
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+    highlight: pygments
+---
+
+```{r setup, echo = F, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+rm(list = ls())
+options(scipen = 0)
+require(ggplot2, quietly = T)
+require(TMB, quietly = T)
+require(reshape)
+require(dplyr, quietly = T)
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+\newpage
+
+# Question 1
+## Ricker
+
+$$
+\begin{array}
+{cc}
+R = \alpha S e^{-\beta S} & original \\
+R = \alpha \tilde S Re^{-\beta \tilde S R}  & substitute \\
+ln(R) = ln(\alpha \tilde S) + ln(R) -\beta \tilde S R & log \\
+\beta \tilde S R= ln(\alpha \tilde S) & subtract, \space add \\
+R= \frac{ln(\alpha \tilde S)}{\beta \tilde S} & divide \\
+\end{array}
+$$
+
+## Pella-Tomlinson
+
+$$
+\begin{array}
+{cc}
+R = \alpha S (1+\beta(1-(\frac{S}{S_0})^\gamma)) & original \\
+R = \alpha \tilde S R (1+\beta(1-(\frac{S}{S_0})^\gamma)) & substitute \\
+\frac{1}{\alpha \tilde S} =  1+\beta(1-(\frac{S}{S_0})^\gamma) & divide \\
+\frac{\frac{1}{\alpha \tilde S} - 1}{\beta} = 1-(\frac{S}{S_0})^\gamma & subtract, \space divide \\
+\frac{1-\alpha \tilde S}{\beta \alpha \tilde S} = 1-(\frac{S}{S_0})^\gamma  & rearrange \space LHS \\
+1 - \frac{1-\alpha \tilde S}{\beta \alpha \tilde S} = (\frac{S}{S_0})^\gamma  & move \space 1 \\
+\langle 1 - \frac{1-\alpha \tilde S}{\beta \alpha \tilde S} \rangle ^{\frac{1}{\gamma}} = \frac{S}{S_0} & \gamma \space root \\
+S_0\langle 1 - \frac{1-\alpha \tilde S}{\beta \alpha \tilde S} \rangle ^{\frac{1}{\gamma}} = \tilde SR & move \space S_0, \space sub \\
+\frac{S_0}{\tilde S}\langle 1 - \frac{1-\alpha \tilde S}{\beta \alpha \tilde S} \rangle ^{\frac{1}{\gamma}} = R & \space solve \\
+\end{array}
+$$
+\newpage
+
+# Question 2: Reparameterize SRR in terms of $R_0$
+
+For each of the SRRs, I first solve for $\alpha$ in the basic formula. Then I identify steepness as $hR_0$ and multiply $S_0$ by 0.2. $\alpha$ can be substituted into that equation and then solved for both $\beta$ and $\alpha$ with respect to $R_0$. I was very explicit with my steps for the BH but do a more condensed version for the subsequent SRRs.
+
+
+## Beverton-Holt
+
+I approached this anticipating the solution would be similar to the way steepness is parameterized in SS. I assume that steepness $h$ occurs at 20% of $S_0$. 
+
+### $\beta$ w.r.t. $R_0$
+
+$$
+\begin{array}
+{cc}
+R_0 = \frac{S_0}{\alpha + \beta S_0} & original \\
+\alpha + \beta S_0 = \frac{S_0}{R_0} & rearrange, \space sub \\
+\alpha =\tilde S_0 - \beta S_0 & alpha \\
+hR_0 = \frac{0.2S_0}{\alpha + 0.2 \beta S_0} & h @ 0.2S_0  \\
+hR_0 = \frac{0.2S_0}{\tilde S_0 - \beta S_0 + 0.2 \beta S_0} & substitute  \\
+hR_0 = \frac{0.2S_0}{\tilde S_0 - 0.8 \beta S_0} & simplify \\
+hR_0\tilde S_0 - 0.8hR_0\beta S_0= 0.2S_0 & multiply \space denom\\
+hS_0 - 0.8hR_0\beta S_0= 0.2S_0 & sub \space S_0 = \tilde S R_0\\
+h - 0.8hR_0\beta = 0.2 & div \space S_0 \\
+5h - 4hR_0\beta = 1 & mult \space 5 \\
+\frac{5h-1}{4hR_0} = \beta & solve \space \beta \\
+\end{array}
+$$
+
+### $\alpha$ w.r.t. $R_0$
+
+$$
+\begin{array}
+{cc}
+\alpha =\tilde S_0 - \beta S_0 & from \space above \\
+\alpha =\tilde S_0 -  \frac{5h-1}{4hR_0}S_0 & sub \space \beta \\
+\alpha =\tilde S_0 -  \frac{5h-1}{4hR_0}\tilde S_0 R_0 & sub \space S_0 = \tilde S R_0  \\
+\alpha =\tilde S_0 -  \frac{5h-1}{4h}\tilde S_0 & cancel \space R_0  \\
+\alpha =\tilde S_0 \langle1-  \frac{5h-1}{4h}\rangle & factor  \\
+\alpha = \tilde S_0 \langle \frac{1-h}{4h}\rangle & rearrange   \\
+\end{array}
+$$
+
+## Ricker
+
+$$
+\begin{array}
+{cc}
+R = \alpha S e^{-\beta S} & original \\
+\frac{R}{S} = \alpha  e^{-\beta S} & divide \space by \space S \\
+\frac{1}{ \tilde S }=   \frac{\alpha}{e^{\beta S}} & sub \space \frac{R}{S} = \frac{1}{ \tilde S } \\
+\frac{e^{\beta S_0}}{ \tilde S_0 }= \alpha & alpha \\
+hR_0 = \alpha 0.2 S_0 e^{-\beta 0.2 S_0} & h @ 0.2\\
+hR_0 = \frac{0.2 S_0}{\tilde S_0} e^{\beta 0.8 S_0} & sub \space \alpha\\
+\beta = \frac{ln(5h)}{0.8\tilde S_0R_0} &  \beta \space w.r.t. \space R_0 \\
+\alpha = \frac{1}{\tilde S_0}e^{\frac{ln(5h)}{0.8}} &  \alpha \space w.r.t. \space R_0 \\
+\end{array}
+$$
+
+
+## Pella-Tomlinson
+Here I assumed that at $R_0$, S = $S_0$
+$$
+\begin{array}
+{cc}
+R_0 = \alpha S (1+\beta(1-(\frac{S_0}{S_0})^\gamma)) & original \\
+R_0 = \alpha S & simplify \\
+\frac{1}{\tilde S} = \frac{R_0}{S} = \alpha & alpha \space w.r.t. \space R_0 \\
+hR_0 = \alpha 0.2 S (1+\beta(1-(\frac{0.2S_0}{S_0})^\gamma)) & h @ 0.2 \\
+hR_0 = \frac{R_0}{S} 0.2 S (1+\beta(1-(\frac{0.2S_0}{S_0})^\gamma)) & sub \space \alpha \\
+h =  0.2(1+\beta(1-(\frac{0.2S_0}{S_0})^\gamma)) & div \space R_0 \\
+h =  0.2+0.2\beta(1-(0.2)^\gamma)) & distribute \\
+h =  0.2+0.2\beta-0.2\beta(0.2)^\gamma & distribute \\
+5h = 1+ \beta - \beta 0.2^\gamma & mult \space 5 \\
+5h = 1+ \beta (1 - 0.2^\gamma) & factor \\
+\frac{5h - 1}{1-0.2^\gamma} = \beta & \beta \space w.r.t. \space R_0 \\
+\end{array}
+$$
+
+# Question 3
+My functions are as follows. Equations in parentheses reference the assignment.
+
+* `doNage` (Eq 5) returns a numbers- and Z-at age matrix. Fishing mortality gets figured in as a multiplier on the selectivities (If `Fv[year]` is zero, selectivity will be zero and the fish will only experience natural mortality).
+* `doYPR` (Eq 3) Uses the `N_a` matrix, weight and selectivity information to create a single, summed value for Yield-Per-Recruit.
+* `getAB` generates $\alpha$ and $\beta$ for each stock recruitment relationship based on the equations derived above. It requires inputs of steepness $h$;  $R_0 = 1$.
+* `doSRR` (Eq 8, Eq 9 and Question 1 answers) generates the spawning biomass per recruit $\tilde S$ using the `N_a` matrix and fecundity information for females only (first column). It then uses the equations for Recruitment at SBPR ($\tilde S$, solved beforehand) to produce a single recruitment estimate $R(F)$. These are multiplied to get spawner biomass as in Equation 7, $S(F) = \tilde S(F) R(F)$
+* `doYield` (Eq 2) Now that we have $\tilde Y$  from `doYPR` and $R$ from the intermediate step of `doSRR` we multiply these together to get total yield.
+
+```{r data and funcs, echo = T, eval = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+# setwd("~/GitHub/FISH-559/Home3")
+dat <- read.table("HOME3.txt", header = T)
+
+doNage <- function(nages = 21,
+                   sel = dat$Sel.f.,
+                   Fv = 0,
+                   M = 0.15) {
+    N_a <- Z_a <- matrix(NA, nrow = nages, ncol = 1)
+    for(a in 1:nages){
+      Z_a[a] <- M + sel[a]*Fv
+      if(a == 1) N_a[a] <- 0.5
+      if(a > 1  & a < max(nages)) N_a[a] <- N_a[a-1]*exp(-Z_a[a-1])
+      if(a == max(nages)) N_a[a] <-  N_a[a-1]*exp(-Z_a[a-1])/(1- exp(-Z_a[a]))
+    }
+    return(cbind(N_a,Z_a))
+}
+
+doYPR <-
+  function(nages = length(unique(dat$Age)),
+  selex = list(dat$Sel.f., dat$Sel.m.),
+  wts = list(dat$Wght.f., dat$Wght.m.),
+  Fv = 0, M = 0.15 ) {
+  ypr <- matrix(NA, nrow = nages, ncol = 2)
+  for(i in 1:2){
+    wt <- wts[[i]]
+    nzmat <-  doNage(sel = selex[[i]], Fv = Fv)
+      n_a <- nzmat[,1]
+    z_a <- nzmat[,2]
+    ypr[,i] <- wt*(( selex[[i]]*Fv)/z_a)*n_a*(1-exp(-z_a))
+  }
+  return(sum(ypr))
+}
+
+getAB <- function(SRR = 1, h = 0.5, R0 = 1,fec = dat$Fecundity, gam = 1){
+  ## always calculate at F = 0
+  sbpr0 <-
+    sum(fec * doNage(Fv = 0, 
+                     sel = list(dat$Sel.f., dat$Sel.m.)[[1]])[, 1])
+   if(SRR == 1){ 
+    alpha <- sbpr0*((1-h)/(4*h))
+    beta <- (5*h-1)/(4*h*R0) 
+  } else  if(SRR == 2){
+    alpha <- exp(log(5*h)/0.8)/sbpr0
+    beta <- log(5*h)/(0.8*sbpr0*R0)
+  } else   if(SRR == 3){
+    alpha <- 1/sbpr0
+    beta <- (5*h-1)/(1 - 0.2^gam) 
+  }
+  return(c("alpha" = alpha, "beta" = beta))
+}
+
+doSRR <- function(fec = dat$Fecundity, SRR = 1, h = 0.5, Fv = 0, gam = 1, R0 = 1, S0 = 0.6739975){
+  ## get s-tilde
+  sbpr <- fec*doNage(Fv = Fv, sel=  list(dat$Sel.f.,dat$Sel.m.)[[1]])[,1] 
+  sumSBPR <- sum(sbpr)
+  if(SRR == 1){ ## bevholt
+    ab <- getAB(SRR = 1, h = h)
+    R <- (sumSBPR - ab[1] )/(ab[2] * sumSBPR) ## Equation 9
+  } else if(SRR == 2){ ## ricker
+    ab <- getAB(SRR = 2, h = h)
+    R <- log(ab[1]*sumSBPR)/(ab[2]*sumSBPR) ## Question 1A
+  } else if(SRR == 3){ ## Pella
+    ab <- getAB(SRR = 3, h = h)
+    R <- (S0/sumSBPR) * (1 - (1 - ab[1] * sumSBPR)/(ab[2] * ab[1] * sumSBPR))^(1/gam) ## Question 1B
+  }
+  return(c('rec' = as.numeric(R),'spawnbio' = sumSBPR))
+}
+
+doYield <- function(ypr, R){
+  yield <- ypr*R
+  return(c("yield" = yield))
+} 
+  
+## put it all together
+masterFunc <-
+  function(nages = 21,
+  Fv = 0,
+  selex = list(dat$Sel.f., dat$Sel.m.),
+  wts = list(dat$Wght.f., dat$Wght.m.),
+  SRR = 1,
+  h = 0.5,
+  gam = 1,
+  R0 = 1,
+  S0 = 0.6739975) {
+  
+  ypr <- doYPR(nages = nages, selex = selex, wts = wts, Fv = Fv)
+  rec <-  doSRR( fec = dat$Fecundity,SRR = SRR, h = h, Fv = Fv,gam = gam, R0 = R0,S0 = S0)
+  
+  yield <- doYield(ypr,rec[1])
+  
+  df <- data.frame(  
+    "SRR" = c('BevHolt','Ricker','Pella-T')[SRR],
+    "Fmort" = Fv,
+    "rec" = rec[1],
+    "yield" = yield,
+    "spawnbio" = rec[2]*rec[1])    ## eq 7
+
+  return(df)
+}
+```
+
+## 3a Plots
+
+Note, I assume $\gamma = 1$ for this assignment. It is possible to implement $\gamma$ = 2.39 which would correspond to a 40% depletion as described in Q4.
+```{r 3a function, echo = T, eval = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+
+  par(mfrow = c(2,2))
+for(s in 1:3){
+  df <- data.frame(SRR = NA, Fmort = NA, rec = NA, yield = NA, spawnbio = NA) ## storage
+
+  for(fi in 1:length(seq(0,1,0.001))){
+      df[fi,] <-   masterFunc(SRR = s, Fv = seq(0,1,0.001)[fi])
+    
+  }
+    ## normalize SSB
+   df$normSpawnbio <- with(df, spawnbio/0.6739975)
+  # df$normSpawnbio <- df$spawnbio
+  mn <- c('BevHolt','Ricker','Pella-T g = 1')[s]
+
+
+  ## rec v normSpawnbio
+  with(df, plot(rec ~ normSpawnbio, type = 'l', lwd = 2, xlab = expression(tilde(S(F))*R(F)), ylab = 'Recruitment' , col = 'firebrick', ylim = c(0,1.25), xlim = c(0,1), cex.main = 0.9, main = paste0(mn,' Spawning Biomass v Recruitment')))
+  abline(0,1,col = 'red', ylim = c(0,1)) ## replacement line
+  
+  ## normSpawnbio v yield
+  with(df, plot(yield ~ normSpawnbio, type = 'l', lwd = 2, xlab = expression(tilde(S(F))*R(F)), ylab = 'Yield' , col = 'goldenrod', ylim = c(0,0.15), xlim = c(0,1), cex.main = 0.9, main = paste0(mn,' Spawning Biomass v Yield')))
+  
+  ## F v yield
+  with(df, plot(yield ~ Fmort, type = 'l', lwd = 2, xlab = "Fishing Mortality", ylab = 'Yield' , col = 'seagreen', ylim = c(0,0.15), xlim = c(0,0.45), cex.main = 0.9, main =  paste0(mn,' Fishing Mortality v Yield')))
+  
+  ## F v normSpawnbio
+  with(df, plot(normSpawnbio ~ Fmort, type = 'l', lwd = 2, xlab = "Fishing Mortality", ylab = expression(tilde(S(F))*R(F)) ,ylim = c(0,1), xlim = c(0,0.45), col = 'dodgerblue', cex.main = 0.9, main = paste0(mn,' Fishing Mortality v Spawning Biomass')))
+  
+}
+```
+
+\newpage
+
+## 3b Point Estimates of $F_{MSY}$, $MSY$ and $F_{crash}$
+
+The two MSY-based quantities must be identified with a root finder; they occur at the maximum of the Yield v Fishing Mortality (green lines) and Yield vs Spawning Biomass (yellow lines) plots, respectively. The lowest fishing mortality corresponding to extinction is the lowest value of $F$ for which Spawning Biomass is zero (blue lines). 
+
+I use two methods here, the first, to find $F_{MSY}$, returns the numerical derivative of yield at different values of $F$. I plug this into `uniroot()` to find where the value equals zero, aka the maximum ($F_{MSY}$). My `bisect()` function uses the bissection method on the  resultant spawning biomass at various $F$s to find $F_{crash}$. Since it took too long to hit zero precisely, I return the first $F$ where spawning biomass is within 4 rounded digits of zero.
+
+```{r 3b, echo = T, eval = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+q3b <- data.frame(SRR = NA, FMSY = NA, MSY = NA, Fcrash = NA)
+
+## worked with J Sullivan on this function
+dfx.dx <- function(Fv_test, h = 0.5){
+  y1 <- masterFunc(SRR = s, h = h, Fv = Fv_test-0.001)$yield
+  y2 <- masterFunc(SRR = s, h = h, Fv = Fv_test+0.001)$yield
+  appx <- (y2-y1)/(0.002) #0.002 is total delta
+  return(appx)
+}
+
+## find where F is minimized and S ~ 0, bisection
+bisect <- function(Fmin = 0, Fmax = 1){
+  for(b in 1:1000){
+    Fv_testM <- (Fmin + Fmax)/2 ## update
+    sbio_temp <- masterFunc(SRR = s, Fv = Fv_testM)$spawnbio
+    if(round(sbio_temp,4) == 0 & (Fmax - Fmin) > 0.0002){ return(Fv_testM)
+    } else if(round(sbio_temp,4) > 0) { Fmin <- Fv_testM 
+    } else if(round(sbio_temp,4) < 0) { Fmax <- Fv_testM }
+  }
+  print('max iter')
+}
+
+for(s in 1:3){
+  ## obtain FMSY
+  FMSY <- as.numeric(uniroot(f = dfx.dx,  h = 0.5, interval = c(0.1,1))[1])
+  ## plug for MSY
+  MSY <- masterFunc(SRR = s, Fv = FMSY)$yield
+  Fcrash <- bisect()
+  q3b[s,] <- c( c('BevHolt','Ricker','Pella-T, gamma = 1')[s], round(FMSY,4), round(MSY,4), round(Fcrash,4))
+}
+
+q3b
+```
+
+```{r 3bextra, echo = F, eval = F, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+## right answer, wrong method ----
+# df <- data.frame(SRR = NA, Fmort = NA, rec = NA, yield = NA, spawnbio = NA) ## storage
+# for(s in 1:3){
+#   for(fi in 1:length(seq(0,1,0.0001))){
+#     df[fi,] <-   masterFunc(SRR = s, Fv = seq(0,1,0.0001)[fi])
+#   }
+#   
+#   ## run approximation for yield v F
+#   rp.approx <- with(df, approx(Fmort, yield, xout = seq(0.08,0.12,0.0001)))
+#   FMSY <- rp.approx$x[rp.approx$y==max(rp.approx$y)]
+#   MSY <- rp.approx$y[rp.approx$y==max(rp.approx$y)]
+#   ## run approximation for yield v spbio
+#   rp.approx <- with(df, approx(Fmort, spawnbio, xout = seq(0,0.5,0.0001)))
+#   Fcrash <- min(rp.approx$x[round(rp.approx$y,2)==0])
+#   
+#   ratioS <- masterFunc(SRR = s, Fv = FMSY)$spawnbio
+#   ratio <- ratioS/0.6739975
+#   
+#   q3b[s,] <- c( c('BevHolt','Ricker','Pella-T, gamma = 1')[s], round(FMSY,3), round(MSY,5), round(Fcrash,3), round(ratio,3))
+# }
+```
+
+
+\newpage
+
+# Question 4
+
+With increased steepness, the depletion ratio is reduced for both the B-H and Ricker formulations. The effect is more pronounced for the Beverton-Holt. Looks like the Beverton-Holt SRR gets us right on target at $h = 0.5$, where as the Ricker and P-T models would say we're above the target.
+
+I checked out the recent sablefish assessment, where it states the ref point is based on $SB_{40}$. Indeed, recruitment dynamics are goverened by the Beverton-Holt for that stock. So, an assessor could rig the status outcome with this information either towards or away from the management target simply by changing the SRR used. This is a difficult type of model mis-specification to diagnose, especially because there are rarely empirical observations of recruitment, and recruitment plots themselves are often the diagnostic tool for model problems.
+
+## 4A 3-Panel Plot
+
+The plot below shows three panels with the resultant recruitment accross a range of $F$ and $h$ values. For the table, I use the `dfx.dx()` function within `uniroot` as above to get specific $F_{MSY}$ estimates at each $h$. I then evaluate the resultant spawning biomass at that $F_{MSY}$ and at $F = 0$ to obtain the ratios.
+
+```{r q4a, echo = T, eval = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+hvec <- seq(0.25,0.95,0.05)
+
+## table for plots
+q4 <- data.frame()
+idx <- idx2 <- 1
+for(s in 1:3){
+  for(h in 1:length(hvec)){ ## iterate steepness
+    for(fi in 1:length(seq(0,1,0.05))){
+      q4[idx,"SRR"] <-  c('BevHolt','Ricker','Pella-T')[s]
+      q4[idx,'Fmort'] <- seq(0,1,0.05)[fi]
+      q4[idx,"steepness"] <- hvec[h]
+      temp <- masterFunc(SRR = s,h = hvec[h], Fv = seq(0,1,0.05)[fi])
+      q4[idx,'S'] <- temp$spawnbio
+      q4[idx,'rec'] <-   temp$rec
+      q4[idx,'yield'] <-  temp$yield
+      idx <- idx + 1
+    }
+    # } ## end fi
+  } ## end steepness
+} ## end SRR
+```
+
+```{r q4b, echo = F, eval = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+ggplot(q4, aes(x = S, y = rec, col = factor(steepness))) +
+  theme_minimal() +
+  scale_color_manual(values = c(RColorBrewer::brewer.pal(8,'Dark2'),
+                                RColorBrewer::brewer.pal(9,'Spectral')))+
+  theme(panel.grid = element_blank(), legend.text = element_text(size = 6)) +
+  scale_x_continuous(limits = c(0,1)) +
+  scale_y_continuous(limits = c(0,2)) +
+  geom_line()  +
+  labs(x = 'S(F)', y = "R(F)", col = 'steepness') +
+  facet_wrap(~SRR)
+```
+
+\newpage
+
+## 4B: Table of $S_{FMSY}(0)/S(0)$
+```{r q4c, echo = T, eval = T, message = F, warning = F,  tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+q4b <- data.frame()
+idx2 <- 1
+for(s in 1:3){
+  for(h in 1:length(hvec)){ 
+    ## get FMSY @ h
+    FMSY <- as.numeric(uniroot(f = dfx.dx,  h = hvec[h], interval = c(0,1))[1])
+    ## plug for numerator
+    ratioS1 <- masterFunc(SRR = s,h = hvec[h], Fv = FMSY)$spawnbio
+    ## F = 0 for denominator
+    ratioS2 <- masterFunc(SRR = s,h = hvec[h], Fv = 0)$spawnbio
+    q4b[idx2,"SRR"] <-  c('BevHolt','Ricker','PellaT')[s]
+    q4b[idx2,"steepness"] <- hvec[h]    
+    q4b[idx2,"ratio"] <- ratioS1/ratioS2
+    idx2 <- idx2 + 1
+  } ## end steepness
+} ## end SRR
+q4b %>% 
+  mutate(ratio = round(ratio,4)) %>%
+  tidyr::spread(key = SRR, value = ratio) %>% 
+  select(steepness, BevHolt, Ricker, PellaT)
+```
+

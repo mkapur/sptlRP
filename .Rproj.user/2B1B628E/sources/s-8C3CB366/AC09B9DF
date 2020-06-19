@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1592585755260.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "AC09B9DF",
+    "lastKnownWriteTime" : 1592588593,
+    "last_content_update" : 1592588593256,
+    "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/R/sptlRP.R",
+    "project_path" : "R/sptlRP.R",
+    "properties" : {
+        "cursorPosition" : "64,36",
+        "scrollLine" : "48",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
