@@ -2,22 +2,22 @@
     "collab_server" : "",
     "contents" : "",
     "created" : 1592604650795.000,
-    "dirty" : true,
-    "encoding" : "",
+    "dirty" : false,
+    "encoding" : "UTF-8",
     "folds" : "",
     "hash" : "0",
     "id" : "774F1DAE",
-    "lastKnownWriteTime" : 6061896979202207324,
-    "last_content_update" : 1592863863706,
-    "path" : null,
-    "project_path" : null,
+    "lastKnownWriteTime" : 1592864009,
+    "last_content_update" : 1592864009477,
+    "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/R/dep.R",
+    "project_path" : "R/dep.R",
     "properties" : {
-        "cursorPosition" : "281,18",
-        "scrollLine" : "249",
+        "cursorPosition" : "38,0",
+        "scrollLine" : "32",
         "tempName" : "Untitled1"
     },
     "relative_order" : 3,
     "source_on_save" : false,
     "source_window" : "",
-    "type" : "cpp"
+    "type" : "r_source"
 }
