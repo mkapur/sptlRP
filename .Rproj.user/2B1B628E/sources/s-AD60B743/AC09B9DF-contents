@@ -27,22 +27,32 @@ dat[18:20,2,3] <- dat[18,2,3]
 par(mfrow = c(narea,3), 
     mar = rep(4,4))
 ## plot inputs by area
+png( here('figs','inputs_by_area.png'),
+     width = 6, height = 8, unit = 'in', res = 520)
+par(mfrow = c(narea,3), 
+    mar = c(4,5,1,1))
 for(a in 1:narea){
   dattemp <- as.data.frame(dat[,,a])
   names(dattemp) = names(dat0)
   ## F Fecundity
-  with(dattemp, plot(Fecundity ~ Age, type = 'l', lwd = 2, ylim = c(0,1), ylab = 'Fecundity', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
+  with(dattemp, plot(Fecundity ~ Age, type = 'l', lwd = 2, yaxt = 'n', ylim = c(0,1.05),
+                     ylab = 'Fecundity', col = 'seagreen4',  cex.lab= 1.5))
+  axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
   ## M/F weights
-  with(dattemp, plot(Wght.f. ~ Age, type = 'l', lwd = 2, ylim = c(0,3), ylab = 'Weight', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
+  with(dattemp, plot(Wght.f. ~ Age, type = 'l', lwd = 2, ylim = c(0,3), 
+                     ylab = 'Weight', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
+  
+  
   with(dattemp, lines(Wght.m. ~ Age, lwd = 2, ylab = 'Weight', col = 'goldenrod',  cex.axis =1.5, cex.lab= 1.5))
   legend('bottomright', legend = c('Female','Male'), col = c('seagreen4','goldenrod'), lwd = 2)
   ## M/F selex
-  with(dattemp, plot(Sel.f. ~ Age, type = 'l', lwd = 2,  ylim = c(0,1), ylab = 'Selectivity', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
+  with(dattemp, plot(Sel.f. ~ Age, type = 'l', lwd = 2,  yaxt = 'n', ylim = c(0,1.05), ylab = 'Selectivity', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
   with(dattemp, lines(Sel.m. ~ Age, lwd = 2, ylab = 'Selectivity', col = 'goldenrod',  cex.axis =1.5, cex.lab= 1.5))
+  axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
   legend('bottomright', legend = c('Female','Male'), col = c('seagreen4','goldenrod'), lwd = 2)
 }
-
-## movement matrix (simple)
+dev.off()
+## movement matrix (simple) ----
 ## movement happens only below age 5, and is unidirectional from areas 1 and 2 to area 3
 X_ija <- array(NA, dim = c(narea,narea,nages))
 for(a in 1:2){ ## only two areas have movement
@@ -222,7 +232,72 @@ masterFunc <-
     return(df)
   }
 
-q3b <- data.frame(SRR = NA, FMSY = NA, MSY = NA, BMSY= NA, Fcrash = NA)
+
+## brute plot (YPR and Yield vs F) ----
+brute <- data.frame('FV_sys' = NA, "yield_1" = NA, "yield_2" = NA,"yield_3" = NA,
+                    "ypr_1" = NA, "ypr_2" = NA,"ypr_3" = NA)
+Fv_test <- seq(0,1,0.01)
+for( i in 1:length(Fv_test)){
+  temp <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test[i],narea))
+  temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
+  brute[i,'FV_sys'] = Fv_test[i]
+  for(a in 1:narea) brute[i,a+1] = temp$yield[a]
+  for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
+  
+}
+## YPR
+brute[,c(1,5:7)] %>%
+  melt(id = 'FV_sys') %>%
+  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
+  geom_line(lwd = 1.1) + 
+  scale_color_grey(labels = paste("Area",1:3)) +
+  labs(x = 'F in area', y = 'YPR', color = '') +
+  # scale_y_continuous(limits = c(0,0.5)) +
+  theme_sleek() + 
+  theme(legend.position = c(0.8,0.9), 
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        legend.text = element_text(size = 20))
+## Yield
+brute[,c(1:4)] %>%
+  melt(id = 'FV_sys') %>%
+  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
+  geom_line(lwd = 1.1) + 
+  scale_color_grey(labels = paste("Area",1:3)) +
+  labs(x = 'F in area', y = 'Yield', color = '') +
+  scale_y_continuous(limits = c(0,0.5)) +
+  theme_sleek() + 
+  theme(legend.position = c(0.8,0.9), 
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        legend.text = element_text(size = 20))
+
+## put it all together
+masterFunc <-
+  function(
+    Fv = rep(0.15,narea),
+    SRR = 1,
+    h = steep,
+    gam = 1,
+    R0 = 1,
+    S0 = 0.6739975) {
+    
+    ypr_a <- doYPR(Fv = Fv)[[2]] ## second element is per area
+    rec_sb <-  doSRR( SRR = SRR, h = steep, Fv = Fv,gam = gam, R0 = R0,S0 = S0)
+    
+    yield <- doYield(ypr_a,rec_sb$rec) ## second object is total
+   
+    ## results by area
+    df <- data.frame(  'Area' = 1:3,
+      "SRR" = c('BevHolt','Ricker','Pella-T')[SRR],
+      "Fmort" = Fv,
+      "rec" = rec_sb$rec,
+      "yield" = yield[[1]],
+      "spawnbio" = rec_sb$spawnbio) #rec[2]*rec[1])    ## eq 7
+    
+    return(df)
+  }
+
 
 ## this needs to be spatial
 ## find where F is minimized and S ~ 0, bisection
@@ -237,83 +312,91 @@ q3b <- data.frame(SRR = NA, FMSY = NA, MSY = NA, BMSY= NA, Fcrash = NA)
 #   print('max iter')
 # }
 
-
 ## uniroot sols
-## likely need to try many combos of Fvtest by area
-dfx.dxSYS <- function(Fv_test, h = 0.5){
-  y1 <- masterFunc(SRR = 1, h = h, Fv = rep(Fv_test-0.001,narea))$yield
-  y2 <- masterFunc(SRR = 1, h = h, Fv = rep(Fv_test+0.001,narea))$yield
+dfx.dxSYS <- function(Fv_test, h = steep){
+  y1 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test-0.001,narea))$yield
+  y2 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test+0.001,narea))$yield
   appx <- (sum(y2)-sum(y1))/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }
 
 ## systemwide but with separate FV_test
-dfx.dxSYS2 <- function(Fv_testa1, Fv_testa2, h = 0.5){
-  y1 <- masterFunc(SRR = 1, h = h, Fv = c(Fv_testa1-0.001,Fv_testa2- 0.001) )$yield
-  y2 <- masterFunc(SRR = 1, h = h, Fv = c(Fv_testa1+0.001,Fv_testa2+ 0.001))$yield
+dfx.dxSYS2 <- function(Fv_testa1, Fv_testa2, h = steep){
+  y1 <- masterFunc(SRR = 1, h = steep, Fv = c(Fv_testa1-0.001,Fv_testa2- 0.001))$yield
+  y2 <- masterFunc(SRR = 1, h = steep, Fv = c(Fv_testa1+0.001,Fv_testa2+ 0.001))$yield
   appx <- (sum(y2)-sum(y1))/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }
 
-dfx.dxAREA <- function(Fv_test, h = 0.5){
-  y1 <- masterFunc(SRR = 1, h = h, Fv = rep(Fv_test-0.001,narea))$yield[3]
-  y2 <- masterFunc(SRR = 1, h = h, Fv = rep(Fv_test+0.001,narea))$yield[3]
+dfx.dxAREA <- function(Fv_test, h = steep){
+  y1 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test-0.001,narea))$yield[3]
+  y2 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test+0.001,narea))$yield[3]
   appx <- (y2-y1)/(0.002) #0.002 is total delta
   return(appx)
 }
 
 ## brute force - try various configs & save delta to search
-Fv_config <- expand.grid(seq(0.02,1,0.1),seq(0.02,1,0.1),seq(0.02,1,0.1))
-
-# https://stackoverflow.com/questions/50978973/looping-uniroot-on-two-arguments-with-sapply
-
-dfx.dxCONFIGA <- function(k, h = 0.5){
-  appx = NULL
-  # for(k in 1:nrow(Fv_config)){
-    y1 <- masterFunc(SRR = 1, h = h, Fv = as.numeric(Fv_config[k,]-0.001))$yield
-    y2 <- masterFunc(SRR = 1, h = h, Fv = as.numeric(Fv_config[k,]+0.001))$yield
-    appx[k] <- (sum(y2)-sum(y1))/(0.002) #0.002 is total delta; we are using system yield
-  # } # end configs
-  return(appx) ## want to minimize all 3
-}
+# Fv_config <- expand.grid(seq(0.02,1,0.1),seq(0.02,1,0.1),seq(0.02,1,0.1))
+# 
+# # https://stackoverflow.com/questions/50978973/looping-uniroot-on-two-arguments-with-sapply
+# 
+# dfx.dxCONFIGA <- function(k, h = steep){
+#   appx = NULL
+#   # for(k in 1:nrow(Fv_config)){
+#     y1 <- masterFunc(SRR = 1, h = steep, Fv = as.numeric(Fv_config[k,]-0.001))$yield
+#     y2 <- masterFunc(SRR = 1, h = steep, Fv = as.numeric(Fv_config[k,]+0.001))$yield
+#     appx[k] <- (sum(y2)-sum(y1))/(0.002) #0.002 is total delta; we are using system yield
+#   # } # end configs
+#   return(appx) ## want to minimize all 3
+# }
 
 minFunc <- function(F1,F2,F3){
   minus <- as.numeric(c(F1 - 0.001, F2 - 0.001, F3 - 0.001))
   plus <- as.numeric(c(F1 +0.001, F2 + 0.001, F3 + 0.001))
-                                          
-  y1 <- masterFunc(SRR = 1, h = h, Fv = minus)$yield
-  y2 <- masterFunc(SRR = 1, h = h, Fv = plus)$yield
+  y1 <- masterFunc(SRR = 1, h = steep, Fv = minus)$yield
+  y2 <- masterFunc(SRR = 1, h = steep, Fv = plus)$yield
   appx <- (sum(y2)-sum(y1))/(0.002) ## system yield again
   return(appx)
 }
 
 
-
-df <- data.frame('Method' = c('Fmsy_System','Fmsy_A3','Fmsy_Config'),
+## uniroot/find FMSY ----
+df2 <- data.frame(
+  expand.grid('Area' = 1:3,
+  'Method' = c('Fmsy_System','Fmsy_Config')),
                  'FMSY' = NA,
                  'MSY' = NA,
-                 'BMSY' = NA)
+                 'BMSY' = NA,
+  'B0')
+
+## single F, maximize system yield
+df2$FMSY[df2$Method == 'Fmsy_System'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = 0.86, interval = c(0.02,1))[1])
+df2$MSY[df2$Method == 'Fmsy_System'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_System'])$yield
+df2$BMSY[df2$Method == 'Fmsy_System'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_System'])$spawnbio
+
+## unique Fs ('config'), maximize system yield
+df2$FMSY[df2$Method == 'Fmsy_Config'] <- coef(mle(minFunc, start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
+                                                  method = "L-BFGS-B",
+                                                  lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
+df2$MSY[df2$Method == 'Fmsy_Config'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_Config'])$yield
+df2$BMSY[df2$Method == 'Fmsy_Config'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_Config'])$spawnbio
+
+## change catchability assumption (Langseth & Schueller 2016)
+## this is the Sampson & Scott 2011 Method; see Maury et al...
 
 
-for(i in 1:nrow(df)){
-  df[1,"FMSY"] <- rep(as.numeric(uniroot(f = dfx.dxSYS,  h = 0.5, interval = c(0.02,1))[1]),3)
-  df[2,"FMSY"] <- as.numeric(uniroot(f = dfx.dxAREA,  h = 0.5, interval = c(0.02,1))[1])
-  df[3,"FMSY"] <- coef(mle(minFunc, start = list(F1 = 0.02, F2 = 0.02, F3 = 0.02), method = "L-BFGS-B",
-              lower = c(0, 0,0), upper = c(1,1,1)))
-  
-  df[i, 'MSY'] <- masterFunc(SRR = s, Fv = rep(df[i,],narea))$yield
-  
-  
-}
+
 
 
 ## MSY by approach
-MSY_sys <- masterFunc(SRR = s, Fv = rep(FMSY_sys,narea))$yield
-MSY_area <- masterFunc(SRR = s, Fv = rep(FMSY_area,narea))$yield
-MSY_config <- masterFunc(SRR = s, Fv = FMSY_config)$yield
 
 ##BMsy by approach
+BMSY_sys <-
+BMSY_area <- masterFunc(SRR = s, Fv = rep(FMSY_area,narea))$spawnbio
+BMSY_config <- masterFunc(SRR = s, Fv = FMSY_config)$spawnbio
+
 
 Fcrash <- bisect()
-q3b[s,] <- c( c('BevHolt','Ricker','Pella-T, gamma = 1')[s], round(FMSY,4), round(MSY,4), round(Fcrash,4))
+q3b[s,] <- c( c('BevHolt','Ricker','Pella-T, gamma = 1')[s], round(FMSY,4),
+              round(MSY,4), round(Fcrash,4))
 

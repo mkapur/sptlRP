@@ -28,10 +28,7 @@ rm(list = ls())
     
     
 ## plot inputs by area
-    png( here('figs','inputs_by_area.png'),
-         width = 6, height = 8, unit = 'in', res = 520)
-      par(mfrow = c(narea,3), 
-          mar = c(4,5,1,1))
+
       for(a in 1:narea){
         dattemp <- as.data.frame(dat[,,a])
         names(dattemp) = names(dat0)
@@ -53,7 +50,7 @@ rm(list = ls())
           axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
           legend('bottomright', legend = c('Female','Male'), col = c('seagreen4','goldenrod'), lwd = 2)
       }
-      dev.off()
+
 ## movement matrix (simple)
 ## movement happens only below age 5, and is unidirectional from areas 1 and 2 to area 3
         X_ija <- array(NA, dim = c(narea,narea,nages))
