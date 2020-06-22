@@ -294,15 +294,18 @@ df <- data.frame('Method' = c('Fmsy_System','Fmsy_A3','Fmsy_Config'),
                  'MSY' = NA,
                  'BMSY' = NA)
 
-## obtain single FMSY which maximizes system yield
-FMSY_sys <- as.numeric(uniroot(f = dfx.dxSYS,  h = 0.5, interval = c(0.02,1))[1])
 
-## obtain global FMSY which maximizes yield in a given area [MANUALLY CHANGE]
-FMSY_area <- as.numeric(uniroot(f = dfx.dxAREA,  h = 0.5, interval = c(0.02,1))[1])
+for(i in 1:nrow(df)){
+  df[1,"FMSY"] <- rep(as.numeric(uniroot(f = dfx.dxSYS,  h = 0.5, interval = c(0.02,1))[1]),3)
+  df[2,"FMSY"] <- as.numeric(uniroot(f = dfx.dxAREA,  h = 0.5, interval = c(0.02,1))[1])
+  df[3,"FMSY"] <- coef(mle(minFunc, start = list(F1 = 0.02, F2 = 0.02, F3 = 0.02), method = "L-BFGS-B",
+              lower = c(0, 0,0), upper = c(1,1,1)))
+  
+  df[i, 'MSY'] <- masterFunc(SRR = s, Fv = rep(df[i,],narea))$yield
+  
+  
+}
 
-## FMSY by area which maximizes system yield
-FMSY_config <- coef(mle(minFunc, start = list(F1 = 0.02, F2 = 0.02, F3 = 0.02), method = "L-BFGS-B",
-                   lower = c(0, 0,0), upper = c(1,1,1)))
 
 ## MSY by approach
 MSY_sys <- masterFunc(SRR = s, Fv = rep(FMSY_sys,narea))$yield
