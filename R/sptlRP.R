@@ -69,36 +69,16 @@ langsZ <- function(M, N_ai, Fv,p_i){
 doNage <- function(X = X_ija, ## input movement matrix
                    indat = dat, ## with bio info'
                    s = 1, ## F = 1, M = 2
-                   Zmethod = 'std', ## use approx?
-                   p_i = c(0.3,0.3,0.4), ## prop E x area
                    Fv = rep(0,narea),
                    M = 0.15) {
   N_ai <- Z_ai <- B_ai <- SB_ai<- matrix(NA, nrow = nages, ncol = narea) ## placeholder
   
   for(a in 1:nages){
-    if(a == 1){
-      N_ai[a,] <- 0.5 ## inits
-      for(i in 1:narea){
-        if(Zmethod == 'std'){
-          ## just selectivity * Fv
-          Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i]
-        } else if(Zmethod == 'Langs'){
-          ## based on prop area
-          Z_ai[a,i] <- langsZ(M = M, N_ai, Fv, p_i)
-        } ## end Langs
-      } ## end areas for A1
-    } ## end A1
+    if(a == 1) N_ai[a,] <- 0.5 ## inits
     for(i in 1:narea){
-      if(Zmethod == 'std'){
-        ## just selectivity * Fv
-        Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] 
-      } else if(Zmethod == 'Langs'){
-        ## based on prop area
-        Z_ai[a,i] <- langsZ(M = M, N_ai, Fv, p_i)
-      } ## end langs
-       if(a > 1  & a < max(nages)) {
-   
-        
+      Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
+      
+      if(a > 1  & a < max(nages)) {
         pLeave = NCome = 0
         for(j in 1:narea){
           if(i != j){
@@ -109,19 +89,20 @@ doNage <- function(X = X_ija, ## input movement matrix
         } # end subareas j
         N_ai[a,i] <- ((1-pLeave)* N_ai[a-1,i] +NCome)*exp(-Z_ai[a-1,i])
         # if(is.na(N_ai[a,i])) stop("NA NAI at",a,i,"\n")
-       } ## end age < maxage
+      } ## end age < maxage
       if(a == max(nages)) N_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
-      # } # end ages
+      
       B_ai[a,i] <- N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
       if(s == 1){
         SB_ai[a,i]  <- NA
-        SB_ai[a,i]  <- B_ai[a,i]*indat[a,2,i] ## Fecundity in col2
+        SB_ai[a,i]  <- B_ai[a,i]*indat[a,1,i]
       } 
       B_i <- sum(B_ai[,i])
       SB_i <- sum(SB_ai[,i])
-    } ## end subareas i
-  } ## end ages
-  return(cbind(N_ai,Z_ai,B_ai,SB_ai))
+    } # end ages
+
+  } ## end subareas i
+  return(cbind(N_ai,Z_ai,sum(B_i), sum(SB_i)))
 }
 
 doYPR <-function( Fv= rep(0.2,narea), M = 0.15 ) {
@@ -219,9 +200,9 @@ masterFunc <-
 brute <- data.frame('FV_sys' = NA, "yield_1" = NA, "yield_2" = NA,"yield_3" = NA,
                     "ypr_1" = NA, "ypr_2" = NA,"ypr_3" = NA)
 
-brute_config <- data.frame(expand.grid(Area = 1:3, FA1 = seq(0.01,0.5,0.01),
-                                       FA2 = seq(0.01,0.5,0.01), FA3 = seq(0.01,0.5,0.01)),
-                           "yield_1" = NA, "yield_2" = NA,"yield_3" = NA)
+# brute_config <- data.frame(expand.grid(Area = 1:3, FA1 = seq(0.01,0.5,0.01),
+#                                        FA2 = seq(0.01,0.5,0.01), FA3 = seq(0.01,0.5,0.01)),
+#                            "yield_1" = NA, "yield_2" = NA,"yield_3" = NA)
 
 Fv_test <- seq(0,1,0.01)
 for( i in 1:length(Fv_test)){
@@ -231,27 +212,27 @@ for( i in 1:length(Fv_test)){
   for(a in 1:narea) brute[i,a+1] = temp$yield[a]
   for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
 }
-for(i in 1:nrow(brute_config)){
-  temp <- masterFunc(SRR = 1, h = steep, Fv = with(brute_config[i,], c(FA1,FA2,FA3)))
-  # temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
-  for(a in 1:narea) brute_config[i,a+4] = temp$yield[a]
-  # for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
-}
-brute_config$IDX <- 1:nrow(brute_config)
+# for(i in 1:nrow(brute_config)){
+#   temp <- masterFunc(SRR = 1, h = steep, Fv = with(brute_config[i,], c(FA1,FA2,FA3)))
+#   # temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
+#   for(a in 1:narea) brute_config[i,a+4] = temp$yield[a]
+#   # for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
+# }
+# brute_config$IDX <- 1:nrow(brute_config)
 
 ## YPR - should look logistic-ish
-brute[,c(1,5:7)] %>%
-  melt(id = 'FV_sys') %>%
-  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
-  geom_line(lwd = 1.1) + 
-  scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'F in area', y = 'YPR', color = '') +
-  # scale_y_continuous(limits = c(0,0.5)) +
-  theme_sleek() + 
-  theme(legend.position = c(0.8,0.9), 
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 16),
-        legend.text = element_text(size = 20))
+# brute[,c(1,5:7)] %>%
+#   melt(id = 'FV_sys') %>%
+#   ggplot(., aes(x = FV_sys, y = value, color = variable)) +
+#   geom_line(lwd = 1.1) + 
+#   scale_color_grey(labels = paste("Area",1:3)) +
+#   labs(x = 'F in area', y = 'YPR', color = '') +
+#   # scale_y_continuous(limits = c(0,0.5)) +
+#   theme_sleek() + 
+#   theme(legend.position = c(0.8,0.9), 
+#         axis.title = element_text(size = 16),
+#         axis.text = element_text(size = 16),
+#         legend.text = element_text(size = 20))
 
 ## Yield - should look domey
 brute[,c(1:4)] %>%
@@ -260,9 +241,8 @@ brute[,c(1:4)] %>%
   geom_line(lwd = 1.1) + 
   scale_color_grey(labels = paste("Area",1:3)) +
   labs(x = 'F in area', y = 'Yield', color = '') +
-  scale_y_continuous(limits = c(0,0.4)) +
-  scale_x_continuous(limits = c(0,0.5)) +
-  
+  # scale_y_continuous(limits = c(0,0.4)) +
+  # scale_x_continuous(limits = c(0,0.5)) +
   theme_sleek() + 
   theme(legend.position = c(0.8,0.9), 
         axis.title = element_text(size = 16),
@@ -377,6 +357,8 @@ df2$FMSY[df2$Method == 'Fmsy_Config'] <- coef(mle(minFunc, start = list(F1 = 0.0
                                                   lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
 df2$MSY[df2$Method == 'Fmsy_Config'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_Config'])$yield
 df2$BMSY[df2$Method == 'Fmsy_Config'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_Config'])$spawnbio
+unfishedB <- apply(doNage()[,7:9],2,sum)
+df2$B0[df2$Area == 1 ] <- unfishedB[1];df2$B0[df2$Area == 2 ] <- unfishedB[2];df2$B0[df2$Area == 3 ] <- unfishedB[3]
 
 ## change catchability assumption (Langseth & Schueller 2016)
 ## this is the Sampson & Scott 2011 Method; see Maury et al...
