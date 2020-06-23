@@ -14,6 +14,7 @@ require(ggsidekick)
 dat0 <- read.table(here("R","HOME3.txt"), header = T)
 narea = 3
 nages = 21
+steep = 0.5
 dat <- array(NA, dim = c(nages,ncol(dat0),narea)) ## placeholder
 
 ## first area is original
@@ -26,35 +27,10 @@ dat[18:20,2,3] <- dat[18,2,3]
 
 par(mfrow = c(narea,3), 
     mar = rep(4,4))
-## plot inputs by area
-png( here('figs','inputs_by_area.png'),
-     width = 6, height = 8, unit = 'in', res = 520)
-par(mfrow = c(narea,3), 
-    mar = c(4,5,1,1))
-for(a in 1:narea){
-  dattemp <- as.data.frame(dat[,,a])
-  names(dattemp) = names(dat0)
-  ## F Fecundity
-  with(dattemp, plot(Fecundity ~ Age, type = 'l', lwd = 2, yaxt = 'n', ylim = c(0,1.05),
-                     ylab = 'Fecundity', col = 'seagreen4',  cex.lab= 1.5))
-  axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
-  ## M/F weights
-  with(dattemp, plot(Wght.f. ~ Age, type = 'l', lwd = 2, ylim = c(0,3), 
-                     ylab = 'Weight', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
-  
-  
-  with(dattemp, lines(Wght.m. ~ Age, lwd = 2, ylab = 'Weight', col = 'goldenrod',  cex.axis =1.5, cex.lab= 1.5))
-  legend('bottomright', legend = c('Female','Male'), col = c('seagreen4','goldenrod'), lwd = 2)
-  ## M/F selex
-  with(dattemp, plot(Sel.f. ~ Age, type = 'l', lwd = 2,  yaxt = 'n', ylim = c(0,1.05), ylab = 'Selectivity', col = 'seagreen4',  cex.axis =1.5, cex.lab= 1.5))
-  with(dattemp, lines(Sel.m. ~ Age, lwd = 2, ylab = 'Selectivity', col = 'goldenrod',  cex.axis =1.5, cex.lab= 1.5))
-  axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
-  legend('bottomright', legend = c('Female','Male'), col = c('seagreen4','goldenrod'), lwd = 2)
-}
-dev.off()
+
 ## movement matrix (simple) ----
-## movement happens only below age 5, and is unidirectional from areas 1 and 2 to area 3
-## movement happens only below age 5, and is unidirectional from areas 1 and 2 to area 3
+
+## movement happens only below age 6, and is unidirectional from areas 1 and 2 to area 3
 X_ija <- array(NA, dim = c(narea,narea,nages))
 for(a in 1:2){ ## only two areas have movement
   for(g in 1:dim(X_ija)[3]){ ## loop ages
@@ -67,7 +43,7 @@ for(a in 1:2){ ## only two areas have movement
     } else{
       X_ija[a,,g] <- 0 ## no movement at older ages
       diag(X_ija[,,g]) <- 1 
-      cat( a, " ",diag(X_ija[,,g]) ,"\n")
+      # cat( a, " ",diag(X_ija[,,g]) ,"\n")
       
       
     } # end else
@@ -80,44 +56,49 @@ for(i in 1:dim(X_ija)[3]){
   print(rowSums(X_ija[,,a]) == 1)
 }
 
-plist = list()
-for(g in 1:6){ ## loop ages
-  plist[[g]] <-  data.frame(X_ija[,,g]) %>% 
-    mutate('FRM' = 1:3) %>%
-    melt(id = 'FRM') %>%
-    ggplot(., aes(x = FRM, y = variable, fill = value)) +
-    geom_tile() + 
-    ggsidekick::theme_sleek() +
-    theme(legend.position = 'none',
-          axis.ticks = element_blank(),
-          axis.text = element_text(size = 10),
-          axis.title = element_text(size = 10)) +
-    scale_x_continuous(expand = c(0,0), breaks = 1:3, labels = paste("Area",1:narea)) +
-    scale_y_discrete(expand = c(0,0), labels = paste("Area",1:narea))+
-    geom_text(aes(label = value), colour = 'white', size = 10) +
-    labs(x = 'Source', y = 'Sink', 
-         title = ifelse(g < 6, paste('Age ',g), "Ages 6+")) 
-  
+## function to return population level F given various Fv, p_i
+## Eq 7 in CJFAS pub, but not subtracting M
+langsZ <- function(M, N_ai, Fv,p_i){
+  num1 <-  p_i[1]*N_ai[a-1,1]*exp(-Fv[1]-M)
+  num2 <-  p_i[2]*N_ai[a-1,2]*exp(-Fv[2]-M)
+  num3 <-  p_i[3]*N_ai[a-1,3]*exp(-Fv[3]-M)
+  denom <- sum(p_i*N_ai[a-1,])
+  return(-log(sum(num1,num2,num3)/denom))
 }
-
-ggsave(Rmisc::multiplot(plotlist = plist, 
-                        layout = matrix(c(1,2,3,4,5,6),nrow = 2, byrow = TRUE) ),
-       file = here('figs','X_ija.png'),
-       width = 10, height = 8, unit = 'in', dpi = 520)
 
 doNage <- function(X = X_ija, ## input movement matrix
                    indat = dat, ## with bio info'
                    s = 1, ## F = 1, M = 2
+                   Zmethod = 'std', ## use approx?
+                   p_i = c(0.3,0.3,0.4), ## prop E x area
                    Fv = rep(0,narea),
                    M = 0.15) {
   N_ai <- Z_ai <- B_ai <- SB_ai<- matrix(NA, nrow = nages, ncol = narea) ## placeholder
   
   for(a in 1:nages){
-    if(a == 1) N_ai[a,] <- 0.5 ## inits
+    if(a == 1){
+      N_ai[a,] <- 0.5 ## inits
+      for(i in 1:narea){
+        if(Zmethod == 'std'){
+          ## just selectivity * Fv
+          Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i]
+        } else if(Zmethod == 'Langs'){
+          ## based on prop area
+          Z_ai[a,i] <- langsZ(M = M, N_ai, Fv, p_i)
+        } ## end Langs
+      } ## end areas for A1
+    } ## end A1
     for(i in 1:narea){
-      Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
-      
-      if(a > 1  & a < max(nages)) {
+      if(Zmethod == 'std'){
+        ## just selectivity * Fv
+        Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] 
+      } else if(Zmethod == 'Langs'){
+        ## based on prop area
+        Z_ai[a,i] <- langsZ(M = M, N_ai, Fv, p_i)
+      } ## end langs
+       if(a > 1  & a < max(nages)) {
+   
+        
         pLeave = NCome = 0
         for(j in 1:narea){
           if(i != j){
@@ -128,37 +109,20 @@ doNage <- function(X = X_ija, ## input movement matrix
         } # end subareas j
         N_ai[a,i] <- ((1-pLeave)* N_ai[a-1,i] +NCome)*exp(-Z_ai[a-1,i])
         # if(is.na(N_ai[a,i])) stop("NA NAI at",a,i,"\n")
-      } ## end age < maxage
+       } ## end age < maxage
       if(a == max(nages)) N_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
-    } # end ages
-    B_ai[a,i] <- N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
-    if(s == 1){
-      SB_ai[a,i]  <- NA
-      SB_ai[a,i]  <- B_ai[a,i]*indat[a,1,i]
-    } 
-    B_i <- sum(B_ai[,i])
-    SB_i <- sum(SB_ai[,i])
-  } ## end subareas i
-  return(cbind(N_ai,Z_ai,sum(B_i), sum(SB_i)))
+      # } # end ages
+      B_ai[a,i] <- N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
+      if(s == 1){
+        SB_ai[a,i]  <- NA
+        SB_ai[a,i]  <- B_ai[a,i]*indat[a,2,i] ## Fecundity in col2
+      } 
+      B_i <- sum(B_ai[,i])
+      SB_i <- sum(SB_ai[,i])
+    } ## end subareas i
+  } ## end ages
+  return(cbind(N_ai,Z_ai,B_ai,SB_ai))
 }
-## returns area-specific N@age and Z@age
-doNage(s = 1)[,1:3] %>%
-  data.frame() %>%
-  mutate(Age = 1:nages) %>%
-  reshape2::melt(id = 'Age') %>%
-  mutate(Area = substr(variable,2,2)) %>%
-  ggplot(., aes(x = Age, y = value, col = Area)) +
-  geom_line(lwd = 1.1) + 
-  scale_color_grey() +
-  labs(x = 'Age', y = 'Numbers', color = 'Area') +
-  theme_sleek()
-
-
-
-## Return area-specific unfished spawning biomass
-
-
-
 
 doYPR <-function( Fv= rep(0.2,narea), M = 0.15 ) {
   ypr_sa <- array(NA, dim = c(1,2,narea)) ## each sex by area
@@ -180,7 +144,7 @@ doYPR <-function( Fv= rep(0.2,narea), M = 0.15 ) {
 }
 
 
-getAB <- function(SRR = 1, h = 0.5, R0 = 1, gam = 1){
+getAB <- function(SRR = 1, h = steep, R0 = 1, gam = 1){
   sbpr0 <- NULL
   for(i in 1:narea){
     ## always calculate at F = 0
@@ -188,21 +152,10 @@ getAB <- function(SRR = 1, h = 0.5, R0 = 1, gam = 1){
     alpha <- sbpr0[i]*((1-h)/(4*h))
     beta <- (5*h-1)/(4*h*R0) 
   }
-  #list(dat$Sel.f., dat$Sel.m.)[[1]])[, 1])
-  # if(SRR == 1){ 
-  ## bev-hold
-  
-  # } else  if(SRR == 2){
-  #   alpha <- exp(log(5*h)/0.8)/sbpr0
-  #   beta <- log(5*h)/(0.8*sbpr0*R0)
-  # } else   if(SRR == 3){
-  #   alpha <- 1/sbpr0
-  #   beta <- (5*h-1)/(1 - 0.2^gam) 
-  # }
   return(c("alpha" = alpha, "beta" = beta))
 }
 
-doSRR <- function( SRR = 1, h = 0.5, 
+doSRR <- function( SRR = 1, h = steep, 
                    Fv = rep(0,narea), gam = 1, R0 = 1, S0 = 0.6739975){
   sumSBPR <- R <- NULL
   
@@ -213,14 +166,14 @@ doSRR <- function( SRR = 1, h = 0.5,
     # sumSBPR <- sum(sbpr)
     # if(SRR == 1){ ## bevholt
     
-    ab <- getAB(SRR = 1, h = h)
+    ab <- getAB(SRR = 1, h = steep)
     R[i] <- (  sumSBPR[i] - ab[1] )/(ab[2] *   sumSBPR[i]) ## Equation 9
     rm(ab)
     # } else if(SRR == 2){ ## ricker
-    #   ab <- getAB(SRR = 2, h = h)
+    #   ab <- getAB(SRR = 2, h = steep)
     #   R <- log(ab[1]*sumSBPR)/(ab[2]*sumSBPR) ## Question 1A
     # } else if(SRR == 3){ ## Pella
-    #   ab <- getAB(SRR = 3, h = h)
+    #   ab <- getAB(SRR = 3, h = steep)
     #   R <- (S0/sumSBPR) * (1 - (1 - ab[1] * sumSBPR)/(ab[2] * ab[1] * sumSBPR))^(1/gam) ## Question 1B
   }
   return(list('rec' = as.numeric(R),'spawnbio' = sumSBPR))
@@ -235,70 +188,6 @@ doYield <- function(ypr, R){
   return(list(yield_a,yield_tot))
 } 
 
-## put it all together
-masterFunc <-
-  function(
-    Fv = rep(0,narea),
-    SRR = 1,
-    h = 0.5,
-    gam = 1,
-    R0 = 1,
-    S0 = 0.6739975) {
-    
-    ypr_a <- doYPR(Fv = Fv)[[2]] ## second element is per area
-    rec_sb <-  doSRR( SRR = SRR, h = h, Fv = Fv,gam = gam, R0 = R0,S0 = S0)
-    
-    yield <- doYield(ypr_a,rec_sb$rec) ## second object is total
-    
-    df <- data.frame(  
-      "SRR" = c('BevHolt','Ricker','Pella-T')[SRR],
-      "Fmort" = Fv,
-      "rec" = rec_sb$rec,
-      "yield" = yield[[1]],
-      "spawnbio" = rec_sb$spawnbio) #rec[2]*rec[1])    ## eq 7
-    
-    return(df)
-  }
-
-
-## brute plot (YPR and Yield vs F) ----
-brute <- data.frame('FV_sys' = NA, "yield_1" = NA, "yield_2" = NA,"yield_3" = NA,
-                    "ypr_1" = NA, "ypr_2" = NA,"ypr_3" = NA)
-Fv_test <- seq(0,1,0.01)
-for( i in 1:length(Fv_test)){
-  temp <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test[i],narea))
-  temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
-  brute[i,'FV_sys'] = Fv_test[i]
-  for(a in 1:narea) brute[i,a+1] = temp$yield[a]
-  for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
-  
-}
-## YPR
-brute[,c(1,5:7)] %>%
-  melt(id = 'FV_sys') %>%
-  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
-  geom_line(lwd = 1.1) + 
-  scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'F in area', y = 'YPR', color = '') +
-  # scale_y_continuous(limits = c(0,0.5)) +
-  theme_sleek() + 
-  theme(legend.position = c(0.8,0.9), 
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 16),
-        legend.text = element_text(size = 20))
-## Yield
-brute[,c(1:4)] %>%
-  melt(id = 'FV_sys') %>%
-  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
-  geom_line(lwd = 1.1) + 
-  scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'F in area', y = 'Yield', color = '') +
-  scale_y_continuous(limits = c(0,0.5)) +
-  theme_sleek() + 
-  theme(legend.position = c(0.8,0.9), 
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 16),
-        legend.text = element_text(size = 20))
 
 ## put it all together
 masterFunc <-
@@ -314,17 +203,97 @@ masterFunc <-
     rec_sb <-  doSRR( SRR = SRR, h = steep, Fv = Fv,gam = gam, R0 = R0,S0 = S0)
     
     yield <- doYield(ypr_a,rec_sb$rec) ## second object is total
-   
+    
     ## results by area
     df <- data.frame(  'Area' = 1:3,
-      "SRR" = c('BevHolt','Ricker','Pella-T')[SRR],
-      "Fmort" = Fv,
-      "rec" = rec_sb$rec,
-      "yield" = yield[[1]],
-      "spawnbio" = rec_sb$spawnbio) #rec[2]*rec[1])    ## eq 7
+                       "SRR" = c('BevHolt','Ricker','Pella-T')[SRR],
+                       "Fmort" = Fv,
+                       "rec" = rec_sb$rec,
+                       "yield" = yield[[1]],
+                       "spawnbio" = rec_sb$spawnbio) #rec[2]*rec[1])    ## eq 7
     
     return(df)
   }
+
+## brute plot (YPR and Yield vs F) ----
+brute <- data.frame('FV_sys' = NA, "yield_1" = NA, "yield_2" = NA,"yield_3" = NA,
+                    "ypr_1" = NA, "ypr_2" = NA,"ypr_3" = NA)
+
+brute_config <- data.frame(expand.grid(Area = 1:3, FA1 = seq(0.01,0.5,0.01),
+                                       FA2 = seq(0.01,0.5,0.01), FA3 = seq(0.01,0.5,0.01)),
+                           "yield_1" = NA, "yield_2" = NA,"yield_3" = NA)
+
+Fv_test <- seq(0,1,0.01)
+for( i in 1:length(Fv_test)){
+  temp <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test[i],narea))
+  temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
+  brute[i,'FV_sys'] = Fv_test[i]
+  for(a in 1:narea) brute[i,a+1] = temp$yield[a]
+  for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
+}
+for(i in 1:nrow(brute_config)){
+  temp <- masterFunc(SRR = 1, h = steep, Fv = with(brute_config[i,], c(FA1,FA2,FA3)))
+  # temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
+  for(a in 1:narea) brute_config[i,a+4] = temp$yield[a]
+  # for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
+}
+brute_config$IDX <- 1:nrow(brute_config)
+
+## YPR - should look logistic-ish
+brute[,c(1,5:7)] %>%
+  melt(id = 'FV_sys') %>%
+  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
+  geom_line(lwd = 1.1) + 
+  scale_color_grey(labels = paste("Area",1:3)) +
+  labs(x = 'F in area', y = 'YPR', color = '') +
+  # scale_y_continuous(limits = c(0,0.5)) +
+  theme_sleek() + 
+  theme(legend.position = c(0.8,0.9), 
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        legend.text = element_text(size = 20))
+
+## Yield - should look domey
+brute[,c(1:4)] %>%
+  melt(id = 'FV_sys') %>%
+  ggplot(., aes(x = FV_sys, y = value, color = variable)) +
+  geom_line(lwd = 1.1) + 
+  scale_color_grey(labels = paste("Area",1:3)) +
+  labs(x = 'F in area', y = 'Yield', color = '') +
+  scale_y_continuous(limits = c(0,0.4)) +
+  scale_x_continuous(limits = c(0,0.5)) +
+  
+  theme_sleek() + 
+  theme(legend.position = c(0.8,0.9), 
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        legend.text = element_text(size = 20))
+
+
+bc <- cbind(brute_config[,c(2:4,8)] %>%
+              melt(id = 'IDX') %>%
+              mutate(Area = substr(variable,3,3)) %>% select(value, Area),
+
+  brute_config[,c(5:8)] %>%
+  melt(id = 'IDX') %>%
+    mutate(Area = substr(variable,7,7)) %>% select(value, Area, IDX))  
+names(bc)[c(1,3)] <- c("Fv","Yield")
+bc <- bc[,c(1:3,5)]
+# bc <- bc[!is.na(bc)]
+bc <- sample_n(bc, 5000)
+
+ggplot(bc, aes(x = Fv, y = Yield, color = IDX))+
+  # geom_line(lwd = 1.1) +
+  geom_point() +
+  # scale_color_grey(labels = paste("Area",1:3)) +
+  labs(x = 'F in area', y = 'Yield', color = '') +
+  # scale_y_continuous(limits = c(0,0.5)) +
+  theme_sleek() + 
+  theme(legend.position = c(0.8,0.9), 
+        axis.title = element_text(size = 16),
+        axis.text = element_text(size = 16),
+        legend.text = element_text(size = 20)) +
+  facet_wrap(~factor(Area))
 
 
 ## this needs to be spatial
@@ -395,10 +364,10 @@ df2 <- data.frame(
                  'FMSY' = NA,
                  'MSY' = NA,
                  'BMSY' = NA,
-  'B0')
+  'B0' = NA)
 
 ## single F, maximize system yield
-df2$FMSY[df2$Method == 'Fmsy_System'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = 0.86, interval = c(0.02,1))[1])
+df2$FMSY[df2$Method == 'Fmsy_System'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = steep, interval = c(0.02,1))[1])
 df2$MSY[df2$Method == 'Fmsy_System'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_System'])$yield
 df2$BMSY[df2$Method == 'Fmsy_System'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_System'])$spawnbio
 
