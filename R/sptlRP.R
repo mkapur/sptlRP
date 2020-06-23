@@ -84,25 +84,23 @@ doNage <- function(X = X_ija, ## input movement matrix
           if(i != j){
             pLeave = pLeave + X_ija[i,j,a-1]
             NCome = NCome + X_ija[j,i,a-1]*N_ai[a-1,j]
-            # if(is.na(NCome)) stop("NA NCOME at",a,i,j,"\n")
           } # end i != j
         } # end subareas j
         N_ai[a,i] <- ((1-pLeave)* N_ai[a-1,i] +NCome)*exp(-Z_ai[a-1,i])
-        # if(is.na(N_ai[a,i])) stop("NA NAI at",a,i,"\n")
       } ## end age < maxage
       if(a == max(nages)) N_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
       
       B_ai[a,i] <- N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
       if(s == 1){
-        SB_ai[a,i]  <- NA
-        SB_ai[a,i]  <- B_ai[a,i]*indat[a,1,i]
+        # SB_ai[a,i]  <- NA
+        SB_ai[a,i]  <- B_ai[a,i]*indat[a,2,i]
       } 
       B_i <- sum(B_ai[,i])
       SB_i <- sum(SB_ai[,i])
     } # end ages
 
   } ## end subareas i
-  return(cbind(N_ai,Z_ai,sum(B_i), sum(SB_i)))
+  return(cbind(N_ai,Z_ai,B_ai,SB_ai))
 }
 
 doYPR <-function( Fv= rep(0.2,narea), M = 0.15 ) {
@@ -125,14 +123,14 @@ doYPR <-function( Fv= rep(0.2,narea), M = 0.15 ) {
 }
 
 
-getAB <- function(SRR = 1, h = steep, R0 = 1, gam = 1){
-  sbpr0 <- NULL
-  for(i in 1:narea){
+getAB <- function(SRR = 1, h = steep, R0 = 1, i){
+  sbpr0 <- alpha <- beta <- NULL
+
     ## always calculate at F = 0
-    sbpr0[i] <-   sum(dat[,2,i] * doNage(Fv = rep(0, narea))) 
-    alpha <- sbpr0[i]*((1-h)/(4*h))
+    sbpr0 <-   sum(doNage(Fv = rep(0,narea))[,9+i]) #sum(dat[,2,i] * doNage(Fv = rep(0, narea))) 
+    alpha <- sbpr0*((1-h)/(4*h))
     beta <- (5*h-1)/(4*h*R0) 
-  }
+  
   return(c("alpha" = alpha, "beta" = beta))
 }
 
@@ -143,12 +141,12 @@ doSRR <- function( SRR = 1, h = steep,
   for(i in 1:narea){
     
     ## get s-tilde
-    sumSBPR[i] <- sum(dat[,2,i]*doNage(Fv = Fv))
+    sumSBPR[i] <- sum(doNage(Fv = Fv)[,9+i]) ## SB in cols 10:12
     # sumSBPR <- sum(sbpr)
     # if(SRR == 1){ ## bevholt
     
-    ab <- getAB(SRR = 1, h = steep)
-    R[i] <- (  sumSBPR[i] - ab[1] )/(ab[2] *   sumSBPR[i]) ## Equation 9
+    ab <- getAB(SRR = 1, h = steep, i=i) ## specific alpha, beta for area
+    R[i] <- (  sumSBPR[i] - ab[1] )/(ab[2] *   sumSBPR[i]) ## Equation 9. eq recruits
     rm(ab)
     # } else if(SRR == 2){ ## ricker
     #   ab <- getAB(SRR = 2, h = steep)
@@ -205,12 +203,12 @@ brute <- data.frame('FV_sys' = NA, "yield_1" = NA, "yield_2" = NA,"yield_3" = NA
 #                            "yield_1" = NA, "yield_2" = NA,"yield_3" = NA)
 
 Fv_test <- seq(0,1,0.01)
-for( i in 1:length(Fv_test)){
-  temp <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test[i],narea))
-  temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
-  brute[i,'FV_sys'] = Fv_test[i]
-  for(a in 1:narea) brute[i,a+1] = temp$yield[a]
-  for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
+for( v in 1:length(Fv_test)){
+  temp <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test[v],narea))
+  temp2 <- doYPR(Fv = rep(Fv_test[v],narea))
+  brute[v,'FV_sys'] = Fv_test[v]
+  for(a in 1:narea) brute[v,a+1] = temp$yield[a]
+  for(a in 1:narea) brute[v,a+4] = temp2[[2]][a]
 }
 # for(i in 1:nrow(brute_config)){
 #   temp <- masterFunc(SRR = 1, h = steep, Fv = with(brute_config[i,], c(FA1,FA2,FA3)))
