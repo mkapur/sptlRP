@@ -2,34 +2,19 @@
     "debugBreakpointsState" : {
         "breakpoints" : [
             {
-                "editor_line_number" : 126,
-                "editor_state" : 2,
-                "function_name" : "doYPR",
+                "editor_line_number" : 1,
+                "editor_state" : 1,
+                "function_name" : "toplevel",
                 "function_steps" : "",
-                "id" : 3,
+                "id" : 25,
                 "is_package_breakpoint" : false,
                 "is_pending_debug_completion" : false,
-                "line_number" : 126,
-                "needs_updated_steps" : true,
-                "package_name" : "",
-                "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/R/sptlRP.R",
-                "state" : 2,
-                "type" : 0
-            },
-            {
-                "editor_line_number" : 281,
-                "editor_state" : 2,
-                "function_name" : "minFunc",
-                "function_steps" : "",
-                "id" : 4,
-                "is_package_breakpoint" : false,
-                "is_pending_debug_completion" : false,
-                "line_number" : 281,
+                "line_number" : 1,
                 "needs_updated_steps" : false,
                 "package_name" : "",
-                "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/R/sptlRP.R",
-                "state" : 2,
-                "type" : 0
+                "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/R/makeplots.R",
+                "state" : 1,
+                "type" : 1
             }
         ]
     }

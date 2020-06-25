@@ -26,103 +26,48 @@ rm(list = ls())
     dat[18:20,2,3] <- dat[18,2,3]
     
 
-
-              
-              
-              doNage <- function(X = X_ija, ## input movement matrix
-                                   indat = dat, ## with bio info'
-                                   s = 1, ## F = 1, M = 2
-                                   Fv = rep(0,narea),
-                                     M = 0.15) {
-                N_ai <- Z_ai <- B_ai <- SB_ai<- matrix(NA, nrow = nages, ncol = narea) ## placeholder
-                
-                for(a in 1:nages){
-                  if(a == 1) N_ai[a,] <- 0.5 ## inits
-                    for(i in 1:narea){
-                      Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
-                        
-                        if(a > 1  & a < max(nages)) {
-                          pLeave = NCome = 0
-                          for(j in 1:narea){
-                            if(i != j){
-                              pLeave = pLeave + X_ija[i,j,a-1]
-                              NCome = NCome + X_ija[j,i,a-1]*N_ai[a-1,j]
-# if(is.na(NCome)) stop("NA NCOME at",a,i,j,"\n")
-                            } # end i != j
-                          } # end subareas j
-                            N_ai[a,i] <- ((1-pLeave)* N_ai[a-1,i] +NCome)*exp(-Z_ai[a-1,i])
-# if(is.na(N_ai[a,i])) stop("NA NAI at",a,i,"\n")
-                        } ## end age < maxage
-                          if(a == max(nages)) N_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
-                    } # end ages
-                      B_ai[a,i] <- N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
-                      if(s == 1){
-                        SB_ai[a,i]  <- NA
-                        SB_ai[a,i]  <- B_ai[a,i]*indat[a,1,i]
-                      } 
-                      B_i <- sum(B_ai[,i])
-                        SB_i <- sum(SB_ai[,i])
-                } ## end subareas i
-                  return(cbind(N_ai,Z_ai,sum(B_i), sum(SB_i)))
-              }
-            
+    
+    
+    
+    doNage <- function(X = X_ija, ## input movement matrix
+                       indat = dat, ## with bio info'
+                       s = 1, ## F = 1, M = 2
+                       Fv = rep(0,narea),
+                       M = 0.15) {
+      N_ai <- Z_ai <- B_ai <- SB_ai<- matrix(NA, nrow = nages, ncol = narea) ## placeholder
+      
+      for(a in 1:nages){
+        if(a == 1) N_ai[a,] <- 0.5 ## inits
+        for(i in 1:narea){
+          Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
+          
+          if(a > 1  & a < max(nages)) {
+            pLeave = NCome = 0
+            for(j in 1:narea){
+              if(i != j){
+                pLeave = pLeave + X_ija[i,j,a-1]
+                NCome = NCome + X_ija[j,i,a-1]*N_ai[a-1,j]
+                # if(is.na(NCome)) stop("NA NCOME at",a,i,j,"\n")
+              } # end i != j
+            } # end subareas j
+            N_ai[a,i] <- ((1-pLeave)* N_ai[a-1,i] +NCome)*exp(-Z_ai[a-1,i])
+            # if(is.na(N_ai[a,i])) stop("NA NAI at",a,i,"\n")
+          } ## end age < maxage
+          if(a == max(nages)) N_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
+        } # end ages
+        B_ai[a,i] <- N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
+        if(s == 1){
+          SB_ai[a,i]  <- NA
+          SB_ai[a,i]  <- B_ai[a,i]*indat[a,1,i]
+        } 
+        B_i <- sum(B_ai[,i])
+        SB_i <- sum(SB_ai[,i])
+      } ## end subareas i
+      return(cbind(N_ai,Z_ai,sum(B_i), sum(SB_i)))
+    }
+    
 ## returns area-specific N@age and Z@age
-            doNage(s = 1,  Fv = rep(0,narea))[,1:3] %>%
-              data.frame() %>%
-              mutate(Age = 1:nages) %>%
-              reshape2::melt(id = 'Age') %>%
-              mutate(Area = substr(variable,2,2)) %>%
-              ggplot(., aes(x = Age, y = value, col = Area)) +
-              geom_line(lwd = 1.1) + 
-              scale_color_grey(labels = paste("Area",1:3)) +
-              labs(x = 'Age', y = 'Relative Numbers', color = '') +
-              theme_sleek() + 
-              theme(legend.position = c(0.8,0.9), 
-                    axis.title = element_text(size = 16),
-                    axis.text = element_text(size = 16),
-                    legend.text = element_text(size = 20))
-              
-              ggsave(last_plot(), 
-                     file = here('figs','Nage.png'),
-                     width = 6, height = 4, unit = 'in', dpi = 520)
-              
-## Return area-specific unfished  biomass
-              doNage(s = 1)[,7:9] %>%
-                data.frame() %>%
-                mutate(Age = 1:nages) %>%
-                reshape2::melt(id = 'Age') %>%
-                mutate(Area = substr(variable,2,2)) %>%
-                ggplot(., aes(x = Age, y = value, col = Area)) +
-                geom_line(lwd = 1.1) + 
-                scale_color_grey(labels = paste("Area",1:3)) +
-                labs(x = 'Age', y = 'Unfished Biomass', color = '') +
-                theme_sleek() + 
-                theme(legend.position = c(0.8,0.9), 
-                      axis.title = element_text(size = 16),
-                      axis.text = element_text(size = 16),
-                      legend.text = element_text(size = 20))
-                ggsave(last_plot(), 
-                       file = here('figs','biomass.png'),
-                       width = 6, height = 4, unit = 'in', dpi = 520)
-                
-## Return area-specific unfished spawning biomass
-                doNage(s = 1)[,10:12] %>%
-                  data.frame() %>%
-                  mutate(Age = 1:nages) %>%
-                  reshape2::melt(id = 'Age') %>%
-                  mutate(Area = substr(variable,2,2)) %>%
-                  ggplot(., aes(x = Age, y = value, col = Area)) +
-                  geom_line(lwd = 1.1) + 
-                  scale_color_grey(labels = paste("Area",1:3)) +
-                  labs(x = 'Age', y = 'Spawning Biomass', color = '') +
-                  theme_sleek() + 
-                  theme(legend.position = c(0.8,0.9), 
-                        axis.title = element_text(size = 16),
-                        axis.text = element_text(size = 16),
-                        legend.text = element_text(size = 20))
-                  ggsave(last_plot(), 
-                         file = here('figs','SSB.png'),
-                         width = 6, height = 4, unit = 'in', dpi = 520)
+ 
                   
                   
                   doYPR <-function( Fv= rep(0.2,narea), M = 0.15 ) {
