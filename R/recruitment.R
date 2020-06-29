@@ -20,7 +20,7 @@ doSRR <- function(SB_aiy, SB0i = SB0_i, h = steep, R0=1){
 getEqRec <- function(SRR = 1, h = steep, 
                      Fv = rep(0,narea), 
                      gam = 1, R0 = 1, S0 = 0.6739975,
-                     ...){
+                     eq_method){
   sumSBPR <- R <- NULL
   
   for(i in 1:narea){

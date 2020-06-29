@@ -1,4 +1,4 @@
-doYPR <-function( Fv= rep(0.2,narea), M = 0.15, ...) {
+doYPR <-function( Fv= rep(0.2,narea), M = 0.15, eq_method) {
   ypr_sa <- array(NA, dim = c(1,2,narea)) ## each sex by area
   ypr_a <- matrix(NA, nrow = 1, ncol = narea) ## each  area
   ypr  <- NA  ## total
