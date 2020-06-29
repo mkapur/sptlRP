@@ -85,23 +85,24 @@ langsZ <- function(M, N_ai, Fv,p_i){
 ## uniroot/find FMSY ----
 df2 <- data.frame(
   expand.grid('Area' = 1:3,
-  'Method' = c('Fmsy_System','Fmsy_Config')),
+              'Eq_Method' = c('STD','TIME','STB'),
+  'F_Method' = c('Fmsy_System','Fmsy_Config')),
                  'FMSY' = NA,
                  'MSY' = NA,
                  'BMSY' = NA,
   'B0' = NA)
 
 ## single F, maximize system yield
-df2$FMSY[df2$Method == 'Fmsy_System'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = steep, interval = c(0.02,1))[1])
-df2$MSY[df2$Method == 'Fmsy_System'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_System'])$yield
-df2$BMSY[df2$Method == 'Fmsy_System'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_System'])$spawnbio
+df2$FMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = steep, interval = c(0.02,1))[1])
+df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$yield
+df2$BMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$spawnbio
 
 ## unique Fs ('config'), maximize system yield
-df2$FMSY[df2$Method == 'Fmsy_Config'] <- coef(mle(minFunc, start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
+df2$FMSY[df2$F_Method == 'Fmsy_Config'] <- coef(mle(minFunc, start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
                                                   method = "L-BFGS-B",
                                                   lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
-df2$MSY[df2$Method == 'Fmsy_Config'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_Config'])$yield
-df2$BMSY[df2$Method == 'Fmsy_Config'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$Method == 'Fmsy_Config'])$spawnbio
+df2$MSY[df2$F_Method == 'Fmsy_Config'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_Config'])$yield
+df2$BMSY[df2$F_Method == 'Fmsy_Config'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_Config'])$spawnbio
 unfishedB <- apply(doNage()[,7:9],2,sum)
 df2$B0[df2$Area == 1 ] <- unfishedB[1];df2$B0[df2$Area == 2 ] <- unfishedB[2];df2$B0[df2$Area == 3 ] <- unfishedB[3]
 
