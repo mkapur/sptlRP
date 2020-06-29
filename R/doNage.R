@@ -37,15 +37,15 @@ doNage <- function(X = X_ija, ## input movement matrix
     #   ## run for nage*2 years with randomly sampled recdevs...
     N_aiy <- Z_aiy <- B_aiy <- SB_aiy  <- array(NA, dim = c(nages, narea, 50)) ## run for 50 yrs
     R_iy <- matrix(NA, nrow = 50, ncol = narea)
+    
     for(y in 1:(dim(N_aiy)[3]-1)){
       if(y == 1){
         for(a in 1:nages){
-          for(i in 1:narea){
             if(a ==1){
               N_aiy[1,,1] <- 0.5 ## inits
-              Z_aiy[1,i,1] <- M + indat[1,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
+              Z_aiy[1,,1] <- M + indat[1,s+4,]*Fv ## female selex for now (cols 5:6)
             }
-            
+          for(i in 1:narea){
             if(a > 1  & a < max(nages)) {
               Z_aiy[a,i,y] <- M + indat[a,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
               if(is.na(Z_aiy[a,i,y])) stop(a,i,'error in ZAIY')
@@ -62,14 +62,14 @@ doNage <- function(X = X_ija, ## input movement matrix
             if(a == max(nages)){
               Z_aiy[a,i,y] <- M + indat[a,s+4,i]*Fv[i] 
               N_aiy[a,i,y] <-  N_aiy[a-1,i,y]*exp(-Z_aiy[a-1,i,y])/(1- exp(-Z_aiy[a-1,i,y]))
-            }
+            } ## end plus group
             B_aiy[a,i,1] <- N_aiy[a,i,y]*indat[a,s+2,i] ## weight in 3 and 4 col
-            if(s == 1){
+            # if(s == 1){
               # SB_aiy[a,i,y]  <- NA
               SB_aiy[a,i,1]  <- B_aiy[a,i,y]*indat[a,2,i]
-            } 
-          } ## end ages 
-        } # end subareas i 
+            # } ## end spawning biomass 
+          } ## end subareas i  
+        } # end ages
         for(i in 1:narea){
           B_i <- sum(B_aiy[,i,1])
           SB_i <- sum(SB_aiy[,i,1]) ## single value for area
@@ -94,13 +94,13 @@ doNage <- function(X = X_ija, ## input movement matrix
                 } # end i != j
               } # end subareas j
               N_aiy[a,i,y] <- ((1-pLeave)* N_aiy[a-1,i,y-1] +NCome)*exp(-Z_aiy[a-1,i,y-1])
-              if(is.na(N_aiy[a,i,y])) stop('error in NAIY')
+              if(is.na(N_aiy[a,i,y])) stop(a,i,y,'error in NAIY')
             } ## end age < maxage
             if(a == max(nages)) N_aiy[a,i,y] <-  N_aiy[a-1,i,y-1]*exp(-Z_aiy[a-1,i,y-1])/(1- exp(-Z_aiy[a,i,y-1]))
             B_aiy[a,i,y] <- N_aiy[a,i,y]*indat[a,s+2,i] ## weight in 3 and 4 col
-            if(s == 1){
+            # if(s == 1){
               SB_aiy[a,i,y]  <- B_aiy[a,i,y]*indat[a,2,i]
-            }
+            # }
           } ## end ages  
         } # end subareas i 
         for(i in 1:narea){
