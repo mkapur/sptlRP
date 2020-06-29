@@ -17,9 +17,7 @@ steep = 0.5
 ## load functions & initialize OM
 lapply(list.files(here("R"), full.names = TRUE), source)
 
-
-
-
+## preload SB0
 SB0_i <-  data.frame()
 for(m in c(1:3)){
   SB0_im <- getSB0(eq_method = c('STD','STB','STB')[m])
@@ -28,8 +26,6 @@ for(m in c(1:3)){
 }
 row.names(SB0_i) <- c('STD','TIME','STB')
 
-
-## movement matrix (simple) ----
 
 ## function to return population level F given various Fv, p_i
 ## Eq 7 in CJFAS pub, but not subtracting M
@@ -92,19 +88,54 @@ df2 <- data.frame(
                  'BMSY' = NA,
   'B0' = NA)
 
-## single F, maximize system yield
-df2$FMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = steep, interval = c(0.02,1))[1])
-df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$yield
-df2$BMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$spawnbio
 
-## unique Fs ('config'), maximize system yield
-df2$FMSY[df2$F_Method == 'Fmsy_Config'] <- coef(mle(minFunc, start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
-                                                  method = "L-BFGS-B",
-                                                  lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
-df2$MSY[df2$F_Method == 'Fmsy_Config'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_Config'])$yield
-df2$BMSY[df2$F_Method == 'Fmsy_Config'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_Config'])$spawnbio
-unfishedB <- apply(doNage()[,7:9],2,sum)
-df2$B0[df2$Area == 1 ] <- unfishedB[1];df2$B0[df2$Area == 2 ] <- unfishedB[2];df2$B0[df2$Area == 3 ] <- unfishedB[3]
+for(e in 1:length(c('STD','TIME','STB'))){
+
+    ## find optimal F vector with various methods
+  ## FMSY_SYSTEM
+  FVTEMP <-    as.numeric(uniroot(f = dfx.dxSYS,  h = steep, eq_method = c('STD','TIME','STB')[e],
+                                  interval = c(0.02,1))[1])
+  
+  df2$FMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- rep(FVTEMP,narea)
+  df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method ==  c('STD','TIME','STB')[e]] <-  masterFunc(SRR = 1, Fv = rep(FVTEMP,narea))$yield
+  df2$BMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- masterFunc(SRR = 1, Fv = rep(FVTEMP,narea))$spawnbio
+  
+  ## FMSY_CONFIG
+  FVTEMP <-  coef(mle(minFunc, 
+                      start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
+                      method = "L-BFGS-B",
+                      fixed = list(e = e), ## subsetting eq method
+                      lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
+  
+  df2$MSY[df2$F_Method == 'Fmsy_Config'& df2$Eq_Method == c('STD','TIME','STB')[e]] <-  
+    masterFunc(SRR = 1, Fv = FVTEMP)$yield
+  df2$BMSY[df2$F_Method == 'Fmsy_Config'& df2$Eq_Method == c('STD','TIME','STB')[e]] <- 
+    masterFunc(SRR = 1, Fv = FVTEMP)$spawnbio
+  
+  unfishedB <- apply(doNage(eq_method = c('STD','TIME','STB')[e])[,7:9],2,sum)
+  
+  df2$B0[df2$Area == 1 & df2$Eq_Method == c('STD','TIME','STB')[e]] <- unfishedB[1]
+  df2$B0[df2$Area == 2 & df2$Eq_Method == c('STD','TIME','STB')[e]] <- unfishedB[2]
+  df2$B0[df2$Area == 3 & df2$Eq_Method == c('STD','TIME','STB')[e]] <- unfishedB[3]
+  
+  
+}
+
+
+
+
+## single F, maximize system yield
+# df2$FMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = steep, interval = c(0.02,1))[1])
+# df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$yield
+# df2$BMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$spawnbio
+# 
+# ## unique Fs ('config'), maximize system yield
+# df2$FMSY[df2$F_Method == 'Fmsy_Config'] <- coef(mle(minFunc, start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
+#                                                   method = "L-BFGS-B",
+#                                                   lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
+
+
+
 
 ## change catchability assumption (Langseth & Schueller 2016)
 ## this is the Sampson & Scott 2011 Method; see Maury et al...
