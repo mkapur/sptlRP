@@ -15,10 +15,12 @@ dat[,3:4,2] <- dat[,3:4,1]*1.5
 dat[1:18,2,3] <- dat[4:21,2,1]
 dat[18:20,2,3] <- dat[18,2,3]
 
-
+X_ija_NULL <- array(0, dim = c(narea,narea,nages))
 X_ija <- array(NA, dim = c(narea,narea,nages))
 for(a in 1:2){ ## only two areas have movement
+
   for(g in 1:dim(X_ija)[3]){ ## loop ages
+    diag(X_ija_NULL[,,g]) <- rep(1, length(  diag(X_ija_NULL[,,g])))
     if(g < 6 & a == 1){
       X_ija[a,3,g] <- 0.2 ## 20% movement from a to a3
       X_ija[a,a,g] <- 0.8 ## retained
@@ -35,7 +37,7 @@ for(a in 1:2){ ## only two areas have movement
   } ## end ages
 } ## end areas
 X_ija[is.na(X_ija)] <- 0
-X_ija[3,3,] <- 1 ## area 3 is self-seeding
+X_ija[3,3,] <- X_ija_NULL[3,3,] <- 1 ## area 3 is self-seeding
 ## sanity check - all rows should sum to 1
 for(i in 1:dim(X_ija)[3]){
   print(rowSums(X_ija[,,a]) == 1)
