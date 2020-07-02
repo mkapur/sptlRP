@@ -70,7 +70,7 @@ for(v in 1:length(Ftest)){
     ## define virgin biomass by AREA
     SB0_i <- doNage( Fv = rep(0,narea), 
                      X = X_ija,
-                     rdist = recr_dist,
+                     rdist = rUse,
                      refR = rec_level)$SB_i
     
     ## get values at present Fv
