@@ -16,20 +16,25 @@ dat[1:18,2,3] <- dat[4:21,2,1]
 dat[18:20,2,3] <- dat[18,2,3]
 
 X_ija_NULL <- array(0, dim = c(narea,narea,nages))
+X_ija_MIX <- array(0, dim = c(narea,narea,nages))
 X_ija <- array(NA, dim = c(narea,narea,nages))
 for(a in 1:2){ ## only two areas have movement
 
   for(g in 1:dim(X_ija)[3]){ ## loop ages
     diag(X_ija_NULL[,,g]) <- rep(1, length(  diag(X_ija_NULL[,,g])))
     if(g < 6 & a == 1){
-      X_ija[a,3,g] <- 0.2 ## 20% movement from a to a3
-      X_ija[a,a,g] <- 0.8 ## retained
+      X_ija[a,3,g] <-   X_ija_MIX[a,3,g]  <- 0.2 ## 20% movement from a to a3
+      X_ija[a,a,g] <-   X_ija_MIX[a,a,g] <- 0.8 ## retained
+      X_ija_MIX[3,1,g] <- 0.3 ## send 20% back from a3
+      X_ija_MIX[3,3,g] <- 0.7 
     } else if(g < 6 & a == 2){
-      X_ija[a,3,g] <- 0.05 
-      X_ija[a,a,g] <- 0.95 
+      X_ija[a,3,g] <- X_ija_MIX[a,3,g]  <- 0.2 
+      X_ija[a,a,g] <-  X_ija_MIX[a,a,g] <- 0.8 
+
     } else{
       X_ija[a,,g] <- 0 ## no movement at older ages
       diag(X_ija[,,g]) <- 1 
+      diag(X_ija_MIX[,,g]) <- 1 
       # cat( a, " ",diag(X_ija[,,g]) ,"\n")
       
       
