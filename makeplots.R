@@ -52,15 +52,16 @@ ggsave(Rmisc::multiplot(plotlist = plist,
        width = 10, height = 8, unit = 'in', dpi = 520)
 
 ## Nums at age ----
-doNage(s = 1,  Fv = rep(0,narea), eq_method == 'STD')[,1:3] %>%
+# doNage(s = 1,  Fv = rep(0,narea), eq_method == 'STD')[,1:3] %>%
+doNage( Fv = rep(0,narea), X = X_ija)[[1]] %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
   mutate(Area = substr(variable,2,2)) %>%
-  ggplot(., aes(x = Age, y = value, col = Area)) +
+  ggplot(., aes(x = Age-1, y = value, col = Area)) +
   geom_line(lwd = 1.1) + 
   scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'Age', y = 'Relative Numbers', color = '') +
+  labs(x = 'Age', y = 'Numbers', color = '') +
   theme_sleek() + 
   theme(legend.position = c(0.8,0.9), 
         axis.title = element_text(size = 16),
@@ -68,7 +69,7 @@ doNage(s = 1,  Fv = rep(0,narea), eq_method == 'STD')[,1:3] %>%
         legend.text = element_text(size = 20))
 
 ggsave(last_plot(), 
-       file = here('figs','Nage_STD.png'),
+       file = here('figs','Nage_Rick_XMov.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
@@ -160,23 +161,14 @@ ggsave(last_plot(),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 ## Brute Y----
-brute <- data.frame('FV_sys' = NA, "yield_1" = NA, "yield_2" = NA,"yield_3" = NA,
-                    "ypr_1" = NA, "ypr_2" = NA,"ypr_3" = NA)
-Fv_test <- seq(0,1,0.01)
-for( v in 1:length(Fv_test)){
-  temp <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test[v],narea))
-  temp2 <- doYPR(Fv = rep(Fv_test[v],narea))
-  brute[v,'FV_sys'] = Fv_test[v]
-  for(a in 1:narea) brute[v,a+1] = temp$yield[a]
-  for(a in 1:narea) brute[v,a+4] = temp2[[2]][a]
-}
+
 brute[,c(1:4)] %>%
   melt(id = 'FV_sys') %>%
   ggplot(., aes(x = FV_sys, y = value, color = variable)) +
   geom_line(lwd = 1.1) + 
   scale_color_grey(labels = paste("Area",1:3)) +
   labs(x = 'F in area', y = 'Yield', color = '') +
-  scale_y_continuous(limits = c(0,0.3)) +
+  scale_y_continuous(limits = c(0,1)) +
   # scale_x_continuous(limits = c(0,0.5)) +
   theme_sleek() + 
   theme(legend.position = c(0.8,0.9), 
@@ -201,39 +193,60 @@ ggsave(last_plot(),
 #         axis.text = element_text(size = 16),
 #         legend.text = element_text(size = 20))
 ## Brute Config ----
-## takes about 4 mins with 5k subset
-brute_config <- data.frame(expand.grid(Area = 1:3, FA1 = seq(0,0.5,0.1),
-                                       FA2 =  seq(0,0.5,0.1), 
-                                       FA3 =  seq(0,0.5.,0.1)),
-                           "yield_1" = NA, "yield_2" = NA,"yield_3" = NA)
-# brute_config <- sample_n(brute_config, 5000)
-# brute_config <- brute_config[1:5000,] ## xy need to be increasing
-for(i in 1:nrow(brute_config)){
-  temp <- masterFunc(SRR = 1, h = steep, Fv = with(brute_config[i,], c(FA1,FA2,FA3)))
-  # temp2 <- doYPR(Fv = rep(Fv_test[i],narea))
-  for(a in 1:narea) brute_config[i,a+4] = temp$yield[a]
-  # for(a in 1:narea) brute[i,a+4] = temp2[[2]][a]
-  if(i %% 100 == 0) cat(i,"\n")
-}
-brute_config$IDX <- 1:nrow(brute_config)
 
 
 ## try a 3d plot
 require(plot3D)
+
+## build theme
+# source("buildBruteConfigs.R")
+lapply(list.files(here("rdata"),full.names = TRUE),source)
+
+## all three colored by sysyield
+png(here('figs','FAll_sysyield.png'), height = 4, width = 9, unit = 'in', res = 420)
+
+par(mfrow = c(1,3), mar = rep(0.5,4))
+for(e in list(brute_config_STD, brute_config_TIME, brute_config_STB)){
+  # brute_temp <- load(here("rdata",e))
 with(
-  subset(brute_config ),
+  subset(e, sysyield > 0),
   scatter3D(
-    x = FA3,
-    y = FA1,
-    z = yield_3,
-    pch = 18,
-    theta = 40,
-    # type = 'l',
+    x = FA1, #matrix(FA3),
+    y = FA2, # matrix(FA1),
+    z = FA3, #matrix(sysyield),
+    pch = 19,
+    cex = 2,
+    theta = 20,
     phi = 20,
-    colvar = yield_3
+    colvar = sysyield,
+    col = rev(heat.colors(100)),
+    xlab = 'F Area 1',
+    ylab = 'F Area 2',
+    zlab = 'F Area 3')
+  )
+}
+dev.off()
+
+png(here('figs','FA1_FA2_sysyield.png'), height = 4, width = 4, unit = 'in', res = 420)
+## just 2 with z as sysyield
+with(
+  subset(brute_config, sysyield > 0),
+  scatter3D(
+    x = FA1, #matrix(FA3),
+    y = FA2, # matrix(FA1),
+    z = sysyield, #matrix(sysyield),
+    pch = 19,
+    cex = 2,
+    theta = 20,
+    phi = 20,
+    colvar = sysyield,
+    col = rev(heat.colors(100)),
+    xlab = 'F Area 1',
+    ylab = 'F Area 2',
+    zlab = 'System Yield'
   )
 )
-
+dev.off()
 
 # with(brute_config, scatter3D(FA2,FA3,yield_2, pch = 18, theta = 15, phi = 20))
 
