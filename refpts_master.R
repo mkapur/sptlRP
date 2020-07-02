@@ -8,7 +8,7 @@ require(reshape)
 require(dplyr, quietly = T)
 require(here)
 require(ggsidekick)
-
+require(stats4)
 ## settings
 narea = 3
 nages = 21
@@ -27,15 +27,7 @@ for(m in c(1:3)){
 row.names(SB0_i) <- c('STD','TIME','STB')
 
 
-## function to return population level F given various Fv, p_i
-## Eq 7 in CJFAS pub, but not subtracting M
-langsZ <- function(M, N_ai, Fv,p_i){
-  num1 <-  p_i[1]*N_ai[a-1,1]*exp(-Fv[1]-M)
-  num2 <-  p_i[2]*N_ai[a-1,2]*exp(-Fv[2]-M)
-  num3 <-  p_i[3]*N_ai[a-1,3]*exp(-Fv[3]-M)
-  denom <- sum(p_i*N_ai[a-1,])
-  return(-log(sum(num1,num2,num3)/denom))
-}
+
 
 
 
@@ -78,39 +70,53 @@ langsZ <- function(M, N_ai, Fv,p_i){
 
 
 
-## uniroot/find FMSY ----
+## Optimization based upon equilibrium method (6 scenarios)
 df2 <- data.frame(
   expand.grid('Area' = 1:3,
               'Eq_Method' = c('STD','TIME','STB'),
-  'F_Method' = c('Fmsy_System','Fmsy_Config')),
-                 'FMSY' = NA,
-                 'MSY' = NA,
-                 'BMSY' = NA,
+              'F_Method' = c('Fmsy_System','Fmsy_Config')),
+  'FMSY' = NA,
+  'F_POP' = NA,
+  'MSY' = NA,
+  'BMSY' = NA,
   'B0' = NA)
 
 
 for(e in 1:length(c('STD','TIME','STB'))){
+  cat(c('STD','TIME','STB')[e],"\n")
 
     ## find optimal F vector with various methods
   ## FMSY_SYSTEM
   FVTEMP <-    as.numeric(uniroot(f = dfx.dxSYS,  h = steep, eq_method = c('STD','TIME','STB')[e],
                                   interval = c(0.02,1))[1])
-  
+  cat("-SYSTEM","\n")
   df2$FMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- rep(FVTEMP,narea)
-  df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method ==  c('STD','TIME','STB')[e]] <-  masterFunc(SRR = 1, Fv = rep(FVTEMP,narea))$yield
-  df2$BMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- masterFunc(SRR = 1, Fv = rep(FVTEMP,narea))$spawnbio
+  df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method ==  c('STD','TIME','STB')[e]] <-  
+    masterFunc(SRR = 1, Fv = rep(FVTEMP,narea), eq_method = c('STD','TIME','STB')[e])$yield
+  df2$BMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- 
+    masterFunc(SRR = 1, Fv = rep(FVTEMP,narea), eq_method = c('STD','TIME','STB')[e])$spawnbio
   
+  ## get population-level F
+  N_ai_temp = doNage(Fv = rep(FVTEMP,narea), eq_method = c('STD','TIME','STB')[e])[,1:3]
+  df2$F_POP[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- 
+    langsF(M = 0.15, N_ai = N_ai_temp, Fv = rep(FVTEMP,narea), p_i = c(0.25,0.25,0.5))
+  rm(FVTEMP)
   ## FMSY_CONFIG
   FVTEMP <-  coef(mle(minFunc, 
                       start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
                       method = "L-BFGS-B",
                       fixed = list(e = e), ## subsetting eq method
-                      lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))
-  
+                      lower = c(0.02, 0.02,0.02), upper = c(1,1,1)))[1:3]
+  cat("--CONFIG","\n")
+  df2$FMSY[df2$F_Method == 'Fmsy_Config' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- FVTEMP
   df2$MSY[df2$F_Method == 'Fmsy_Config'& df2$Eq_Method == c('STD','TIME','STB')[e]] <-  
-    masterFunc(SRR = 1, Fv = FVTEMP)$yield
+    masterFunc(SRR = 1, Fv = FVTEMP, eq_method = c('STD','TIME','STB')[e])$yield
   df2$BMSY[df2$F_Method == 'Fmsy_Config'& df2$Eq_Method == c('STD','TIME','STB')[e]] <- 
-    masterFunc(SRR = 1, Fv = FVTEMP)$spawnbio
+    masterFunc(SRR = 1, Fv = FVTEMP, eq_method = c('STD','TIME','STB')[e])$spawnbio
+  ## get population-level F
+  N_ai_temp = doNage(Fv = FVTEMP, eq_method = c('STD','TIME','STB')[e])[,1:3]
+  df2$F_POP[df2$F_Method == 'Fmsy_Config' & df2$Eq_Method == c('STD','TIME','STB')[e]] <- 
+    langsF(M = 0.15, N_ai = N_ai_temp, Fv = FVTEMP, p_i = c(0.25,0.25,0.5))
   
   unfishedB <- apply(doNage(eq_method = c('STD','TIME','STB')[e])[,7:9],2,sum)
   
@@ -121,9 +127,32 @@ for(e in 1:length(c('STD','TIME','STB'))){
   
 }
 
+df2 %>%
+  ggplot(., aes(x = FMSY, y = F_POP, fill = factor(Eq_Method))) +
+  geom_point() +
+  theme_sleek() + scale_fill_grey() +
+  labs(x= expression("F"[MSY]),y = expression("F"[Pop]), fill = 'Eq_Method') +
+  facet_wrap(~F_Method)
+
+df2 %>%
+  ggplot(., aes(x = Eq_Method, y = FMSY, fill = factor(Area))) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme_sleek() + scale_fill_grey() +
+  labs(x= 'Equilibrium Method',y = expression("F"[MSY]), fill = 'Area') +
+  facet_wrap(~F_Method)
+ggsave(last_plot(), 
+       file = here('figs','FMSY_scenarios.png'),
+       width = 6, height = 4, unit = 'in', dpi = 520)
 
 
-
+df2 %>%
+  ggplot(., aes(x = Eq_Method, y = B0, fill = factor(Area))) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme_sleek() +   theme(legend.position = c(0.9,0.8)) + scale_fill_grey() +
+  labs(x= 'Equilibrium Method',y = expression('Unfished Biomass '~B[0]), fill = 'Area')
+ggsave(last_plot(), 
+       file = here('figs','B0_Method.png'),
+       width = 6, height = 4, unit = 'in', dpi = 520)
 ## single F, maximize system yield
 # df2$FMSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <- as.numeric(uniroot(f = dfx.dxSYS,  h = steep, interval = c(0.02,1))[1])
 # df2$MSY[df2$F_Method == 'Fmsy_System' & df2$Eq_Method == 'STD'] <-  masterFunc(SRR = 1, Fv = df2$FMSY[df2$F_Method == 'Fmsy_System'])$yield
