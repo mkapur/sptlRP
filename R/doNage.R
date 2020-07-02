@@ -14,10 +14,13 @@ doNage <- function(X = X_ija, ## input movement matrix
       Z_ai[a,i] <- M + indat[a,s+4,i]*Fv[i] ## female selex for now (cols 5:6)
       ## Calc Survivors for each area-age
       if(a > 1  & a < max(nages)) {
-        NSurv_ai[a,i] <- NSurv_ai[a-1,i]*exp(-Z_ai[a-1,i])
+        # NSurv_ai[a,i] <- NSurv_ai[a-1,i]*exp(-Z_ai[a-1,i])
+        NSurv_ai[a,i] <- N_ai[a-1,i]*exp(-Z_ai[a-1,i])
+        
       } ## end age < maxage
       if(a == max(nages)){
-        NSurv_ai[a,i] <-  NSurv_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
+        # NSurv_ai[a,i] <-  NSurv_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
+        NSurv_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
         
         ## Calc SPB for each area-age
         # B_ai[a,i] <-   NSurv_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
@@ -27,14 +30,12 @@ doNage <- function(X = X_ija, ## input movement matrix
       } ## end plus group
     
       ## Calc SPB for each area-age
-      B_ai[a,i] <-   NSurv_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
-      SB_ai[a,i]  <- B_ai[a,i]*indat[a,2,i]
-      ## Calc Yield for each area-age   
-      Yield_ai[a,i] <- Fv[i]*indat[a,s+4,i]*B_ai[a,i]
+      # B_ai[a,i] <-   NSurv_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
+      # SB_ai[a,i]  <- B_ai[a,i]*indat[a,2,i]
+      # ## Calc Yield for each area-age   
+      # Yield_ai[a,i] <- Fv[i]*indat[a,s+4,i]*B_ai[a,i]
       } ## end survivors-in-area
-    
-  
-    
+
     for(i in 1:narea){ ## loop areas within ages
       ## for each age mix survivors among areas according to movement specs
       pLeave = NCome = 0
@@ -45,9 +46,16 @@ doNage <- function(X = X_ija, ## input movement matrix
         } # end i != j
       } # end subareas j
       if(a >1) N_ai[a,i] <- (1-pLeave)* NSurv_ai[a,i] + NCome
+      
+      B_ai[a,i] <-   N_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
+      SB_ai[a,i]  <- B_ai[a,i]*indat[a,2,i]
+      ## Calc Yield for each area-age   
+      Yield_ai[a,i] <- Fv[i]*indat[a,s+4,i]*B_ai[a,i]
     } # end subareas i 
   } ## end ages
   # accumulate total SPB and Yield 
+  
+  
   SB_total <- sum(SB_ai)
   Yield_total <- sum(Yield_ai)
 
