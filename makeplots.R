@@ -61,7 +61,7 @@ doNage( Fv = rep(0,narea), X = X_ija)$N_ai %>%
   ggplot(., aes(x = Age-1, y = value, col = Area)) +
   geom_line(lwd = 1.1) + 
   scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'Age', y = 'Numbers', color = '') +
+  labs(x = 'Age', y = 'Total Numbers', color = '') +
   theme_sleek() + 
   theme(legend.position = c(0.8,0.9), 
         axis.title = element_text(size = 16),
@@ -123,7 +123,7 @@ ggsave(last_plot(),
        file = here('figs','Nage_All.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
 ## B0 ----
-doNage( Fv = rep(0,narea), X = X_ija_NULL)$B_ai %>%
+doNage( Fv = rep(0,narea), X = X_ija)$B_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -143,7 +143,7 @@ ggsave(last_plot(),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 ## SB0 ----
-doNage(s = 1)[,10:12] %>%
+doNage( Fv = rep(0,narea), X = X_ija)$SB_i %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
