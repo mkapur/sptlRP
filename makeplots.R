@@ -193,6 +193,93 @@ ggsave(last_plot(),
 #         axis.title = element_text(size = 16),
 #         axis.text = element_text(size = 16),
 #         legend.text = element_text(size = 20))
+
+
+
+## Rick's plots ----
+p1 <- ggplot(current, aes(x = Fv, y = Yield)) + 
+  geom_line(lwd = 1.1, aes(color = 'current')) + 
+  geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) +
+  scale_color_manual(values = c('seagreen','goldenrod')) +
+  theme_sleek() +theme(legend.position = 'none') 
+
+## i think the hitch is where F is cancelling out recruitment subsidy
+# p2 <- ggplot(current, aes(x = Fv, y = B)) + 
+#   geom_line(lwd = 1.1, aes(color = 'current')) + 
+#   geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) + 
+#   theme_sleek()
+
+p3 <- ggplot(current, aes(x = B, y = Yield)) + 
+  geom_line(lwd = 1.1, aes(color = 'current')) + 
+  geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) + 
+  scale_color_manual(values = c('seagreen','goldenrod')) +
+  labs(color = "Approach") + 
+  theme_sleek() +theme(legend.position = c(0.8,0.8))
+
+
+p1  | p3
+ggsave(last_plot(),
+       file = here('figs',"Yield_Comparison.png"),
+       width = 8, height = 6, unit = 'in', dpi = 420)
+
+
+p4 <- ggplot( ) +
+  geom_line(data = data.frame(proposed_i[,,1]), aes(x = Fv, y = Yield, col = 'Area 1') ) +
+  geom_line(data = data.frame(proposed_i[,,2]), aes(x = Fv, y = Yield, col = 'Area 2') ) +
+  geom_line(data = data.frame(proposed_i[,,3]), aes(x = Fv, y = Yield, col = 'Area 3') ) +
+  labs(x = 'F', color = 'Area', title = 'Yield vs F by Area') + 
+  theme_sleek() +theme(legend.position = 'none') 
+# geom_vline(xintercept = Ftest[which(proposed_i[,2,1] > proposed_i[,3,1])[1]]) #+ ## where Y > B in area 1
+# geom_vline(xintercept = Ftest[which.max(proposed_i[,2,3])]) ## where Y > B in area 1
+
+# b <- which(proposed_i[,2,2] > proposed_i[,3,2])[1]
+b <- which.max(proposed_i[,2,3])
+
+p5 <- ggplot( ) +
+  geom_line(data = data.frame(proposed_i[,,1]), aes(x = B, y = Yield, col = 'Area 1') ) +
+  geom_line(data = data.frame(proposed_i[,,2]), aes(x = B, y = Yield, col = 'Area 2') ) +
+  geom_line(data = data.frame(proposed_i[,,3]), aes(x = B, y = Yield, col = 'Area 3') ) +
+  labs(x = 'B', color = 'Area', title = 'Yield  vs B by Area', 
+       subtitle = 'Vert Line @ Area 2 Crashing & Ymax Area 3') + 
+  theme_sleek() +
+  geom_vline(xintercept = proposed_i[b,3,3])+theme(legend.position = 'none') 
+# geom_vline(xintercept = Ftest[which.max(proposed_i[,2,3])]) ## where Y > B in area 1
+
+p6 <- ggplot( ) +
+  geom_line(data = data.frame(proposed_i[,,1]), aes(x = Fv, y = B, col = 'Area 1') ) +
+  geom_line(data = data.frame(proposed_i[,,2]), aes(x = Fv, y = B, col = 'Area 2') ) +
+  geom_line(data = data.frame(proposed_i[,,3]), aes(x = Fv, y = B, col = 'Area 3') ) +
+  labs(x = 'F', color = 'Area', title = 'B vs F by Area') +
+  theme_sleek() +theme(legend.position = c(0.8,0.8))
+
+(p4  |p5  |p6)
+
+ggsave(last_plot(),
+       file = here('figs',"Yield_by_area.png"),
+       width = 10, height = 8, unit = 'in', dpi = 420)
+
+
+rick %>%
+  select(-Fv) %>%
+  melt(id = 'SBeqtotal') %>%
+  ggplot(., aes(x = SBeqtotal, y = value, color = variable)) +
+  geom_point()
+theme_sleek() +
+  # scale_color_manual(labels = c(expression(R=E)))
+  labs(x = "Fv", y = 'Recruitment', color = 'Approach')
+
+
+proposed_i[,,3] %>% as.data.frame() %>% filter(B < Yield)
+## AREA SPECIFIC YIELD CURVES
+plot(proposed_i[,,3], xlim = c(0,1), col = 'red')
+points(proposed_i[,,2]) ## ANYTHING GREATER THAN ROW 75 HAS yield > B
+points(proposed_i[,,1])
+
+plot(proposed_i[,c(1,3),3], ylim = c(0,1500), col = 'red')
+points(proposed_i[,c(1,3),2])
+points(proposed_i[,c(1,3),1])
+
+
 ## Brute Config ----
 
 
