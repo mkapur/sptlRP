@@ -53,7 +53,7 @@ ggsave(Rmisc::multiplot(plotlist = plist,
 
 ## Nums at age ----
 # doNage(s = 1,  Fv = rep(0,narea), eq_method == 'STD')[,1:3] %>%
-doNage( Fv = rep(0,narea), X = X_ija)[[1]] %>%
+doNage( Fv = rep(0,narea), X = X_ija)$N_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -69,7 +69,7 @@ doNage( Fv = rep(0,narea), X = X_ija)[[1]] %>%
         legend.text = element_text(size = 20))
 
 ggsave(last_plot(), 
-       file = here('figs','Nage_Rick_XMov.png'),
+       file = here('figs','Nage_Rick_Xija.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
@@ -123,7 +123,7 @@ ggsave(last_plot(),
        file = here('figs','Nage_All.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
 ## B0 ----
-doNage(s = 1)[,7:9] %>%
+doNage( Fv = rep(0,narea), X = X_ija_NULL)$B_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -137,8 +137,9 @@ doNage(s = 1)[,7:9] %>%
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
         legend.text = element_text(size = 20))
+
 ggsave(last_plot(), 
-       file = here('figs','biomass.png'),
+       file = here('figs','biomass_rick_NoMov.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 ## SB0 ----

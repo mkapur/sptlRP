@@ -23,13 +23,13 @@ for(a in 1:2){ ## only two areas have movement
   for(g in 1:dim(X_ija)[3]){ ## loop ages
     diag(X_ija_NULL[,,g]) <- rep(1, length(  diag(X_ija_NULL[,,g])))
     if(g < 6 & a == 1){
-      X_ija[a,3,g] <-   X_ija_MIX[a,3,g]  <- 0.2 ## 20% movement from a to a3
-      X_ija[a,a,g] <-   X_ija_MIX[a,a,g] <- 0.8 ## retained
+      X_ija[a,3,g] <-   X_ija_MIX[a,3,g]  <- 0.05 ## 20% movement from a to a3
+      X_ija[a,a,g] <-   X_ija_MIX[a,a,g] <- 0.95 ## retained
       X_ija_MIX[3,1,g] <- 0.3 ## send 20% back from a3
       X_ija_MIX[3,3,g] <- 0.7 
     } else if(g < 6 & a == 2){
-      X_ija[a,3,g] <- X_ija_MIX[a,3,g]  <- 0.2 
-      X_ija[a,a,g] <-  X_ija_MIX[a,a,g] <- 0.8 
+      X_ija[a,3,g] <- X_ija_MIX[a,3,g]  <- 0.15
+      X_ija[a,a,g] <-  X_ija_MIX[a,a,g] <- 0.85
 
     } else{
       X_ija[a,,g] <- 0 ## no movement at older ages

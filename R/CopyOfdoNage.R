@@ -1,5 +1,5 @@
 
-doNage <- function(X = X_ija, ## input movement matrix
+DEP_doNage <- function(X = X_ija, ## input movement matrix
                    indat = dat, ## with bio info'
                    s = 1, ## F = 1, M = 2
                    Fv = rep(0,narea),
