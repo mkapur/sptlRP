@@ -194,6 +194,34 @@ ggsave(last_plot(),
 #         axis.text = element_text(size = 16),
 #         legend.text = element_text(size = 20))
 
+## plot Radj ----
+
+plotseq = seq(1,length(Ftest),10)
+png(here('figs','R_eq_iterations.png'),
+    height = 8.5, width = 11, unit = 'in', res = 600)
+
+par(mfrow = c(5,ceiling(length(plotseq)/5)), 
+    mar = c(5,5,1.5,1.5))
+for(j in plotseq){
+  plot(radj[,j,1], col = 'black', 
+       type = 'l', ylim = c(0,450), 
+       xlab = 'Iteration No.',ylab =  'R_eq')
+  # if(j %in% seq(1,25,5)){
+  #   axis(1, labels  = )
+  #   axis(2, labels = 'R_eq')
+  # }
+  
+  text(x = maxiter*0.5, y = max(radj[,j,])*0.9,
+       cex = 1.5, label = paste0('F = ',Ftest[j]))
+  ## niter x fv x areas
+  for(i in 2:narea){
+    points(radj[,j,i], col = c('blue','red')[i-1], type = 'l')
+  }
+}
+plot.new()
+legend('center',col = c('black','blue','red'), 
+       legend = paste('Area',1:3), lty = 1, cex = 2)
+dev.off()
 
 
 ## Rick's plots ----
@@ -211,18 +239,19 @@ p1 <- ggplot(current, aes(x = Fv, y = Yield)) +
 
 p3 <- ggplot(current, aes(x = B, y = Yield)) + 
   geom_line(lwd = 1.1, aes(color = 'current')) + 
-  geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) + 
+  geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) +
   scale_color_manual(values = c('seagreen','goldenrod')) +
   labs(color = "Approach") + 
   theme_sleek() +theme(legend.position = c(0.8,0.8))
 
 
 p1  | p3
+
 ggsave(last_plot(),
-       file = here('figs',"Yield_Comparison.png"),
+       file = here('figs',"Yield_Comparison_v2.png"),
        width = 8, height = 6, unit = 'in', dpi = 420)
 
-
+## Ricks plots by area ----
 p4 <- ggplot( ) +
   geom_line(data = data.frame(proposed_i[,,1]), aes(x = Fv, y = Yield, col = 'Area 1') ) +
   geom_line(data = data.frame(proposed_i[,,2]), aes(x = Fv, y = Yield, col = 'Area 2') ) +
@@ -233,15 +262,14 @@ p4 <- ggplot( ) +
 # geom_vline(xintercept = Ftest[which.max(proposed_i[,2,3])]) ## where Y > B in area 1
 
 # b <- which(proposed_i[,2,2] > proposed_i[,3,2])[1]
-b <- which.max(proposed_i[,2,3])
+# b <- which.max(proposed_i[,2,3])
 
 p5 <- ggplot( ) +
   geom_line(data = data.frame(proposed_i[,,1]), aes(x = B, y = Yield, col = 'Area 1') ) +
   geom_line(data = data.frame(proposed_i[,,2]), aes(x = B, y = Yield, col = 'Area 2') ) +
   geom_line(data = data.frame(proposed_i[,,3]), aes(x = B, y = Yield, col = 'Area 3') ) +
-  labs(x = 'B', color = 'Area', title = 'Yield  vs B by Area', 
-       subtitle = 'Vert Line @ Area 2 Crashing & Ymax Area 3') + 
-  theme_sleek() +
+  labs(x = 'B', color = 'Area', title = 'Yield  vs B by Area') +
+  theme_sleek() #+
   geom_vline(xintercept = proposed_i[b,3,3])+theme(legend.position = 'none') 
 # geom_vline(xintercept = Ftest[which.max(proposed_i[,2,3])]) ## where Y > B in area 1
 
@@ -255,7 +283,7 @@ p6 <- ggplot( ) +
 (p4  |p5  |p6)
 
 ggsave(last_plot(),
-       file = here('figs',"Yield_by_area.png"),
+       file = here('figs',"Yield_by_area_v2.png"),
        width = 10, height = 8, unit = 'in', dpi = 420)
 
 

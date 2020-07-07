@@ -117,7 +117,8 @@ for(v in 1:length(Ftest)){
       # use ratio of B_equils among areas to calculate adjustment to recr_dist 
       recr_dist_adj <- B_eq_i[v,]/sum(B_eq_i[v,]);
     
-        rick[v,"Fv"] <- Ftest[v]
+      ## storing info, not currently used
+      rick[v,"Fv"] <- Ftest[v]
       rick[v,"SBeqtotal"] <-   sum(B_eq_i[v,] )
       ## two options for calculating new R ref
       ## sum of expected recruits in areas
