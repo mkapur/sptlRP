@@ -10,10 +10,10 @@ dat <- array(NA, dim = c(nages,ncol(dat0),narea)) ## placeholder
 ## first area is original
 dat[,,1:3] <- as.matrix(dat0)
 ## second area, both sexes grow 15% larger, but with same fertility schedule
-dat[,3:4,2] <- dat[,3:4,1]*1.5
+# dat[,3:4,2] <- dat[,3:4,1]*1.5
 ## third area, productive at early age
-dat[1:18,2,3] <- dat[4:21,2,1]
-dat[18:20,2,3] <- dat[18,2,3]
+# dat[1:18,2,3] <- dat[4:21,2,1]
+# dat[18:20,2,3] <- dat[18,2,3]
 
 X_ija_NULL <- array(0, dim = c(narea,narea,nages))
 X_ija_MIX <- array(0, dim = c(narea,narea,nages))
