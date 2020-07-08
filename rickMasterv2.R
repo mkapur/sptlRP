@@ -22,6 +22,7 @@ recr_dist <- list(c(1,1,1),
 
 R0 <- c(420,330,250) ## each area has its own R0
 rec_level <- R0 ## I suggest it should be the area-specific R0.
+nominal_dist <- R0/sum(R0)
 maxiter = 100
 radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
 
@@ -45,7 +46,12 @@ for(v in 1:length(Ftest)){
     if(k == 1){
       rlevelUse = rec_level
     } else{
-      rlevelUse = if(any(currEq$R_equil > R0)) R0 else currEq$R_equil 
+      proposed_R_i <- currEq$R_equil*nominal_dist 
+      ## overwrite those which are too high
+      # proposed_R_i[which(proposed_R_i > R0)] <- rec_level[which(proposed_R_i > R0)]
+      rlevelUse = proposed_R_i
+      # cat(rlevelUse,"\n")
+      # rm(proposed_R_i)
     }
     ## define virgin biomass
     SB0 <- doNage( Fv = rep(0,narea), 
@@ -68,7 +74,7 @@ for(v in 1:length(Ftest)){
                                    Recr_virgin = sum(R0), SPR_temp = SB_R)## L17247 ON TPL
     current[v,'Fv'] <- Ftest[v]
     current[v,'Yield'] <- Yield_R * currEq$R_equil
-    current[v,'B'] <- SB_R* currEq$R_equil#*currEq$B_equil
+    current[v,'B'] <- SB_R* currEq$R_equil 
     rick[v,'R_ESUMB'] <- currEq$R_equil ## expected recruits given sum biomass in area
   } ## end iters
 } ## end F
