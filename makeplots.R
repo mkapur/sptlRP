@@ -195,7 +195,6 @@ ggsave(last_plot(),
 #         legend.text = element_text(size = 20))
 
 ## plot Radj ----
-
 plotseq = seq(1,length(Ftest),10)
 png(here('figs','R_eq_iterations.png'),
     height = 8.5, width = 11, unit = 'in', res = 600)
@@ -206,11 +205,6 @@ for(j in plotseq){
   plot(radj[,j,1], col = 'black', 
        type = 'l', ylim = c(0,450), 
        xlab = 'Iteration No.',ylab =  'R_eq')
-  # if(j %in% seq(1,25,5)){
-  #   axis(1, labels  = )
-  #   axis(2, labels = 'R_eq')
-  # }
-  
   text(x = maxiter*0.5, y = max(radj[,j,])*0.9,
        cex = 1.5, label = paste0('F = ',Ftest[j]))
   ## niter x fv x areas
@@ -222,6 +216,12 @@ plot.new()
 legend('center',col = c('black','blue','red'), 
        legend = paste('Area',1:3), lty = 1, cex = 2)
 dev.off()
+
+## R_eq_method
+
+R_eq_i[,4] <- rowSums(R_eq_i)
+ data.frame(R_eq_i) %>%
+   mutate(Fv = Ftest)
 
 
 ## Rick's plots ----
@@ -291,9 +291,25 @@ rick %>%
   select(-Fv) %>%
   melt(id = 'SBeqtotal') %>%
   ggplot(., aes(x = SBeqtotal, y = value, color = variable)) +
-  geom_point()
-theme_sleek() +
-  # scale_color_manual(labels = c(expression(R=E)))
+  geom_point() +
+  theme_sleek() +
+  scale_color_manual(values = c('goldenrod','seagreen'),
+                     labels =c("R=sum(E(B_a)), proposed", 
+                               "R=E(sum(B_a)), current"))+
+  labs(x = "Total_SB", y = 'Recruitment', color = 'Approach')
+
+ggsave(last_plot(),
+       file = here('figs',"SRR_by_approach.png"),
+       width = 6, height = 4, unit = 'in', dpi = 420)
+
+rick %>%
+  select(-SBeqtotal) %>%
+  melt(id = 'Fv') %>%
+  ggplot(., aes(x = Fv, y = value, color = variable)) +
+  geom_point() +
+  theme_sleek() +
+  scale_color_manual(values = c('goldenrod','seagreen'),
+                     labels =c("R=sum(E(B_a))", "R=E(sum(Ba))"))+
   labs(x = "Fv", y = 'Recruitment', color = 'Approach')
 
 
