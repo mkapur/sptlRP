@@ -22,39 +22,56 @@ recr_dist <- list(c(1,1,1),
 
 R0 <- c(420,330,250) ## each area has its own R0
 rec_level <- R0 ## I suggest it should be the area-specific R0.
+maxiter = 100
+radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
+
+
 ## load functions & initialize OM
 lapply(list.files(here("R"), full.names = TRUE), source)
 
 ## Current SS Approach ----
 
-## define virgin biomass
-SB0 <- doNage( Fv = rep(0,narea), 
-               X = X_ija,
-               rdist = recr_dist,
-               refR = rec_level)$SB_total
 
 ## Get NAA using movement. Input X_ija_NULL to turn movement OFF (smooth curve)
 ## applying system-wide F
 Ftest <- seq(0,1,0.005)
 current <- data.frame(Fv = NA, Yield = NA, B = NA)
 rick <- data.frame() ## storage for SRR question
+
+
 for(v in 1:length(Ftest)){
-  ## get values at present Fv
-  curr <- doNage( Fv = rep(Ftest[v],narea), 
-                  X = X_ija,
-                  rdist = recr_dist, ## these are set to 1
-                  refR = rec_level)
-  # calc SPB/R and Yield/R
-  SB_R <- curr$SB_total/sum(rec_level)
-  Yield_R <- curr$Yield_total/sum(rec_level)
-  #call Equil_Spawn_Recr_Fxn to get B_equil and R_equil from SPB/R and SR parms
-  currEq <- Equil_Spawn_Recr_Fxn(steepness = steep[1], SSB_virgin = SB0, 
-                                 Recr_virgin = sum(R0), SPR_temp = SB_R)## L17247 ON TPL
-  current[v,'Fv'] <- Ftest[v]
-  current[v,'Yield'] <- Yield_R * currEq$R_equil
-  current[v,'B'] <- SB_R* currEq$R_equil#*currEq$B_equil
-  rick[v,'R_ESUMB'] <- currEq$R_equil ## expected recruits given sum biomass in area
-}
+  cat(v,"\n")
+  for(k in 1:maxiter){
+    if(k == 1){
+      rlevelUse = rec_level
+    } else{
+      rlevelUse = if(any(currEq$R_equil > R0)) R0 else currEq$R_equil 
+    }
+    ## define virgin biomass
+    SB0 <- doNage( Fv = rep(0,narea), 
+                   X = X_ija,
+                   rdist = recr_dist,
+                   refR = rlevelUse)$SB_total
+    
+    ## get values at present Fv
+    curr <- doNage( Fv = rep(Ftest[v],narea), 
+                    X = X_ija,
+                    rdist = recr_dist, ## these are set to 1
+                    refR = rlevelUse)
+    
+    
+    # calc SPB/R and Yield/R
+    SB_R <- curr$SB_total/sum(rlevelUse)
+    Yield_R <- curr$Yield_total/sum(rlevelUse)
+    #call Equil_Spawn_Recr_Fxn to get B_equil and R_equil from SPB/R and SR parms
+    currEq <- Equil_Spawn_Recr_Fxn(steepness = steep[1], SSB_virgin = SB0, 
+                                   Recr_virgin = sum(R0), SPR_temp = SB_R)## L17247 ON TPL
+    current[v,'Fv'] <- Ftest[v]
+    current[v,'Yield'] <- Yield_R * currEq$R_equil
+    current[v,'B'] <- SB_R* currEq$R_equil#*currEq$B_equil
+    rick[v,'R_ESUMB'] <- currEq$R_equil ## expected recruits given sum biomass in area
+  } ## end iters
+} ## end F
 
 ## proposed approach ----
 
@@ -63,8 +80,6 @@ proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
 proposed_i <- array(NA, dim = c(length(Ftest),3,narea), dimnames = list(NULL,c('Fv','Yield',"B"))) ## now for each area
 B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri<- matrix(NA, nrow =length(Ftest), ncol = narea)
 
-maxiter = 100
-radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
 
 for(v in 1:length(Ftest)){
   
@@ -81,7 +96,7 @@ for(v in 1:length(Ftest)){
                        R_eq_i[v,])[[4]] 
     }
     # cat(rlevelUse,"\n")
-    # if(k %% 2!=0 ) cat(v,"\t",k,"\t",paste(round(rlevelUse)),"\n") ## monitoring if this changes
+    if(k %% 2!=0 ) cat(v,"\t",k,"\t",paste(round(rlevelUse)),"\n") ## monitoring if this changes
     radj[k,v,] <- rlevelUse
     ## define virgin biomass by AREA
     SB0_i <- doNage( Fv = rep(0,narea), 
