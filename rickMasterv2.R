@@ -53,7 +53,7 @@ for(v in 1:length(Ftest)){
   current[v,'Fv'] <- Ftest[v]
   current[v,'Yield'] <- Yield_R * currEq$R_equil
   current[v,'B'] <- SB_R* currEq$R_equil#*currEq$B_equil
-  rick[v,'R_ESUMB'] <- currEq$R_equil ## expected recruits given total
+  rick[v,'R_ESUMB'] <- currEq$R_equil ## expected recruits given sum biomass in area
 }
 
 ## proposed approach ----
@@ -125,12 +125,8 @@ for(v in 1:length(Ftest)){
       ## storing info, not currently used
       rick[v,"Fv"] <- Ftest[v]
       rick[v,"SBeqtotal"] <-   sum(B_eq_i[v,] )
-      # ## two options for calculating new R ref
-      # ## sum of expected recruits in areas
+      ## sum of expected recruits in areas
       rick[v,"R_SUMEBA"]  <- sum( R_eq_i[v,])
-      # ## expected recruits given summed biomass in area
-      # rick[v,"R_ESUMB"] <- Equil_Spawn_Recr_Fxn(steepness = steep[1], SSB_virgin = sum(SB0_i),
-      #                                           Recr_virgin = sum(R0), SPR_temp = sum(SB_Ri[v,]))$R_equil
     }
   } ## end k:maxiter
   proposed[v,'Fv'] <- Ftest[v]
