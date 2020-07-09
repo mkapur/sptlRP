@@ -92,6 +92,7 @@ doNage <- function(X = X_ija, ## input movement matrix
   return(list("N_ai" = N_ai, 
               "Z_ai" = Z_ai, 
               "B_ai" = B_ai,
+              "SB_ai" = SB_ai,
               "SB_i" = apply(SB_ai,2,sum),
               "Yield_i" =  apply(Yield_ai,2,sum),
               "SB_total"= SB_total, 
