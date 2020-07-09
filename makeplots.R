@@ -69,7 +69,7 @@ doNage( Fv = rep(0,narea), X = X_ija)$N_ai %>%
         legend.text = element_text(size = 20))
 
 ggsave(last_plot(), 
-       file = here('figs','Nage_Rick_Xija.png'),
+       file = here('figs','Nage_Rick_NoMovEqualRec.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
@@ -123,7 +123,7 @@ ggsave(last_plot(),
        file = here('figs','Nage_All.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
 ## B0 ----
-doNage( Fv = rep(0,narea), X = X_ija)$B_ai %>%
+doNage( Fv = rep(0,narea), X = X_ija_NULL)$B_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -143,7 +143,7 @@ ggsave(last_plot(),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 ## SB0 ----
-doNage( Fv = rep(0,narea), X = X_ija)$SB_i %>%
+doNage( Fv = rep(0,narea), X = X_ija)$SB_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -157,6 +157,8 @@ doNage( Fv = rep(0,narea), X = X_ija)$SB_i %>%
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
         legend.text = element_text(size = 20))
+
+
 ggsave(last_plot(), 
        file = here('figs','SSB.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
@@ -195,17 +197,18 @@ ggsave(last_plot(),
 #         legend.text = element_text(size = 20))
 
 ## plot Radj ----
-plotseq = seq(1,length(Ftest),10)
-png(here('figs','R_eq_iterations.png'),
+
+png(here('figs','R_eq_iterations_v3.png'),
     height = 8.5, width = 11, unit = 'in', res = 600)
 
+plotseq = seq(1,length(Ftest),10)
 par(mfrow = c(5,ceiling(length(plotseq)/5)), 
     mar = c(5,5,1.5,1.5))
 for(j in plotseq){
   plot(radj[,j,1], col = 'black', 
-       type = 'l', ylim = c(0,450), 
+       type = 'l', ylim = c(0,800), 
        xlab = 'Iteration No.',ylab =  'R_eq')
-  text(x = maxiter*0.5, y = max(radj[,j,])*0.9,
+  text(x = maxiter*0.5, y = 600,
        cex = 1.5, label = paste0('F = ',Ftest[j]))
   ## niter x fv x areas
   for(i in 2:narea){
@@ -214,7 +217,8 @@ for(j in plotseq){
 }
 plot.new()
 legend('center',col = c('black','blue','red'), 
-       legend = paste('Area',1:3), lty = 1, cex = 2)
+       legend = paste('Area',1:3), lty = 1, cex = 1.5)
+
 dev.off()
 
 ## R_eq_method
@@ -227,28 +231,23 @@ R_eq_i[,4] <- rowSums(R_eq_i)
 ## Rick's plots ----
 p1 <- ggplot(current, aes(x = Fv, y = Yield)) + 
   geom_line(lwd = 1.1, aes(color = 'current')) + 
-  geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) +
+  geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
   scale_color_manual(values = c('seagreen','goldenrod')) +
-  theme_sleek() +theme(legend.position = 'none') 
+  theme_sleek() +theme(legend.position = 'none') #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
 
-## i think the hitch is where F is cancelling out recruitment subsidy
-# p2 <- ggplot(current, aes(x = Fv, y = B)) + 
-#   geom_line(lwd = 1.1, aes(color = 'current')) + 
-#   geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) + 
-#   theme_sleek()
 
 p3 <- ggplot(current, aes(x = B, y = Yield)) + 
   geom_line(lwd = 1.1, aes(color = 'current')) + 
-  geom_line(data = proposed, lwd = 1.1, aes(color = 'proposed')) +
+  geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
   scale_color_manual(values = c('seagreen','goldenrod')) +
   labs(color = "Approach") + 
-  theme_sleek() +theme(legend.position = c(0.8,0.8))
+  theme_sleek() +theme(legend.position = c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
 
 
 p1  | p3
 
 ggsave(last_plot(),
-       file = here('figs',"Yield_Comparison_v2.png"),
+       file = here('figs',"Yield_Comparison_Movement_HighOscillationProblem.png"),
        width = 8, height = 6, unit = 'in', dpi = 420)
 
 ## Ricks plots by area ----
@@ -270,7 +269,7 @@ p5 <- ggplot( ) +
   geom_line(data = data.frame(proposed_i[,,3]), aes(x = B, y = Yield, col = 'Area 3') ) +
   labs(x = 'B', color = 'Area', title = 'Yield  vs B by Area') +
   theme_sleek() #+
-  geom_vline(xintercept = proposed_i[b,3,3])+theme(legend.position = 'none') 
+
 # geom_vline(xintercept = Ftest[which.max(proposed_i[,2,3])]) ## where Y > B in area 1
 
 p6 <- ggplot( ) +
@@ -283,23 +282,28 @@ p6 <- ggplot( ) +
 (p4  |p5  |p6)
 
 ggsave(last_plot(),
-       file = here('figs',"Yield_by_area_v2.png"),
+       file = here('figs',"Yield_by_area_Movement_v3.png"),
        width = 10, height = 8, unit = 'in', dpi = 420)
 
-
-rick %>%
-  select(-Fv) %>%
-  melt(id = 'SBeqtotal') %>%
-  ggplot(., aes(x = SBeqtotal, y = value, color = variable)) +
-  geom_point() +
-  theme_sleek() +
-  scale_color_manual(values = c('goldenrod','seagreen'),
-                     labels =c("R=sum(E(B_a)), proposed", 
-                               "R=E(sum(B_a)), current"))+
+## SRR ----
+bind_rows(rick %>%
+            select(Fv, SBeqtotal2, R_ESUMB) %>%
+            mutate(SB = SBeqtotal2, value =R_ESUMB,App = "R=E(sum(B_a)), current") %>%
+            select(Fv, SB, value, App),
+          rick %>%select(Fv, SBeqtotal, R_SUMEBA) %>%
+            mutate(SB = SBeqtotal, value =R_SUMEBA,App =  "R=sum(E(B_a)), proposed") %>%  
+            select(Fv, SB, value, App)) %>% 
+  # rick %>%
+  #   select(-Fv) %>%
+  #   melt(id = c('SBeqtotal', 'SBeqtotal2')) %>% 
+  ggplot(., aes(x = SB, y = value, color = App)) +
+  geom_point(alpha = 0.2) +
+  theme_sleek() + theme(legend.position = c(0.75,0.1)) +
+  scale_color_manual(values = c('seagreen','goldenrod'))+
   labs(x = "Total_SB", y = 'Recruitment', color = 'Approach')
 
 ggsave(last_plot(),
-       file = here('figs',"SRR_by_approach.png"),
+       file = here('figs',"SRR_by_approach_NoMovement100iter.png"),
        width = 6, height = 4, unit = 'in', dpi = 420)
 
 rick %>%
