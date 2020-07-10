@@ -85,10 +85,10 @@ for(v in 1:length(Ftest)){
 ## proposed approach ----
 
 ## applying system-wide F
-maxiter = 11
+maxiter = 101
 proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
 proposed_i <- array(NA, dim = c(length(Ftest),3,narea), dimnames = list(NULL,c('Fv','Yield',"B"))) ## now for each area
-B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri<- matrix(NA, nrow =length(Ftest), ncol = narea)
+B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri <- matrix(NA, nrow =length(Ftest), ncol = narea)
 radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
 testdf <- data.frame()
 # for(v in 110:160){
@@ -140,6 +140,8 @@ for(v in 1:length(Ftest)){
     testdf[k,'Yield_a2'] <-    prop$Yield_i[2]; 
     testdf[k,'Yield_a3'] <-     prop$Yield_i[3]  
     
+    
+    
     # radj[k,v,] <- rlevelUse
     # call Equ_Spawn_Recr_Fxn for each area to get B_equil and R_equil from SPB/R and SR parms
     for(i in 1:narea){ ## will overwrite second time
@@ -178,7 +180,7 @@ for(v in 1:length(Ftest)){
       # propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
       #                                Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
       propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
-                                     Recr_virgin = rleveltmp, SPR_temp = SB_Ri[v,i])
+                                     Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
       B_eq_i[v,i] <- propEq$B_equil
       R_eq_i[v,i] <- propEq$R_equil ## gets overwritten each iteration
 
