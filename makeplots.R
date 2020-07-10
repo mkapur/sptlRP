@@ -25,6 +25,8 @@ for(a in 1:narea){
 }
 dev.off()
 
+
+
 ## Xija ----
 plist = list()
 for(g in 1:6){ ## loop ages
@@ -247,7 +249,7 @@ p3 <- ggplot(current, aes(x = B, y = Yield)) +
 p1  | p3
 
 ggsave(last_plot(),
-       file = here('figs',"Yield_Comparison_Movement_HighOscillationProblem.png"),
+       file = here('figs',"Yield_Comparison_Movement_R.png"),
        width = 8, height = 6, unit = 'in', dpi = 420)
 
 ## Ricks plots by area ----
@@ -305,6 +307,31 @@ bind_rows(rick %>%
 ggsave(last_plot(),
        file = here('figs',"SRR_by_approach_NoMovement100iter.png"),
        width = 6, height = 4, unit = 'in', dpi = 420)
+
+## SBPR vs R by FV----
+a1 <- data.frame("Req" = R_eq_i[,1],"SBPR" = SB_Ri[,1],Ftest) %>% 
+  ggplot(., aes(x = SBPR, y = Req, color = Ftest)) +
+  geom_point() + labs(color = 'F', title = 'Area 1') +
+  theme_sleek()+theme(legend.position = 'none')+
+  scale_y_continuous(limits = c(0,500))
+
+a2 <- data.frame("Req" = R_eq_i[,2],"SBPR" = SB_Ri[,2],Ftest) %>% 
+  ggplot(., aes(x = SBPR, y = Req, color = Ftest)) +
+  geom_point() + labs(color = 'F', title = 'Area 2') +
+  theme_sleek() +theme(legend.position = 'none')+
+  scale_y_continuous(limits = c(0,500))
+a3 <- data.frame("Req" = R_eq_i[,3],"SBPR" = SB_Ri[,3],Ftest) %>% 
+  ggplot(., aes(x = SBPR, y = Req, color = Ftest)) +
+  geom_point() + 
+  labs(color = 'F', title = 'Area 3') +
+  theme_sleek() +
+  scale_y_continuous(limits = c(0,500))
+a1 |a2 |a3
+
+ggsave(last_plot(),
+       file = here('figs','ReqvsSBPR_F_area.png'),
+       width = 6, height = 4, unit = 'in', dpi = 520)
+
 
 rick %>%
   select(-SBeqtotal) %>%
