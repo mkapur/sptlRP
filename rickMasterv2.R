@@ -85,17 +85,18 @@ for(v in 1:length(Ftest)){
 ## proposed approach ----
 
 ## applying system-wide F
-maxiter = 101
+maxiter = 11
 proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
 proposed_i <- array(NA, dim = c(length(Ftest),3,narea), dimnames = list(NULL,c('Fv','Yield',"B"))) ## now for each area
 B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri<- matrix(NA, nrow =length(Ftest), ncol = narea)
 radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
-
+testdf <- data.frame()
 # for(v in 110:160){
 for(v in 1:length(Ftest)){
   # if(v %% 10 == 0) cat(v,"\n")
   for(k in 1:maxiter){ ## Loop over steps A & B
-    
+    testdf[k,'iter'] <- k
+    testdf[k,'F'] <- Ftest[v]
     if(k == 1){
       rdistUse <- recr_dist ## no distribution now; full rec-level in each area
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
@@ -113,6 +114,8 @@ for(v in 1:length(Ftest)){
       
       
     }
+    
+    testdf[k,'rec_a1'] <- rlevelUse[1]; testdf[k,'rec_a2'] <- rlevelUse[2] ; testdf[k,'rec_a3'] <- rlevelUse[3]  
     # radj[k,v,] <- rlevelUse
     # if(k == 10  |k == 9 ) cat(v,"\t",k,"\t",paste(round(rlevelUse)),"\n") ## monitoring if this changes
 
@@ -121,7 +124,6 @@ for(v in 1:length(Ftest)){
                      X = X_ija,
                      rdist = rdistUse,
                      refR = list(rec_level,rlevelUse)[[2]])$SB_i
-    
     ## get values at present Fv
     # In each iteration, calculate the SSB and Yield that 
     # comes from those recruits, taking movement into account
@@ -129,6 +131,15 @@ for(v in 1:length(Ftest)){
                     X = X_ija,
                     rdist = rdistUse,
                     refR = rlevelUse) 
+
+    testdf[k,'B_a1'] <-     colSums(prop$B_ai)[1]; 
+    testdf[k,'B_a2'] <-     colSums(prop$B_ai)[2]; 
+    testdf[k,'B_a3'] <-     colSums(prop$B_ai)[3]  
+    
+    testdf[k,'Yield_a1'] <-     prop$Yield_i[1]; 
+    testdf[k,'Yield_a2'] <-    prop$Yield_i[2]; 
+    testdf[k,'Yield_a3'] <-     prop$Yield_i[3]  
+    
     # radj[k,v,] <- rlevelUse
     # call Equ_Spawn_Recr_Fxn for each area to get B_equil and R_equil from SPB/R and SR parms
     for(i in 1:narea){ ## will overwrite second time
@@ -164,8 +175,10 @@ for(v in 1:length(Ftest)){
       # if(k %% 10 == 0 ) cat(v, k,i,  Yield_Ri[v,i],"\n")
       
       ## Calc area-specific recruits using area-specific SB etc
+      # propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
+      #                                Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
       propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
-                                     Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
+                                     Recr_virgin = rleveltmp, SPR_temp = SB_Ri[v,i])
       B_eq_i[v,i] <- propEq$B_equil
       R_eq_i[v,i] <- propEq$R_equil ## gets overwritten each iteration
 
