@@ -1,9 +1,9 @@
 ## inputs by area ----
 png( here('figs','inputs_by_area.png'),
-     width = 6, height = 8, unit = 'in', res = 520)
-par(mfrow = c(narea,3), 
+     width = 8, height = 4, unit = 'in', res = 520)
+par(mfrow = c(1,3), 
     mar = c(4,5,1,1))
-for(a in 1:narea){
+for(a in 1:1){
   dattemp <- as.data.frame(dat[,,a])
   names(dattemp) = names(dat0)
   ## F Fecundity
