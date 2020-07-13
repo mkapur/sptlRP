@@ -142,7 +142,7 @@ for(v in 1:length(Ftest)){
       
       ## Calc area-specific recruits using area-specific SB etc
       # propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
-      #                                Recr_virgin = rleveltemp, SPR_temp = SB_Ri[v,i])
+                                     # Recr_virgin = rleveltmp, SPR_temp = SB_Ri[v,i])
       propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
                                      Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
       

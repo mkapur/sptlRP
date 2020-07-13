@@ -313,18 +313,21 @@ a1 <- data.frame("Req" = R_eq_i[,1],"SBPR" = SB_Ri[,1],Ftest) %>%
   ggplot(., aes(x = SBPR, y = Req, color = Ftest)) +
   geom_point() + labs(color = 'F', title = 'Area 1') +
   theme_sleek()+theme(legend.position = 'none')+
+  geom_hline(yintercept = R0[1], lwd = 1.1, color = 'red') +
   scale_y_continuous(limits = c(0,500))
 
 a2 <- data.frame("Req" = R_eq_i[,2],"SBPR" = SB_Ri[,2],Ftest) %>% 
   ggplot(., aes(x = SBPR, y = Req, color = Ftest)) +
   geom_point() + labs(color = 'F', title = 'Area 2') +
   theme_sleek() +theme(legend.position = 'none')+
+  geom_hline(yintercept = R0[2], lwd = 1.1, color = 'red') +
   scale_y_continuous(limits = c(0,500))
 a3 <- data.frame("Req" = R_eq_i[,3],"SBPR" = SB_Ri[,3],Ftest) %>% 
   ggplot(., aes(x = SBPR, y = Req, color = Ftest)) +
   geom_point() + 
   labs(color = 'F', title = 'Area 3') +
   theme_sleek() +
+  geom_hline(yintercept = R0[3], lwd = 1.1, color = 'red') +
   scale_y_continuous(limits = c(0,500))
 a1 |a2 |a3
 
