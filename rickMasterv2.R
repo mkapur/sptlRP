@@ -76,7 +76,6 @@ B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri <- matrix(NA
 radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
 testdf <- data.frame()
 
-
 ## define virgin biomass by AREA, does not change
 SB0_i <- doNage(Fv = rep(0,narea), 
                 X = X_ija,
@@ -85,8 +84,7 @@ SB0_i <- doNage(Fv = rep(0,narea),
 
 for(v in 1:length(Ftest)){
   for(k in 1:maxiter){ ## Loop over steps A & B
-    # testdf[k,'iter'] <- k
-    # testdf[k,'F'] <- Ftest[v]
+
     if(k == 1){
       rdistUse <- recr_dist ## no distribution now; full rec-level in each area
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
@@ -94,10 +92,6 @@ for(v in 1:length(Ftest)){
       rdistUse <- recr_dist ## only after computing R_i
       rlevelUse =   R_eq_i[v,]
     }
-    
-    testdf[k,'rec_a1'] <- rlevelUse[1]; testdf[k,'rec_a2'] <- rlevelUse[2] ; testdf[k,'rec_a3'] <- rlevelUse[3]  
-    
-
     ## get values at present Fv
     # In each iteration, calculate the SSB and Yield that 
     # comes from those recruits, taking movement into account
@@ -105,13 +99,7 @@ for(v in 1:length(Ftest)){
                     X = X_ija,
                     rdist = rdistUse,
                     refR = rlevelUse) 
-    
-    # testdf[k,'B_a1'] <-     colSums(prop$B_ai)[1]; 
-    # testdf[k,'B_a2'] <-     colSums(prop$B_ai)[2]; 
-    # testdf[k,'B_a3'] <-     colSums(prop$B_ai)[3]  
-    # testdf[k,'Yield_a1'] <-     prop$Yield_i[1]; 
-    # testdf[k,'Yield_a2'] <-    prop$Yield_i[2]; 
-    # testdf[k,'Yield_a3'] <-     prop$Yield_i[3]  
+
     
     # call Equ_Spawn_Recr_Fxn for each area to get B_equil and R_equil from SPB/R and SR parms
     for(i in 1:narea){ ## will overwrite second time
