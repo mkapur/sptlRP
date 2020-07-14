@@ -30,7 +30,7 @@ lapply(list.files(here("R"), full.names = TRUE), source)
 
 ## Get NAA using movement. Input X_ija_NULL to turn movement OFF (smooth curve)
 ## applying system-wide F
-Ftest <- seq(0,1,0.005)
+Ftest <- seq(0,1,0.05)
 current <- data.frame(Fv = NA, Yield = NA, B = NA)
 rick <- data.frame() ## storage for SRR question
 
@@ -75,6 +75,14 @@ proposed_i <- array(NA, dim = c(length(Ftest),3,narea), dimnames = list(NULL,c('
 B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri <- matrix(NA, nrow =length(Ftest), ncol = narea)
 radj <- array(NA, dim = c(maxiter,length(Ftest),3)) ## keeping track of convergence
 testdf <- data.frame()
+
+
+## define virgin biomass by AREA, does not change
+SB0_i <- doNage(Fv = rep(0,narea), 
+                X = X_ija,
+                rdist = recr_dist,
+                refR = rec_level)$SB_i
+
 for(v in 1:length(Ftest)){
   for(k in 1:maxiter){ ## Loop over steps A & B
     # testdf[k,'iter'] <- k
@@ -90,8 +98,7 @@ for(v in 1:length(Ftest)){
                          R_eq_i[v,],
                          R_eq_i[v,]*B_eq_i[v,]/sum(B_eq_i[v,]),
                          apply(rbind( R_eq_i[v,],radj[k-1,v,] ),2,mean),
-                         rec_level*B_eq_i[v,]/sum(B_eq_i[v,]),
-                         sum(R_eq_i[v,])*nominal_dist)[[4]] 
+                         rec_level*B_eq_i[v,]/sum(B_eq_i[v,]))[[4]] 
       
       
       
@@ -99,11 +106,7 @@ for(v in 1:length(Ftest)){
     
     testdf[k,'rec_a1'] <- rlevelUse[1]; testdf[k,'rec_a2'] <- rlevelUse[2] ; testdf[k,'rec_a3'] <- rlevelUse[3]  
     
-    ## define virgin biomass by AREA
-    SB0_i <- doNage(Fv = rep(0,narea), 
-                    X = X_ija,
-                    rdist = rdistUse,
-                    refR = list(rec_level,rlevelUse)[[2]])$SB_i
+
     ## get values at present Fv
     # In each iteration, calculate the SSB and Yield that 
     # comes from those recruits, taking movement into account
@@ -141,8 +144,6 @@ for(v in 1:length(Ftest)){
       Yield_Ri[v,i] <- prop$Yield_i[i]/(rleveltmp*rdistUse[i])
       
       ## Calc area-specific recruits using area-specific SB etc
-      # propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
-                                     # Recr_virgin = rleveltmp, SPR_temp = SB_Ri[v,i])
       propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
                                      Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
       

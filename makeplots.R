@@ -203,7 +203,7 @@ ggsave(last_plot(),
 png(here('figs','R_eq_iterations_v3.png'),
     height = 8.5, width = 11, unit = 'in', res = 600)
 
-plotseq = seq(1,length(Ftest),10)
+plotseq = seq(1,length(Ftest),5)
 par(mfrow = c(5,ceiling(length(plotseq)/5)), 
     mar = c(5,5,1.5,1.5))
 for(j in plotseq){
@@ -249,7 +249,7 @@ p3 <- ggplot(current, aes(x = B, y = Yield)) +
 p1  | p3
 
 ggsave(last_plot(),
-       file = here('figs',"Yield_Comparison_Movement_R.png"),
+       file = here('figs',"Yield_Comparison_Movement_v4.png"),
        width = 8, height = 6, unit = 'in', dpi = 420)
 
 ## Ricks plots by area ----
@@ -284,7 +284,7 @@ p6 <- ggplot( ) +
 (p4  |p5  |p6)
 
 ggsave(last_plot(),
-       file = here('figs',"Yield_by_area_Movement_v3.png"),
+       file = here('figs',"Yield_by_area_Movement_v4.png"),
        width = 10, height = 8, unit = 'in', dpi = 420)
 
 ## SRR ----
