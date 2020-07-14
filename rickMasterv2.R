@@ -92,16 +92,7 @@ for(v in 1:length(Ftest)){
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
     } else{
       rdistUse <- recr_dist ## only after computing R_i
-      rlevelUse =   list(rec_level, 
-                         rick[v,'R_ESUMB'],
-                         rick[v,'R_SUMEBA'],
-                         R_eq_i[v,],
-                         R_eq_i[v,]*B_eq_i[v,]/sum(B_eq_i[v,]),
-                         apply(rbind( R_eq_i[v,],radj[k-1,v,] ),2,mean),
-                         rec_level*B_eq_i[v,]/sum(B_eq_i[v,]))[[4]] 
-      
-      
-      
+      rlevelUse =   R_eq_i[v,]
     }
     
     testdf[k,'rec_a1'] <- rlevelUse[1]; testdf[k,'rec_a2'] <- rlevelUse[2] ; testdf[k,'rec_a3'] <- rlevelUse[3]  
@@ -127,12 +118,7 @@ for(v in 1:length(Ftest)){
       # calc area-specific SPB/R and Yield/R, using area-specific R
       
       if( k > 1){
-        rleveltmp = list(rlevelUse[i],
-                         min(rlevelUse[i],R0[i]),
-                         max(rlevelUse[i],R0[i]),
-                         mean(c(rlevelUse[i],radj[k-1,v,i] )),
-                         max(rlevelUse[i],1))[[1]]
-        
+        rleveltmp = rlevelUse[i]
       } else{
         rleveltmp = rlevelUse[i]
       }
