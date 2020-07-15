@@ -200,28 +200,56 @@ ggsave(last_plot(),
 
 ## plot Radj ----
 
-png(here('figs','R_eq_iterations_v3.png'),
-    height = 8.5, width = 11, unit = 'in', res = 600)
+# png(here('figs','R_eq_iterations_v3.png'),
+#     height = 8.5, width = 11, unit = 'in', res = 600)
+# 
+# plotseq = seq(1,length(Ftest),5)
+# par(mfrow = c(5,ceiling(length(plotseq)/5)),
+#     mar = c(5,5,1.5,1.5))
+# for(j in plotseq){
+#   plot(radj[,j,1], col = 'black',
+#        type = 'l', ylim = c(0,800),
+#        xlab = 'Iteration No.',ylab =  'R_eq')
+#   text(x = maxiter*0.5, y = 600,
+#        cex = 1.5, label = paste0('F = ',Ftest[j]))
+#   ## niter x fv x areas
+#   for(i in 2:narea){
+#     points(radj[,j,i], col = c('blue','red')[i-1], type = 'l')
+#   }
+# }
+# plot.new()
+# legend('center',col = c('black','blue','red'),
+#        legend = paste('Area',1:3), lty = 1, cex = 1.5)
+# 
+# dev.off()
 
-plotseq = seq(1,length(Ftest),5)
-par(mfrow = c(5,ceiling(length(plotseq)/5)), 
+
+plotseq = c(9,11,13)
+par(mfrow = c(4,length(plotseq)),
     mar = c(5,5,1.5,1.5))
-for(j in plotseq){
-  plot(radj[,j,1], col = 'black', 
-       type = 'l', ylim = c(0,800), 
-       xlab = 'Iteration No.',ylab =  'R_eq')
-  text(x = maxiter*0.5, y = 600,
-       cex = 1.5, label = paste0('F = ',Ftest[j]))
-  ## niter x fv x areas
-  for(i in 2:narea){
-    points(radj[,j,i], col = c('blue','red')[i-1], type = 'l')
-  }
-}
+# plist = list()
+for(i in 1:4){
+  radj <- data.frame(rRef_proposed_radj[,,,i])
+  
+  for(j in plotseq){
+    plot(radj[,j,1], col = 'black', 
+         type = 'l', ylim = c(0,800), 
+         xlab = 'Iteration No.',ylab =  'R_eq')
+    text(x = maxiter*0.5, y = 600,
+         cex = 1.5, label = paste0('F = ',Ftest[j]))
+    ## niter x fv x areas
+    for(k in 2:narea){
+      points(radj[,j,k], col = c('blue','red')[k-1], type = 'l')
+    }
+  } ## end j (Fs)
+} ## end RR
 plot.new()
 legend('center',col = c('black','blue','red'), 
        legend = paste('Area',1:3), lty = 1, cex = 1.5)
 
 dev.off()
+
+
 
 ## R_eq_method
 
@@ -231,28 +259,104 @@ R_eq_i[,4] <- rowSums(R_eq_i)
 
 
 ## Rick's plots ----
-p1 <- ggplot(current, aes(x = Fv, y = Yield)) + 
-  geom_line(lwd = 1.1, aes(color = 'current')) + 
-  geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
-  scale_color_manual(values = c('seagreen','goldenrod')) +
-  theme_sleek() +theme(legend.position = 'none') #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+# p1 <- ggplot(current, aes(x = Fv, y = Yield)) + 
+#   geom_line(lwd = 1.1, aes(color = 'current')) + 
+#   geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
+#   scale_color_manual(values = c('seagreen','goldenrod')) +
+#   theme_sleek() +theme(legend.position = 'none') #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+# 
+# 
+# p3 <- ggplot(current, aes(x = B, y = Yield)) + 
+#   geom_line(lwd = 1.1, aes(color = 'current')) + 
+#   geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
+#   scale_color_manual(values = c('seagreen','goldenrod')) +
+#   labs(color = "Approach") + 
+#   theme_sleek() +theme(legend.position = c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+# 
+# 
+# p1  | p3
+# 
+# ggsave(last_plot(),
+#        file = here('figs',paste0("Yield_Comparison_Movement_",paste(R0_list[[1]], collapse = "-")),".png"),
+#        width = 8, height = 6, unit = 'in', dpi = 420)
 
+ p1list = barlist=list()
+ for(i in 1:4){
+   current <- data.frame(rRef_current[,,i])
+   names(current) <- c('Fv','Yield','B')
+   proposed <-  data.frame(rRef_proposed[,,i])
+   names(proposed) <- c('Fv','Yield','B')
+   p1list[[i]] <- ggplot(current, aes(x = Fv, y = Yield)) +
+     geom_line(lwd = 1.1, aes(color = 'current')) +
+     geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
+     scale_color_manual(values = c('seagreen','goldenrod')) +
+     labs(x = 'F', y = ifelse(i == 1, 'Yield',""), color = "") +
+     theme_sleek() +
+     theme(legend.position = if(i < 4) 'none' else c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+ 
+   
+  barlist[[i]] <- melt(data.frame(R0_list[[i]])) %>%
+     mutate(Area = 1:3) %>%
+   ggplot(., aes(x = Area, y = value, fill = factor(Area))) +
+     geom_histogram(stat = 'identity',
+                    boundary = 0)+
+     scale_fill_grey()  +
+    annotate('text', x = 1:3, y = 200,
+             label = paste('Area',1:3),
+             color = c("grey88","grey33","grey22"), size = 3)+
+    scale_y_continuous(limits = c(0,500)) +
+     theme_void()+
+    theme(legend.position = 'none')
+   
+   }
+ 
+ lay = rbind(c(1,2,3,4),
+                c(5,6,7,8),
+                c(5,6,7,8))
 
-p3 <- ggplot(current, aes(x = B, y = Yield)) + 
-  geom_line(lwd = 1.1, aes(color = 'current')) + 
-  geom_line(data = proposed, lwd = 1.1,linetype = 'dashed', aes(color = 'proposed')) +
-  scale_color_manual(values = c('seagreen','goldenrod')) +
-  labs(color = "Approach") + 
-  theme_sleek() +theme(legend.position = c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
-
-
-p1  | p3
-
-ggsave(last_plot(),
-       file = here('figs',"Yield_Comparison_Movement_v4.png"),
-       width = 8, height = 6, unit = 'in', dpi = 420)
-
+ ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
+                          layout = lay,
+                          cols = 4),
+        file = here('figs',"Yield_comparison_Rref_steep=1.png"),
+        width = 10, height = 8, unit = 'in', dpi = 420)
+ 
+ 
 ## Ricks plots by area ----
+ p1list = list()
+ for(i in 1:4){
+
+   proposed_i <-  rRef_proposed_i[,,,i]
+   propi1 <- data.frame(proposed_i[,1:3,1])
+   names(propi1) <- c('Fv','Yield','B')
+   propi2 <- data.frame(proposed_i[,1:3,2])
+   names(propi2) <- c('Fv','Yield','B')
+   propi3 <- data.frame(proposed_i[,1:3,3])
+   names(propi3) <- c('Fv','Yield','B')
+   
+   p1list[[i]] <- ggplot( ) +
+     geom_line(data = propi1, lwd = 1.1,
+               aes(x = Fv, y = Yield, col = 'Area 1') ) +
+     geom_line(data = propi2, lwd = 1.1,
+               aes(x = Fv, y = Yield, col = 'Area 2') ) +
+     geom_line(data = propi3, lwd = 1.1,
+               aes(x = Fv, y = Yield, col = 'Area 3') ) +
+     labs(x = 'F', y = ifelse(i == 1, 'Yield',""), color = "") +
+     scale_color_grey() + scale_y_continuous(limits = c(0,65)) +
+     theme_sleek() +
+     theme(legend.position = if(i < 4) 'none' else c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+   
+ 
+   
+ }
+
+  
+ ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
+                          layout = lay,
+                          cols = 4),
+         file = here('figs',"Yield_comparison_Area_Rref.png"),
+         width = 10, height = 8, unit = 'in', dpi = 420)
+ 
+ 
 p4 <- ggplot( ) +
   geom_line(data = data.frame(proposed_i[,,1]), aes(x = Fv, y = Yield, col = 'Area 1') ) +
   geom_line(data = data.frame(proposed_i[,,2]), aes(x = Fv, y = Yield, col = 'Area 2') ) +
