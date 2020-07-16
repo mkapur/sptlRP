@@ -55,7 +55,7 @@ ggsave(Rmisc::multiplot(plotlist = plist,
 
 ## Nums at age ----
 # doNage(s = 1,  Fv = rep(0,narea), eq_method == 'STD')[,1:3] %>%
-doNage( Fv = rep(0,narea), X = X_ija)$N_ai %>%
+doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[1]])$N_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -71,7 +71,7 @@ doNage( Fv = rep(0,narea), X = X_ija)$N_ai %>%
         legend.text = element_text(size = 20))
 
 ggsave(last_plot(), 
-       file = here('figs','Nage_Rick_NoMovEqualRec.png'),
+       file = here('figs','Nage_XX.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
@@ -125,7 +125,8 @@ ggsave(last_plot(),
        file = here('figs','Nage_All.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
 ## B0 ----
-doNage( Fv = rep(0,narea), X = X_ija_NULL)$B_ai %>%
+doNage( Fv = rep(0,narea), X = X_ija, 
+        refR = R0_list[[1]])$B_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -145,7 +146,7 @@ ggsave(last_plot(),
        width = 6, height = 4, unit = 'in', dpi = 520)
 
 ## SB0 ----
-doNage( Fv = rep(0,narea), X = X_ija)$SB_ai %>%
+ doNage( Fv = rep(0.55,narea), X = X_ija, refR = c(108.2182,85.02972,64.41718))$SB_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -153,17 +154,20 @@ doNage( Fv = rep(0,narea), X = X_ija)$SB_ai %>%
   ggplot(., aes(x = Age, y = value, col = Area)) +
   geom_line(lwd = 1.1) + 
   scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'Age', y = 'Spawning Biomass', color = '') +
+  labs(x = 'Age', y = 'Spawning Biomass', color = '',
+       title = 'Unfished Spawning Biomass',
+       subtitle = paste0("Area ",1:3," R0 = " ,R0_list[[1]], collapse = ", ")) +
   theme_sleek() + 
+  # scale_y_continuous(limits = c(0,50)) +
   theme(legend.position = c(0.8,0.9), 
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 16),
-        legend.text = element_text(size = 20))
-
-
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 16))
+# R0_list[[1]]
+ 
 ggsave(last_plot(), 
-       file = here('figs','SSB.png'),
-       width = 6, height = 4, unit = 'in', dpi = 520)
+       file = here('figs','SSB_A3comp.png'),
+       width = 8, height = 6, unit = 'in', dpi = 520)
 
 ## Brute Y----
 
@@ -222,35 +226,126 @@ ggsave(last_plot(),
 #        legend = paste('Area',1:3), lty = 1, cex = 1.5)
 # 
 # dev.off()
+png(here('figs','R_eq_iterations_v4_buffer.png'),
+    height = 8.5, width = 11, unit = 'in', res = 600)
 
-
-plotseq = c(9,11,13)
-par(mfrow = c(4,length(plotseq)),
+plotseq = c(10:15)
+par(mfrow = c(dim(rRef_proposed_radj)[4],length(plotseq)),
     mar = c(5,5,1.5,1.5))
+
 # plist = list()
-for(i in 1:4){
-  radj <- data.frame(rRef_proposed_radj[,,,i])
-  
-  for(j in plotseq){
-    plot(radj[,j,1], col = 'black', 
-         type = 'l', ylim = c(0,800), 
-         xlab = 'Iteration No.',ylab =  'R_eq')
-    text(x = maxiter*0.5, y = 600,
-         cex = 1.5, label = paste0('F = ',Ftest[j]))
-    ## niter x fv x areas
-    for(k in 2:narea){
-      points(radj[,j,k], col = c('blue','red')[k-1], type = 'l')
-    }
-  } ## end j (Fs)
-} ## end RR
+for(i in 1:dim(rRef_proposed_radj)[4]){
+
+  radj <- rRef_proposed_radj[,,,i]
+    for(j in plotseq){
+      if(i == dim(rRef_proposed_radj)[4] & j == max(plotseq)) next()
+      plot(radj[,j,1], col = 'black', 
+           type = 'l', ylim = c(0,800), 
+           xlab = 'Iteration No.',
+           ylab =  'R_eq')
+      text(x = maxiter*0.5, y = 600,
+           cex = 1.5, label = paste0('F = ',Ftest[j]))
+      ## niter x fv x areas
+      for(k in 2:narea){
+        lines(radj[,j,k], col = c('blue','red')[k-1])
+      }
+    } ## end j (Fs)
+  } 
+
 plot.new()
-legend('center',col = c('black','blue','red'), 
-       legend = paste('Area',1:3), lty = 1, cex = 1.5)
+legend('center',
+       col = c('black','blue','red'), 
+       legend = paste('Area',1:3), lty = 1, cex = 1)
 
 dev.off()
 
 
+## exploring convergence draa ----
+plot(rRef_proposed_radj[,12,3,4],type = 'p', col = 'red', 
+     ylim = c(0,500))
+lines(rRef_proposed_radj[,12,2,4],type = 'p', col = 'blue')
+lines(rRef_proposed_radj[,12,1,4],type = 'p', col = 'black')
 
+
+plot(rRef_proposed_SBi[,11,3,1],type = 'l', col = 'red',ylim= c(0,80))
+lines(rRef_proposed_SBi[,11,2,1],type = 'l', col = 'blue')
+lines(rRef_proposed_SBi[,11,1,1],type = 'l', col = 'black')
+
+
+plot(rRef_proposed_sbpr[,16,3,1],type = 'l', col = 'red',
+     ylim = c(0,max(rRef_proposed_sbpr[,16,3,1])))
+lines(rRef_proposed_sbpr[,16,2,1],type = 'l', col = 'blue')
+lines(rRef_proposed_sbpr[,16,1,1],type = 'l', col = 'black')
+
+plot(rRef_proposed_radj[2:101,12,3,1] ~rRef_proposed_radj[1:100,12,3,1])
+
+plot(rRef_proposed_SBi[2:101,12,3,1] ~rRef_proposed_SBi[1:100,12,3,1])
+
+
+
+
+
+plot(rRef_proposed_SBi[1:100,12,3,1],
+       rRef_proposed_radj[2:101,12,3,1])
+
+## small SB and rRef lead to huge SBPR (divide small #s)
+ggplot(data = NULL, aes(x = rRef_proposed_radj[1:100,12,3,1],
+                        y = rRef_proposed_SBi[1:100,12,3,1],
+                        color = rRef_proposed_sbpr[1:100,12,3,1])) +
+  geom_point() +
+  geom_text(label = list(round(rRef_proposed_sbpr[1:101,12,3,1] ,2),
+                         round(rRef_proposed_radj[2:101,12,3,1] ,4),
+                         round(rRef_proposed_SBi[1:101,12,3,1] ,4))[[2]],
+            check_overlap = TRUE)
+
+# as input Rref gets lower, next rRef gets higher,
+## and vice versa
+## the highest SBPRs occur at the lowest rRefs bc div by large nums
+ggplot(data = NULL, aes(x = rRef_proposed_radj[1:100,12,3,1],
+                        y = rRef_proposed_radj[2:101,12,3,1],
+                        color = list(factor(2:101),
+                                     rRef_proposed_sbpr[2:101,12,3,1],
+                                     c('black',
+                                       rRef_proposed_SBi[2:101,12,3,1]))[[1]])) +
+  geom_point() + #scale_color_grey() +
+  geom_text(label = list(round(rRef_proposed_sbpr[2:101,12,3,1] ,2),
+                         round(rRef_proposed_radj[1:101,12,3,1] ,4),
+                         round(rRef_proposed_SBi[1:101,12,3,1] ,4),
+                        paste('iter',1:101))[[1]],
+            # check_overlap = TRUE,
+            color = 'black') +
+  labs(x = "r eq input iter", y = "next r_eq", color = "sbpr at next r_eq")
+
+rRef_proposed_radj[1:101,12,3,1][
+  which(round(rRef_proposed_sbpr[1:101,12,3,1] ,2) == 0.27)]
+
+## there are only 2 values of SBPR
+ggplot(data = NULL, aes(x = rRef_proposed_SBi[1:101,12,3,1],
+                        y = rRef_proposed_sbpr[1:101,12,3,1],
+                        color = rRef_proposed_radj[1:101,12,3,1])) +
+  geom_point()
+
+
+## does A3 always have the highest SBPR
+for(v in 1:length(Ftest)){
+  for(k in 1:maxiter){
+    if(which.max(rRef_proposed_sbpr[k,v,,1]) != 3) stop("error RR1")
+    if(which.max(rRef_proposed_sbpr[k,v,,2]) != 3) stop("error RR2")
+    if(which.max(rRef_proposed_sbpr[k,v,,3]) != 3) stop("error RR3")
+    if(which.max(rRef_proposed_sbpr[k,v,,4]) != 3) stop("error RR4")
+    
+  }}
+
+## sanity check calcs happened correctly
+(rRef_proposed_SBi[1:101,12,3,1]/rRef_proposed_radj[1:101,12,3,1]) ==
+  rRef_proposed_sbpr[1:101,12,3,1]
+## it's a rounding issue
+plot((rRef_proposed_SBi[1:101,12,3,1]/rRef_proposed_radj[1:101,12,3,1]) ~
+       rRef_proposed_sbpr[1:101,12,3,1], ylim = c(0,1), xlim = c(0,1))
+abline(0,1, col = 'red')
+
+## 24 is where oscillations start
+which(rRef_proposed_SBi[1:100,12,3,1] <rRef_proposed_SBi[1:100,12,1,1])
 ## R_eq_method
 
 R_eq_i[,4] <- rowSums(R_eq_i)
@@ -317,12 +412,13 @@ R_eq_i[,4] <- rowSums(R_eq_i)
  ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
                           layout = lay,
                           cols = 4),
-        file = here('figs',"Yield_comparison_Rref_steep=1.png"),
+        file = here('figs',"Yield_comparison_Rref_Buffer=0.005.png"),
         width = 10, height = 8, unit = 'in', dpi = 420)
  
  
 ## Ricks plots by area ----
  p1list = list()
+ blist= list()
  for(i in 1:4){
 
    proposed_i <-  rRef_proposed_i[,,,i]
@@ -345,15 +441,33 @@ R_eq_i[,4] <- rowSums(R_eq_i)
      theme_sleek() +
      theme(legend.position = if(i < 4) 'none' else c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
    
+ blist[[i]] <-  ggplot( ) +
+   geom_line(data = propi1, lwd = 1.1,
+             aes(x = Fv, y = B, col = 'Area 1') ) +
+   geom_line(data = propi2, lwd = 1.1,
+             aes(x = Fv, y = B, col = 'Area 2') ) +
+   geom_line(data = propi3, lwd = 1.1,
+             aes(x = Fv, y = B, col = 'Area 3') ) +
+   labs(x = 'F', y = ifelse(i == 1, 'B',""), color = "") +
+   scale_color_grey() + 
+   scale_y_continuous(limits = c(0,625)) +
+   theme_sleek() +
+   theme(legend.position = if(i < 4) 'none' else c(0.7,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
  
-   
  }
 
-  
+
+ ggsave(  Rmisc::multiplot(plotlist = c(barlist,blist),
+                           layout = lay,
+                           cols = 4)
+          ,
+         file = here('figs',"BvF_Area_Rref_nomove.png"),
+         width = 10, height = 8, unit = 'in', dpi = 420) 
+ 
  ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
                           layout = lay,
                           cols = 4),
-         file = here('figs',"Yield_comparison_Area_Rref.png"),
+         file = here('figs',"Yield_comparison_Area_Rref_nomove.png"),
          width = 10, height = 8, unit = 'in', dpi = 420)
  
  

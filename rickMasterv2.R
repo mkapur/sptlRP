@@ -14,14 +14,15 @@ require(ggplot2, quietly = T)
 ## settings ----
 narea <- 3
 nages <- 21
-steep <- rep(1,3)
-recr_dist <- list(c(1,1,1),
-                  c(0.5,0.3,0.2))[[1]] ## global recruits to areas
+steep <- rep(0.7,3)
+recr_dist <- c(1,1,1) ## global recruits to areas
 
 R0_list <- list(c(420,330,250),
                 rev(c(420,330,250)),
                 c(333,333,333),
-                c(499,499,2))
+                c(499,499,2)) #,
+                # c(2,2,499),
+                # c(420,330,1000))
 ## each area has its own R0
 # rec_level <- R0 ## I suggest it should be the area-specific R0.
 # nominal_dist <- R0/sum(R0)
@@ -56,7 +57,7 @@ for(RR in 1:dim(rRef_current)[3]){
                    refR = rlevelUse)$SB_total
     
     ## get values at present Fv
-    curr <- doNage( Fv = rep(Ftest[v],narea), 
+    curr <- doNage( Fv =  rep(Ftest[v],narea), #c(rep(Ftest[v],2),0), #
                     X = X_ija,
                     rdist = recr_dist, ## these are set to 1
                     refR = rlevelUse)
@@ -86,14 +87,11 @@ for(RR in 1:dim(rRef_current)[3]){
 
 ## applying system-wide F
 maxiter = 101
-
-
-
 rRef_proposed <- array(NA, dim = c(length(Ftest),3,length(R0_list)))
-rRef_proposed_radj <- array(NA, dim = c(maxiter,length(Ftest),narea,length(R0_list)))
+rRef_proposed_radj <- rRef_proposed_sbpr <- rRef_proposed_SBi <- array(NA, dim = c(maxiter,length(Ftest),narea,length(R0_list)))
 rRef_proposed_i <- array(NA, dim = c(length(Ftest),3,narea,length(R0_list)))
-                         
-for(RR in 1:dim(rRef_current)[3]){
+
+for(RR in 1:dim(rRef_proposed)[3]){
   rec_level <- R0 <- R0_list[[RR]]
   proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
   proposed_i <- array(NA, dim = c(length(Ftest),3,narea), dimnames = list(NULL,c('Fv','Yield',"B"))) ## now for each area  ## define virgin biomass by AREA, does not change
@@ -111,14 +109,17 @@ for(RR in 1:dim(rRef_current)[3]){
       if(k == 1){
         rdistUse <- recr_dist ## no distribution now; full rec-level in each area
         rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
+        # SB_Ri3LAST  <- rec_level[3] ## not yet overwritten
       } else{
         rdistUse <- recr_dist ## only after computing R_i
-        rlevelUse =   R_eq_i[v,]
+        rlevelUse =  R_eq_i[v,]# c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
+        # SB_Ri3LAST  <- SB_Ri[v,3] ## not yet overwritten
       }
+      cat("inreq \t",v,k,i, rlevelUse, "\n")
       ## get values at present Fv
       # In each iteration, calculate the SSB and Yield that 
       # comes from those recruits, taking movement into account
-      prop <- doNage( Fv = rep(Ftest[v],narea), 
+      prop <- doNage( Fv = rep(Ftest[v],narea), #c(rep(Ftest[v],2),0), #
                       X = X_ija,
                       rdist = rdistUse,
                       refR = rlevelUse) 
@@ -129,17 +130,36 @@ for(RR in 1:dim(rRef_current)[3]){
         # calc area-specific SPB/R and Yield/R, using area-specific R
         
         if( k > 1){
-          rleveltmp = rlevelUse[i]
+          rleveltmp = min(rlevelUse[i], R0[i])
         } else{
           rleveltmp = rlevelUse[i]
         }
+        # if(round(rleveltmp) == 0) next() ## end iteration if rec is now zero
+        # cat(v, k,i,rleveltmp,"\n")
+        # radj[k,v,i] <- rleveltmp
+        rRef_proposed_radj[k,v,i,RR] <- rleveltmp
+        # SB_Ri[v,i] <- prop$SB_i[i]/(rleveltmp*rdistUse[i])## on k = 1 will just be rleveltemp
+   
         
-        cat(v, k,i,round(rleveltmp),"\n")
-        radj[k,v,i] <- rleveltmp
+        # SB_Ri[v,i] <- prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## on k = 1 will just be rleveltemp
+        SB_Ri[v,i] <-  prop$SB_i[i]/((rleveltmp+0.005)*rdistUse[i]) ## Rick's idea
+        # if( SB_Ri[v,i] > SB0_i[i]) SB_Ri[v,i] <- SB0_i[i] ## penalty for dividing small numbers
         
-        SB_Ri[v,i] <- prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## on k = 1 will just be rleveltemp
+        # if(k > 2){
+          
+          # SB_Ri[v,3] <- mean(rRef_proposed_sbpr[k-1,v,3,RR],
+          #                   prop$SB_i[i]/(rleveltmp*rdistUse[i]))
+          # SB_Ri[v,3] <- min(rRef_proposed_sbpr[k-1,v,3,RR],
+          #                   prop$SB_i[i]/(rleveltmp*rdistUse[i])) ## on k = 1 will just be rleveltemp
+        # }
+        
         Yield_Ri[v,i] <- prop$Yield_i[i]/(rleveltmp*rdistUse[i])
         
+        rRef_proposed_SBi[k,v,i,RR] <-  prop$SB_i[i]
+        rRef_proposed_sbpr[k,v,i,RR] <- SB_Ri[v,i]
+        
+     
+        # cat(v, k,i,    prop$SB_i[i],SB_Ri[v,i],"\n")
         ## Calc area-specific recruits using area-specific SB etc
         propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
                                        Recr_virgin = R0[i], SPR_temp = SB_Ri[v,i])
@@ -151,29 +171,74 @@ for(RR in 1:dim(rRef_current)[3]){
           proposed_i[v,'Fv',i] <- Ftest[v]
           proposed_i[v,'Yield',i] <-  Yield_Ri[v,i]*R_eq_i[v,i]
           proposed_i[v,'B',i] <-    SB_Ri[v,i] *R_eq_i[v,i]
+          # cat("B \t",v,k,i,  proposed_i[v,'B',i], "\n")
+          cat("Yield \t",v,k,i,  proposed_i[v,'B',i], "\n")
+          
         } ## end k max
-      } ## end areas    
-      cat(v, k,i, Yield_Ri[v,i]*R_eq_i[v,i],"\n")
-      if(k == maxiter){ ## store quantities
-        ## storing info, not currently used
-        rick[v,"Fv"] <- Ftest[v]
-        rick[v,"SBeqtotal"] <-   sum(B_eq_i[v,] )
-        ## sum of expected recruits in areas
-        rick[v,"R_SUMEBA"]  <- sum( R_eq_i[v,])
-      }
+      } ## end areas
+      # cat("SB_i \t",v,k,i, prop$SB_i, "\n")
+      # cat("SBPR \t",v,k,i, SB_Ri[v,], "\n")
+      # cat("NEWREQ \t",v,k,i, R_eq_i[v,], "\n")
+      # cat("SB_i_ratio \t",v,k,i, prop$SB_i/sum(prop$SB_i), "\n")
+      # cat("NewREQ_ratio \t",v,k,i, R_eq_i[v,]/sum(R_eq_i[v,]), "\n")
+      # cat("SBPR_ratio \t",v,k,i, SB_Ri[v,]/sum(SB_Ri[v,]), "\n")
+      
+      # if(k == maxiter){ ## store quantities
+      #   ## storing info, not currently used
+      #   rick[v,"Fv"] <- Ftest[v]
+      #   rick[v,"SBeqtotal"] <-   sum(B_eq_i[v,] )
+      #   ## sum of expected recruits in areas
+      #   rick[v,"R_SUMEBA"]  <- sum( R_eq_i[v,])
+      # }
     } ## end k:maxiter
     ## save totals from final iteration
     proposed[v,'Fv'] <- Ftest[v]
     proposed[v,'Yield'] <-   sum(proposed_i[v,'Yield',])
     proposed[v,'B'] <-  sum(proposed_i[v,'B',])
+
+    
   } ## end FV
-  rRef_proposed_radj[,,,RR] <- radj
+
   rRef_proposed[,,RR] <- as.matrix(proposed)
   rRef_proposed_i[,,,RR] <- proposed_i
 } ## end RR
 
+## do the oscillations start whenever B_sink < B_source? yes
+ss <- data.frame(RR = 1:4, Fv_obs= c(0.55,0.6,0.55,NA), FV_SLTS = NA)
+for(i in 1:4){
+  ss$RR <- i
+sinkLTsource <- which(rRef_proposed_i[,3,3,i] < rRef_proposed_i[,3,2,i] &
+        rRef_proposed_i[,3,3,i] < rRef_proposed_i[,3,1,i] )[1]
+Ftest[sinkLTsource]
+ss$FV_SLTS[i] <- Ftest[sinkLTsource]
+}
 
-## get Fsys_msy and sys_yield
+## TRIAL 1B ----
+## get Fsys_msy and sys_yield ----
+
+
+terminal.req <-   rRef_proposed_radj[maxiter,,,RR]
+optim.proposed <- function(Fv_i, terminal_req){
+  
+  prop <- doNage( Fv = Fv_i, 
+                  X = X_ija,
+                  rdist = rdistUse,
+                  refR = terminal_req) 
+  SB_Ri <- prop$SB_i[i]/(terminal_req) ## on k = 1 will just be rleveltemp
+  Yield_Ri <- prop$Yield_i[i]/(terminal_req)
+  
+  ## Calc area-specific recruits using area-specific SB etc
+  propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
+                                 Recr_virgin = R0[i], SPR_temp = SB_Ri)
+  
+  B_eq_i <- propEq$B_equil
+  R_eq_i<- propEq$R_equil ## gets overwritten each iteration
+  Yield <- Yield_Ri*R_eq_i
+  B <- SB_Ri *R_eq_i
+  
+  return(list(Yield,B))
+}
+
 
 dfx.dxSYS <- function(Fv_test, h = steep, eq_method ){
   y1 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test-0.001,narea), eq_method = eq_method)$yield
