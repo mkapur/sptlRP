@@ -31,7 +31,8 @@ doNage <- function(X = X_ija, ## input movement matrix
         if(a == max(nages)){
           # NSurv_ai[a,i] <-  NSurv_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
           # NSurv_ai[a,i] <-  N_ai[a-1,i]*exp(-Z_ai[a-1,i])/(1- exp(-Z_ai[a,i]))
-          NSurv_sai[sex,a,i] <-  N_sai[sex,a-1,i]*exp(-Z_sai[sex,a-1,i])/(1- exp(-Z_sai[sex,a,i]))
+          NSurv_sai[sex,a,i] <-  N_sai[sex,a-1,i]*exp(-Z_sai[sex,a-1,i])/ifelse(Z_sai[sex,a,i] !=0,
+                                                                                1- exp(-Z_sai[sex,a,i]),1)
           
           ## Calc SPB for each area-age
           # B_ai[a,i] <-   NSurv_ai[a,i]*indat[a,s+2,i] ## weight in 3 and 4 col
