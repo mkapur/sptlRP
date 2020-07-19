@@ -130,7 +130,7 @@ for(RR in 1:dim(rRef_proposed)[3]){
         # calc area-specific SPB/R and Yield/R, using area-specific R
         
         if( k > 1){
-          rleveltmp = min(rlevelUse[i], R0[i])
+          rleveltmp = rlevelUse[i] #min(, R0[i]) if unconstrained will be ~10 over R0
         } else{
           rleveltmp = rlevelUse[i]
         }
@@ -240,9 +240,10 @@ optim.proposed <- function(Fv_i, terminal_req){
 }
 
 
-dfx.dxSYS <- function(Fv_test, h = steep, eq_method ){
-  y1 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test-0.001,narea), eq_method = eq_method)$yield
-  y2 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test+0.001,narea), eq_method = eq_method)$yield
+dfx.dxSYS <- function(Fv_test ){
+  y1 <- optim_proposed(Fv_i = rep(Fv_test,narea), terminal.req  )
+  # y1 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test-0.001,narea), eq_method = eq_method)$yield
+  # y2 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test+0.001,narea), eq_method = eq_method)$yield
   appx <- (sum(y2)-sum(y1))/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }

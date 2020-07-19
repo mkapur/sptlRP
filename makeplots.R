@@ -457,11 +457,11 @@ R_eq_i[,4] <- rowSums(R_eq_i)
  }
 
 
- ggsave(  Rmisc::multiplot(plotlist = c(barlist,blist),
+ ggsave(  Rmisc::multiplot(plotlist = c(barlist,p1list),
                            layout = lay,
                            cols = 4)
           ,
-         file = here('figs',"BvF_Area_Rref_nomove.png"),
+         file = here('figs',"YieldvF_Area_Rref_Buffer=0.005.png"),
          width = 10, height = 8, unit = 'in', dpi = 420) 
  
  ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
