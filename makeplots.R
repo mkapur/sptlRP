@@ -54,7 +54,6 @@ ggsave(Rmisc::multiplot(plotlist = plist,
        width = 10, height = 8, unit = 'in', dpi = 520)
 
 ## Nums at age ----
-# doNage(s = 1,  Fv = rep(0,narea), eq_method == 'STD')[,1:3] %>%
 doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[1]])$N_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
@@ -69,61 +68,91 @@ doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[1]])$N_ai %>%
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
         legend.text = element_text(size = 20))
-
 ggsave(last_plot(), 
-       file = here('figs','Nage_XX.png'),
+       file = here('figs','Nage_RR1.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
+## Nums at age panel ----
+nagelist <- nagelist2 <- list()
+for(RR in 1:4){
+  nagelist[[RR]] <- doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[RR]])$N_ai %>%
+    data.frame() %>%
+    mutate(Age = 1:nages) %>%
+    reshape2::melt(id = 'Age') %>%
+    mutate(Area = substr(variable,2,2)) %>%
+    ggplot(., aes(x = Age-1, y = value, col = Area)) +
+    geom_line(lwd = 1.1) + 
+    scale_color_grey(labels = paste("Area",1:3)) +
+    labs(x = 'Age', y = 'Total Numbers', color = '') +
+    theme_sleek() +  theme(legend.position = 'none')
+    # theme(legend.position = c(0.5,0.5), 
+    #       axis.title = element_text(size = 16),
+    #       axis.text = element_text(size = 16),
+    #       legend.text = element_text(size = 20))
+}
+for(RR in 1:4){
+nagelist2[[RR]] <- ggdraw() +
+  draw_plot(nagelist[[RR]]) +
+  draw_plot(barlist[[RR]]+
+              annotate('text', x = 2, y = 500, cex = 4,
+                       label = 'Initial Recruitment'), 
+            x = 0.6, y = 0.5,
+            width = .3, height = .3)
+}
 
-doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
-  data.frame() %>%
-  mutate(Age = 1:nages) %>%
-  reshape2::melt(id = 'Age') %>%
-  mutate(Area = substr(variable,2,2)) %>%
-  ggplot(., aes(x = Age, y = value, col = Area)) +
-  geom_line(lwd = 1.1) + 
-  scale_color_grey(labels = paste("Area",1:3)) +
-  labs(x = 'Age', y = 'Relative Numbers', color = '') +
-  theme_sleek() + 
-  theme(legend.position = c(0.8,0.9), 
-        axis.title = element_text(size = 16),
-        axis.text = element_text(size = 16),
-        legend.text = element_text(size = 20))
-ggsave(last_plot(), 
-       file = here('figs','Nage_STB.png'),
-       width = 6, height = 4, unit = 'in', dpi = 520)
-
-rbind(
-doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STD')[,1:3] %>%
-  data.frame() %>%
-  mutate(Age = 1:nages, EQ = 'STD')%>%
-  reshape2::melt( id = c('Age','EQ')),
-doNage(s = 1,  Fv = rep(0,narea), eq_method = 'TIME')[,1:3] %>%
-  data.frame() %>%
-  mutate(Age = 1:nages, EQ = 'TIME')%>%
-  reshape2::melt( id = c('Age','EQ')),
-doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
-  data.frame() %>%
-  mutate(Age = 1:nages, EQ = 'STB')%>%
-  reshape2::melt( id = c('Age','EQ'))) %>%
-  mutate(Area = substr(variable,2,2)) %>% 
-  select(-variable) %>%
-  mutate(group = paste0("Area ",Area," ",EQ)) %>%
-  ggplot(., aes(x = Age, y = value, col = Area, linetype = group)) +
-  geom_line(lwd = 1.1) + 
-  scale_color_grey() +
-  scale_linetype_manual(values = rep(c('solid','dashed','dotted'),3))+
-  scale_y_continuous(limits = c(0,1.5)) +
-  labs(x = 'Age', y = 'Relative Numbers', color = '', linetype = "") +
-  theme_sleek() + 
-  theme(legend.position = 'none', 
-        axis.title = element_text(size = 10),
-        axis.text = element_text(size = 10),
-        legend.text = element_text(size = 20)) +
-  facet_wrap(~EQ)
-
-ggsave(last_plot(), 
-       file = here('figs','Nage_All.png'),
+ggsave(Rmisc::multiplot(plotlist = nagelist2,  cols = 2), 
+       file = here('figs','Nage_panel.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
+
+# doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
+#   data.frame() %>%
+#   mutate(Age = 1:nages) %>%
+#   reshape2::melt(id = 'Age') %>%
+#   mutate(Area = substr(variable,2,2)) %>%
+#   ggplot(., aes(x = Age, y = value, col = Area)) +
+#   geom_line(lwd = 1.1) + 
+#   scale_color_grey(labels = paste("Area",1:3)) +
+#   labs(x = 'Age', y = 'Relative Numbers', color = '') +
+#   theme_sleek() + 
+#   theme(legend.position = c(0.8,0.9), 
+#         axis.title = element_text(size = 16),
+#         axis.text = element_text(size = 16),
+#         legend.text = element_text(size = 20))
+# ggsave(last_plot(), 
+#        file = here('figs','Nage_STB.png'),
+#        width = 6, height = 4, unit = 'in', dpi = 520)
+
+# rbind(
+# doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STD')[,1:3] %>%
+#   data.frame() %>%
+#   mutate(Age = 1:nages, EQ = 'STD')%>%
+#   reshape2::melt( id = c('Age','EQ')),
+# doNage(s = 1,  Fv = rep(0,narea), eq_method = 'TIME')[,1:3] %>%
+#   data.frame() %>%
+#   mutate(Age = 1:nages, EQ = 'TIME')%>%
+#   reshape2::melt( id = c('Age','EQ')),
+# doNage(s = 1,  Fv = rep(0,narea), eq_method = 'STB')[,1:3] %>%
+#   data.frame() %>%
+#   mutate(Age = 1:nages, EQ = 'STB')%>%
+#   reshape2::melt( id = c('Age','EQ'))) %>%
+#   mutate(Area = substr(variable,2,2)) %>% 
+#   select(-variable) %>%
+#   mutate(group = paste0("Area ",Area," ",EQ)) %>%
+#   ggplot(., aes(x = Age, y = value, col = Area, linetype = group)) +
+#   geom_line(lwd = 1.1) + 
+#   scale_color_grey() +
+#   scale_linetype_manual(values = rep(c('solid','dashed','dotted'),3))+
+#   scale_y_continuous(limits = c(0,1.5)) +
+#   labs(x = 'Age', y = 'Relative Numbers', color = '', linetype = "") +
+#   theme_sleek() + 
+#   theme(legend.position = 'none', 
+#         axis.title = element_text(size = 10),
+#         axis.text = element_text(size = 10),
+#         legend.text = element_text(size = 20)) +
+#   facet_wrap(~EQ)
+
+# ggsave(last_plot(), 
+#        file = here('figs','Nage_All.png'),
+#        width = 10, height = 8, unit = 'in', dpi = 520)
 ## B0 ----
 doNage( Fv = rep(0,narea), X = X_ija, 
         refR = R0_list[[1]])$B_ai %>%
@@ -226,7 +255,7 @@ ggsave(last_plot(),
 #        legend = paste('Area',1:3), lty = 1, cex = 1.5)
 # 
 # dev.off()
-png(here('figs','R_eq_iterations_v4_buffer.png'),
+png(here('figs','R_eq_iterations_v4_xr.png'),
     height = 8.5, width = 11, unit = 'in', res = 600)
 
 plotseq = c(10:15)
@@ -375,8 +404,12 @@ R_eq_i[,4] <- rowSums(R_eq_i)
 #        file = here('figs',paste0("Yield_Comparison_Movement_",paste(R0_list[[1]], collapse = "-")),".png"),
 #        width = 8, height = 6, unit = 'in', dpi = 420)
 
- p1list = barlist=list()
+ p1list = plist2 <-  barlist=list()
+ 
+
+
  for(i in 1:4){
+   labs = round(c(sysopt$FsysMSY,sysopt_curr$FsysMSY),3)
    current <- data.frame(rRef_current[,,i])
    names(current) <- c('Fv','Yield','B')
    proposed <-  data.frame(rRef_proposed[,,i])
@@ -387,7 +420,24 @@ R_eq_i[,4] <- rowSums(R_eq_i)
      scale_color_manual(values = c('seagreen','goldenrod')) +
      labs(x = 'F', y = ifelse(i == 1, 'Yield',""), color = "") +
      theme_sleek() +
-     theme(legend.position = if(i < 4) 'none' else c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+     annotate('text', x = 0.75, y = 95,
+              color ='seagreen',
+              label = as.expression(bquote(F[MSY]~"="~.(labs[i])))) +
+     
+     annotate('text', x = 0.75, y = 85,
+              color ='goldenrod',
+              label = as.expression(bquote(F[MSY]~"="~.(labs[i+4])))) +
+     
+     annotate('text', x = 0.75, y = 75,
+              color ='seagreen',
+              label = as.expression(bquote(MSY~"="~
+                                             .(round(sysopt_curr[i,'YsysMSY'],2))))) +
+     annotate('text', x = 0.75, y = 65,
+              color ='goldenrod',
+              label = as.expression(bquote(MSY~"="~
+                                             .(round(sysopt[i,'YsysMSY'],2)))))+
+     
+     theme(legend.position = if(i < 4) 'none' else c(0.75,0.5)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
  
    
   barlist[[i]] <- melt(data.frame(R0_list[[i]])) %>%
@@ -404,23 +454,40 @@ R_eq_i[,4] <- rowSums(R_eq_i)
     theme(legend.position = 'none')
    
    }
- 
- lay = rbind(c(1,2,3,4),
-                c(5,6,7,8),
-                c(5,6,7,8))
 
- ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
-                          layout = lay,
-                          cols = 4),
-        file = here('figs',"Yield_comparison_Rref_Buffer=0.005.png"),
+ for(RR in 1:4){
+   plist2[[RR]] <- ggdraw() +
+     draw_plot(p1list[[RR]] +   
+                 annotate('text', x = 0, y = 95, 
+                          label = toupper(letters[RR]), cex = 6)) +
+     draw_plot(barlist[[RR]]+
+                 annotate('text', x = 2, y = 500, cex = 4,
+                          label = 'Initial Recruitment'), 
+               x = 0.7, y = 0.15,
+               width = .25, height = .25) 
+   
+   
+ }
+ 
+ ggsave(  Rmisc::multiplot(plotlist = plist2,
+                           cols = 2),
+        file = here('figs',"Yield_comparison_Rref_Buffer=0.005_fmsy.png"),
         width = 10, height = 8, unit = 'in', dpi = 420)
+ 
+
+
  
  
 ## Ricks plots by area ----
  p1list = list()
  blist= list()
+ A1 = round(c(areaopt[,2],sysopt_curr$FsysMSY),3)
+ A2 = round(c(areaopt[,3],sysopt_curr$FsysMSY),3)
+ A3 = round(c(areaopt[,4],sysopt_curr$FsysMSY),3)
+ 
+ 
  for(i in 1:4){
-
+   
    proposed_i <-  rRef_proposed_i[,,,i]
    propi1 <- data.frame(proposed_i[,1:3,1])
    names(propi1) <- c('Fv','Yield','B')
@@ -437,40 +504,113 @@ R_eq_i[,4] <- rowSums(R_eq_i)
      geom_line(data = propi3, lwd = 1.1,
                aes(x = Fv, y = Yield, col = 'Area 3') ) +
      labs(x = 'F', y = ifelse(i == 1, 'Yield',""), color = "") +
-     scale_color_grey() + scale_y_continuous(limits = c(0,65)) +
+     scale_color_grey() + 
+     scale_y_continuous(limits = c(0,65)) +
+     
+     annotate('text', x = 0.75, y = 60,
+              color ='grey66',
+              label = as.expression(bquote(F[MSY]~"="~.(A1[i])))) +
+     annotate('text', x = 0.75, y = 55,
+              color ='grey44',
+              label = as.expression(bquote(F[MSY]~"="~.(A2[i])))) +
+     annotate('text', x = 0.75, y = 50,
+              color ='grey22',
+              label = as.expression(bquote(F[MSY]~"="~.(A3[i])))) +
+     annotate('text', x = 0.75, y = 45,
+              color ='blue',
+              label = as.expression(bquote(Total~Yield~"="~.(sum(areaopt[i,5:7]))))) +
+     
      theme_sleek() +
-     theme(legend.position = if(i < 4) 'none' else c(0.8,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+     theme(legend.position = 'none')
+     # theme(legend.position = if(i < 4) 'none' else c(0.8,0.2)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
    
- blist[[i]] <-  ggplot( ) +
-   geom_line(data = propi1, lwd = 1.1,
-             aes(x = Fv, y = B, col = 'Area 1') ) +
-   geom_line(data = propi2, lwd = 1.1,
-             aes(x = Fv, y = B, col = 'Area 2') ) +
-   geom_line(data = propi3, lwd = 1.1,
-             aes(x = Fv, y = B, col = 'Area 3') ) +
-   labs(x = 'F', y = ifelse(i == 1, 'B',""), color = "") +
-   scale_color_grey() + 
-   scale_y_continuous(limits = c(0,625)) +
-   theme_sleek() +
-   theme(legend.position = if(i < 4) 'none' else c(0.7,0.8)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
- 
+   blist[[i]] <-  ggplot( ) +
+     geom_line(data = propi1, lwd = 1.1,
+               aes(x = Fv, y = B, col = 'Area 1') ) +
+     geom_line(data = propi2, lwd = 1.1,
+               aes(x = Fv, y = B, col = 'Area 2') ) +
+     geom_line(data = propi3, lwd = 1.1,
+               aes(x = Fv, y = B, col = 'Area 3') ) +
+     labs(x = 'F', y = ifelse(i == 1, 'B',""), color = "") +
+     scale_color_grey() + 
+     scale_y_continuous(limits = c(0,625)) +
+     theme_sleek() +
+     theme(legend.position = 'none') #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
+   
  }
 
-
- ggsave(  Rmisc::multiplot(plotlist = c(barlist,p1list),
-                           layout = lay,
-                           cols = 4)
+ for(RR in 1:4){
+   plist2[[RR]] <- ggdraw() +
+     draw_plot(p1list[[RR]] +   
+                 annotate('text', x = 0, y = 60, 
+                          label = toupper(letters[RR]), cex = 6)) +
+     draw_plot(barlist[[RR]]+
+                 annotate('text', x = 2, y = 500, cex = 4,
+                          label = 'Initial Recruitment'), 
+               x = 0.65, y = 0.15,
+               width = .3, height = .3) 
+   
+   
+ }
+ 
+ ggsave( Rmisc::multiplot(plotlist = plist2,
+                          cols = 2)
           ,
-         file = here('figs',"YieldvF_Area_Rref_Buffer=0.005.png"),
+         file = here('figs',"YieldvF_Area_Rref_Buffer=0.005_Fopt.png"),
          width = 10, height = 8, unit = 'in', dpi = 420) 
  
- ggsave( Rmisc::multiplot(plotlist = c(barlist,p1list),
-                          layout = lay,
-                          cols = 4),
-         file = here('figs',"Yield_comparison_Area_Rref_nomove.png"),
-         width = 10, height = 8, unit = 'in', dpi = 420)
+
  
+
  
+## Yields vs F config ----
+ycomp <- data.frame(expand.grid('RR' = 1:4, 'eq_method' = c('current','proposed'),
+                                "F_method" = c('system','config'),
+                                'Area' = 1:3)) %>% mutate('yield' = NA)
+ycomp$Area[ycomp$eq_method == 'current'] <- 'Total'
+
+for(RR in 1:4){
+  
+  ycomp$yield[ycomp$RR == RR & ycomp$eq_method == 'current'][1] <- sysopt_curr$YsysMSY[RR]
+  ycomp$yield[ycomp$RR == RR & 
+                ycomp$eq_method == 'proposed' & 
+                ycomp$F_method == 'system'] <- sysopt[RR,5:7]
+  
+  ycomp$yield[ycomp$RR == RR & 
+                ycomp$eq_method == 'proposed' & 
+                ycomp$F_method == 'config'] <- areaopt[RR,5:7]
+ 
+}
+
+ylist <- ylist2 <- list()
+for(R in 1:4){
+  tmp <- ycomp %>% filter(RR == R)
+  
+
+  ylist[[R]] <- ggplot(tmp, aes(x = interaction(eq_method, F_method), y = yield, fill = Area)) +
+   geom_bar(position = 'stack', stat = 'identity') +
+   scale_fill_manual(values = c('grey22','grey44','grey66','seagreen4')) +
+   scale_x_discrete(limits = c('current.system', 'proposed.system', 'proposed.config'),
+                    labels = c('Current',expression(Proposed~F[system]),
+                               expression(Proposed ~F[config]))) +
+    labs(x = ifelse(R == 1,'Equilibrium and F approach',""),
+         y = ifelse(R == 1, 'Yield',""), color = "") +
+    theme_sleek() +
+    theme(legend.position = if(R < 4) 'none' else c(0.5,1), 
+          legend.direction = 'horizontal',
+          axis.text.x = element_text(size = 8),
+          legend.background = element_rect(fill=alpha('white', 1)))
+  
+   
+}
+
+
+
+ggsave(  Rmisc::multiplot(plotlist = ylist2,
+                          cols = 2)  ,
+         file = here('figs',"yield_area_method.png"),
+         width = 12, height = 8, unit = 'in', dpi = 420) 
+  
 p4 <- ggplot( ) +
   geom_line(data = data.frame(proposed_i[,,1]), aes(x = Fv, y = Yield, col = 'Area 1') ) +
   geom_line(data = data.frame(proposed_i[,,2]), aes(x = Fv, y = Yield, col = 'Area 2') ) +
@@ -523,7 +663,7 @@ bind_rows(rick %>%
   labs(x = "Total_SB", y = 'Recruitment', color = 'Approach')
 
 ggsave(last_plot(),
-       file = here('figs',"SRR_by_approach_NoMovement100iter.png"),
+       file = here('figs',"SRR_by_approach_WithPenalty.png"),
        width = 6, height = 4, unit = 'in', dpi = 420)
 
 ## SBPR vs R by FV----
