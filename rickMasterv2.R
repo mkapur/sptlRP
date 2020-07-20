@@ -183,13 +183,13 @@ for(RR in 1:dim(rRef_proposed)[3]){
       # cat("NewREQ_ratio \t",v,k,i, R_eq_i[v,]/sum(R_eq_i[v,]), "\n")
       # cat("SBPR_ratio \t",v,k,i, SB_Ri[v,]/sum(SB_Ri[v,]), "\n")
       
-      # if(k == maxiter){ ## store quantities
-      #   ## storing info, not currently used
-      #   rick[v,"Fv"] <- Ftest[v]
-      #   rick[v,"SBeqtotal"] <-   sum(B_eq_i[v,] )
-      #   ## sum of expected recruits in areas
-      #   rick[v,"R_SUMEBA"]  <- sum( R_eq_i[v,])
-      # }
+      if(k == maxiter){ ## store quantities
+        ## storing info, not currently used
+        rick[v,"Fv"] <- Ftest[v]
+        rick[v,"SBeqtotal"] <-   sum(B_eq_i[v,] )
+        ## sum of expected recruits in areas
+        rick[v,"R_SUMEBA"]  <- sum( R_eq_i[v,])
+      }
     } ## end k:maxiter
     ## save totals from final iteration
     proposed[v,'Fv'] <- Ftest[v]
@@ -213,73 +213,100 @@ Ftest[sinkLTsource]
 ss$FV_SLTS[i] <- Ftest[sinkLTsource]
 }
 
-## TRIAL 1B ----
-## get Fsys_msy and sys_yield ----
-## note yields & b by area
+## TRIAL 2: Optimizing F ----
+
+## functions to optimize ----
 dfx.dxSYS <- function(Fv_test,RLI ){
   y1 <- optim_loop(Fv_i = rep(Fv_test-0.001,narea), rec_level_idx = RLI)$Yield
   y2 <- optim_loop(Fv_i = rep(Fv_test+0.001,narea), rec_level_idx = RLI)$Yield
-  
-  # y1 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test-0.001,narea), eq_method = eq_method)$yield
-  # y2 <- masterFunc(SRR = 1, h = steep, Fv = rep(Fv_test+0.001,narea), eq_method = eq_method)$yield
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }
 
 
+dfx.dxSYS_curr <- function(Fv_test,RLI ){
+  y1 <- run_one_current(Fv_i = rep(Fv_test-0.001,narea), rec_level_idx = RLI)$Yield
+  y2 <- run_one_current(Fv_i = rep(Fv_test+0.001,narea), rec_level_idx = RLI)$Yield
+  appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  return(appx)
+}
 
+
+## 2A F sys @ both approaches ----
 sysopt <- data.frame('RR' = NA, 'FsysMSY' = NA, 'BsysMSY' = NA, 'YsysMSY' = NA,
                      'YA1' = NA, 'YA2' = NA, 'YA3' = NA, 
                      'BA1' = NA, 'BA2' = NA, 'BA3'= NA )
+sysopt_curr <- data.frame('RR' = NA, 'FsysMSY' = NA, 'BsysMSY' = NA, 'YsysMSY' = NA)
 for(RR in 1:4){
-  sysopt[RR,'RR'] <- RR
-  sysopt[RR,'FsysMSY'] <- as.numeric(uniroot(f = dfx.dxSYS, 
+  
+  # ## PROPOSED
+  sysopt[RR,'RR'] <-  sysopt_curr[RR,'RR'] <- RR
+  sysopt[RR,'FsysMSY'] <- as.numeric(uniroot(f = dfx.dxSYS,
                    RLI = 1,
                    interval = c(0.02,1))[1])
-  
-  run_at_msy <- optim_loop(Fv_i = rep(  sysopt[RR,'FsysMSY'],narea), rec_level_idx = RLI)
+
+  run_at_msy <- optim_loop(Fv_i = rep(  sysopt[RR,'FsysMSY'],narea), rec_level_idx = RR)
   sysopt[RR,'YsysMSY'] <- run_at_msy$Yield
   sysopt[RR,'BsysMSY'] <- run_at_msy$Biomass
-  
+
   sysopt[RR,5:7] <- run_at_msy$Yield_i
   sysopt[RR,8:10] <- run_at_msy$Biomass_i
+  
+  ## current
+  sysopt_curr[RR,'FsysMSY'] <- as.numeric(uniroot(f = dfx.dxSYS_curr, 
+                                     RLI = RR,
+                                     interval = c(0.02,1))[1])
+  curr_at_FMSY <- run_one_current(Fv_i = rep(  sysopt_curr[RR,'FsysMSY'],narea), rec_level_idx = RR)
+  
+  sysopt_curr[RR,'YsysMSY'] <- curr_at_FMSY$Yield
+  sysopt_curr[RR,'BsysMSY'] <- curr_at_FMSY$B
+
+  
+  
+
 
 }
 
-save(sysopt,file = here("sys_optimize.Rdata"))
+save(sysopt,file = here("sys_optimize_proposed.Rdata"))
+save(sysopt_curr,file = here("sys_optimize_current.Rdata"))
 
-## TRIAL 1C----
-## Get F_i_msy
+## 2B F_i @ proposed ----
 
 minFunc <- function(F1,F2,F3,RLI){
   minus <- as.numeric(c(F1 - 0.001, F2 - 0.001, F3 - 0.001))
   plus <- as.numeric(c(F1 +0.001, F2 + 0.001, F3 + 0.001))
   y1 <- optim_loop(Fv_i = minus, rec_level_idx = RLI)$Yield
   y2 <- optim_loop(Fv_i = plus, rec_level_idx = RLI)$Yield
-  appx <- (y2-y1)/(0.002) ## system yield again
+  appx <- abs(y2-y1)/(0.002) ## system yield again
   return(appx)
 }
-
 
 
 areaopt <- data.frame('RR' = NA, 
                       'F1' = NA, 'F2' = NA, 'F3' = NA,
                      'YA1' = NA, 'YA2' = NA, 'YA3' = NA, 
-                     'BA1' = NA, 'BA2' = NA, 'BA3'= NA )
+                     'BA1' = NA, 'BA2' = NA, 'BA3'= NA,
+                     'CURRENT_YIELD')
 for(RR in 1:4){
   areaopt[RR,'RR'] <- RR
-  FVTEMP <-  coef(mle(minFunc, 
+  FVTEMP <-  coef(mle(minFunc,
                       start = list(F1 = 0.025, F2 = 0.025, F3 = 0.025),
                       method = "L-BFGS-B",
                       fixed = list( RLI = RR), ## subsetting eq method
-                      lower = c(0.02, 0.02,0.02), upper = c(0.5,0.5,0.5)))[1:3]
-  
-  run_at_msy <- optim_loop(Fv_i = FVTEMP, rec_level_idx = RLI)
+                      lower = c(0.02, 0.02,0.02), upper = c(0.4,0.4,0.4)))[1:3]
+
+  run_at_msy <- optim_loop(Fv_i = FVTEMP, rec_level_idx = RR)
   areaopt[RR,2:4] <- FVTEMP
 
   areaopt[RR,5:7] <- round(run_at_msy$Yield_i,2)
   areaopt[RR,8:10] <- round(run_at_msy$Biomass_i,2)
+
   
+  curr_at_ftemp <- run_one_current(Fv_i =   as.numeric(areaopt[1,2:4]), rec_level_idx = RR)
+  areaopt[RR, 'CURRENT_YIELD'] <- curr_at_ftemp$Yield
 }
 
-save(areaopt,file = here("area_optimize.Rdata"))
+save(areaopt,file = here("area_optimize_proposed.Rdata"))
+
+
+
