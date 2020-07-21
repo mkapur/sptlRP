@@ -142,7 +142,7 @@ for(RR in 1:dim(rRef_proposed)[3]){
    
         
         # SB_Ri[v,i] <- prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## on k = 1 will just be rleveltemp
-        SB_Ri[v,i] <-  prop$SB_i[i]/((rleveltmp+0.005)*rdistUse[i]) ## Rick's idea
+        SB_Ri[v,i] <-  prop$SB_i[i]/((rleveltmp+0.01*R0[i])*rdistUse[i]) ## Rick's idea
         # if( SB_Ri[v,i] > SB0_i[i]) SB_Ri[v,i] <- SB0_i[i] ## penalty for dividing small numbers
         
         # if(k > 2){
