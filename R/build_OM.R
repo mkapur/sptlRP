@@ -5,19 +5,15 @@
 
 ## load data and introduce some demographic variation among areas
 dat0 <- read.table(here("HOME3.txt"), header = T)
-dat <- array(NA, dim = c(nages,ncol(dat0),narea)) ## placeholder
+dat <- array(NA, dim = c(nrow(dat0),ncol(dat0),narea)) ## placeholder
 
-## first area is original
-dat[,,1:3] <- as.matrix(dat0)
-## second area, both sexes grow 15% larger, but with same fertility schedule
-# dat[,3:4,2] <- dat[,3:4,1]*1.5
-## third area, productive at early age
-# dat[1:18,2,3] <- dat[4:21,2,1]
-# dat[18:20,2,3] <- dat[18,2,3]
+for(i in 1:narea) dat[,,i] <- as.matrix(dat0)
 
-X_ija_NULL <- array(0, dim = c(narea,narea,nages))
-X_ija_MIX <- array(0, dim = c(narea,narea,nages))
-X_ija <- array(NA, dim = c(narea,narea,nages))
+if(narea == 3){
+
+  X_ija_NULL <- array(0, dim = c(narea,narea,nages))
+  X_ija_MIX <- array(0, dim = c(narea,narea,nages))
+  X_ija <- array(NA, dim = c(narea,narea,nages))
 for(a in 1:2){ ## only two areas have movement
 
   for(g in 1:dim(X_ija)[3]){ ## loop ages
@@ -47,6 +43,34 @@ X_ija[3,3,] <- X_ija_NULL[3,3,] <- 1 ## area 3 is self-seeding
 for(i in 1:dim(X_ija)[3]){
   print(rowSums(X_ija[,,a]) == 1)
 }
+} else if (narea == 2){
+
+  X_ija_EQUAL <- X_ija_NULL2 <- X_ija_MIX2 <- X_ija_UNI2 <- array(NA, dim = c(narea,narea,nages))
+
+  for(a in 1:2){ ## only two areas have movement
+    for(g in 1:dim(X_ija_EQUAL)[3]){ ## loop ages
+      diag(X_ija_NULL2[,,g]) <- rep(1, length(  diag(X_ija_NULL2[,,g])))
+      if(g < 6){
+        X_ija_UNI2[1,1:2,g] <- 0.5
+        X_ija_UNI2[2,1,g] <- 0
+        X_ija_UNI2[2,2,g] <- 1
+        
+        X_ija_MIX2[2,1,g] <- 0.25 
+        X_ija_MIX2[2,2,g] <- 0.75 
+        X_ija_MIX2[1,1,g] <- 0.8 
+        X_ija_MIX2[1,2,g] <- 0.2
+        X_ija_EQUAL[1,1,g]  <- X_ija_EQUAL[2,2,g] <- 0.5
+        X_ija_EQUAL[1,2,g]  <- X_ija_EQUAL[2,1,g] <- 0.5
+      } else{
+        X_ija_EQUAL[a,,g] <- X_ija_MIX2[a,,g] <- X_ija_UNI2[a,,g] <- 0 ## no movement at older ages
+        diag(X_ija_EQUAL[,,g]) <- 1 
+        diag(X_ija_MIX2[,,g]) <- 1 
+        # cat( a, " ",diag(X_ija[,,g]) ,"\n")
+      } # end else
+    } ## end ages
+  } ## end areas
+  X_ija_NULL2[is.na(X_ija_NULL2)] <- 0
+} ## end only 2 areas
 
 ## return unfished spawning biomass depending on method
 getSB0 <- function(eq_method){
