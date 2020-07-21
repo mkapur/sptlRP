@@ -80,6 +80,7 @@ doNage <- function(X = X_ija, ## input movement matrix
     for(i in 1:narea){
       B_ai[a,i] <- sum(B_sai[,a,i])
       N_ai[a,i]  <- sum(N_sai[,a,i])
+      Z_ai[a,i]  <- sum(Z_sai[,a,i])
       Yield_ai[a,i] <- sum(Yield_sai[,a,i])
     }
   }
