@@ -54,7 +54,8 @@ ggsave(Rmisc::multiplot(plotlist = plist,
        width = 10, height = 8, unit = 'in', dpi = 520)
 
 ## Nums at age ----
-doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[1]])$N_ai %>%
+doNage( Fv = rep(0,narea), X = X_ija_MIX,
+        refR = c(700,300), rdist = c(1,1))$N_ai %>%
   data.frame() %>%
   mutate(Age = 1:nages) %>%
   reshape2::melt(id = 'Age') %>%
@@ -68,13 +69,23 @@ doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[1]])$N_ai %>%
         axis.title = element_text(size = 16),
         axis.text = element_text(size = 16),
         legend.text = element_text(size = 20))
+
 ggsave(last_plot(), 
        file = here('figs','Nage_RR1.png'),
        width = 6, height = 4, unit = 'in', dpi = 520)
+
+
+doNage( Fv = rep(0.25,narea), X = X_ija_MIX2,
+        refR = c(998,0.2), rdist = c(1,1))$Yield_i
+
+doNage( Fv = rep(0.25,narea), X = X_ija_MIX2,
+        refR = c(998,2), rdist = c(1,1))$Yield_i
+
 ## Nums at age panel ----
 nagelist <- nagelist2 <- list()
 for(RR in 1:4){
-  nagelist[[RR]] <- doNage( Fv = rep(0,narea), X = X_ija, refR = R0_list[[RR]])$N_ai %>%
+  nagelist[[RR]] <- doNage( Fv = rep(0,narea), X = X_ija,
+                            refR = R0_list[[RR]])$N_ai %>%
     data.frame() %>%
     mutate(Age = 1:nages) %>%
     reshape2::melt(id = 'Age') %>%
@@ -404,10 +415,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
 #        file = here('figs',paste0("Yield_Comparison_Movement_",paste(R0_list[[1]], collapse = "-")),".png"),
 #        width = 8, height = 6, unit = 'in', dpi = 420)
 
- p1list = plist2 <-  barlist=list()
- 
-
-
+ p1list <- plist2 <-  barlist <- list()
  for(i in 1:4){
    labs = round(c(sysopt$FsysMSY,sysopt_curr$FsysMSY),3)
    current <- data.frame(rRef_current[,,i])
@@ -449,7 +457,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
     annotate('text', x = 1:3, y = 200,
              label = paste('Area',1:3),
              color = c("grey88","grey33","grey22"), size = 3)+
-    scale_y_continuous(limits = c(0,500)) +
+    scale_y_continuous(limits = c(0,550)) +
      theme_void()+
     theme(legend.position = 'none')
    
@@ -461,7 +469,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
                  annotate('text', x = 0, y = 95, 
                           label = toupper(letters[RR]), cex = 6)) +
      draw_plot(barlist[[RR]]+
-                 annotate('text', x = 2, y = 500, cex = 4,
+                 annotate('text', x = 2, y = 545, cex = 3,
                           label = 'Initial Recruitment'), 
                x = 0.7, y = 0.15,
                width = .25, height = .25) 
@@ -471,7 +479,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
  
  ggsave(  Rmisc::multiplot(plotlist = plist2,
                            cols = 2),
-        file = here('figs',"Yield_comparison_Rref_Buffer=0.005_fmsy.png"),
+        file = here('figs',"Yield_comparison_Rref_Buffer=0.005_fmsy_21iter.png"),
         width = 10, height = 8, unit = 'in', dpi = 420)
  
 
