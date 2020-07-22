@@ -310,7 +310,7 @@ for(RR in 1:4){
 save(areaopt,file = here("area_optimize_proposed_21iter.Rdata"))
 
 
-## TRIAL 3: Eigen 2 Area
+## TRIAL 3: Eigen 2 Area ----
 rm(list = ls())
 narea <- 2
 nages <- 21
@@ -332,32 +332,15 @@ Ftest <- seq(0,1,0.05)
 sys2area <- array(NA, dim = c(length(Ftest),3,length(R0_list),3)) ## F x 3 x RR x Movemats
 radj2area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list),3)) ## iters, Fv, 2 areas , RR x movements
 
-# https://setosa.io/ev/eigenvectors-and-eigenvalues/
-# A = matrix(c(0.8,0.2,0.2,0.8), byrow = TRUE, ncol=2) ## if equal movement will return original
-# A = matrix(c(1,0,0,1), byrow = TRUE, ncol=2) ## if no movement net flux only identical when both is zero
-# A = matrix(c(0.5,0.5,0.5,0.5), byrow = TRUE, ncol=2) ## if equal movement will return original
-# A = matrix(c(0.75,0.25,0.2,0.8), byrow = TRUE, ncol=2) ## if assym mixing
-A = matrix(c(0.9,0.1,1e-5,0.99999),byrow = TRUE, ncol=2) ## if unidirectional has problems
-r = eigen(A)
-# V = r$vectors * sqrt(2) ## bc eigen function does a weird normalization thing
-lam = r$values #* sqrt(2)
-V %*% diag(lam) %*% solve(V) ## gives back A, this is solvin Avt = lambdavt for A
 
-# lam* R0_list[[1]]
-abs(diag(V) * R0_list[[1]])
 
 
 for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   for(RR in 1:length(R0_list)){
     
-    # if(m == 2){
-      ## for mixing, calculate eigen
-      eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
-      receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
-    # } else{
-      # receq = R0_list[[RR]]
-    # }
-    
+    eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
+    receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
+
     for(Fv in 1:length(Ftest)){
       curr <- run_one_current(Fv_i = rep(Ftest[Fv],narea), 
                               rec_level_idx = RR, 
@@ -460,16 +443,21 @@ for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   for(RR in 1:length(R0_list)){
     
     if(m == 2){
-      ## for mixing, calculate eigen
+      ## for mixing, do as before
       eigv <- eigen(list(X_ija[,,1], X_ija_MIX[,,1])[[m]])$vectors * sqrt(2)
+      # abs(diag(eigv) * R0_list[[RR]])
       receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
-      
-      eigv <- eigen(list(X_ija[,,1], X_ija_MIX[,,1])[[m]])$vectors * sqrt(2)
-      receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
-      
-    } else{
-      receq = R0_list[[RR]]
+    } else if(m == 1){
+      ## unidirectional movement
+      eigv <- eigen(list(X_ija[,,1], X_ija_MIX[,,1])[[m]])$values
+      # eigv * R0_list[[RR]] 
+      receq = eigv * R0_list[[RR]] #eigv*R0_list[[RR]]
     }
+
+      cat(m, RR, receq,"\n")
+    # } else{
+    #   receq = R0_list[[RR]]
+    # }
     
     for(Fv in 1:length(Ftest)){
       curr <- run_one_current(Fv_i = rep(Ftest[Fv],narea), 
@@ -489,44 +477,62 @@ for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
       radj3area[,Fv,2:4,RR,m] <- prop$radj
       radj3area[,Fv,1,RR,m] <- Ftest[Fv]
       
-      cat(m,"\t",RR,"\t",Fv,"\n")
+      # cat(m,"\t",RR,"\t",Fv,"\n")
     } ## end Fs
   } ## end input rec levels
 } ## end movement approaches
 
 ## plot radjf
-for(m in 1:2){#dim(radj3area)[5]){
+for(m in 1:1){#dim(radj3area)[5]){
   # png(here('figs',paste0('R_eq_iterations_3area_',c('EQUAL','MIX')[m],'.png')),
   #          height = 8.5, width = 11, unit = 'in', res = 600)
 
-      plotseq = c(10:15)
+      plotseq = c(11:13)
       par(mfrow = c(dim(radj3area)[4],
                     length(plotseq)),
           mar = c(5,5,1.5,1.5))
       radj3areaTMP <- radj3area[,,,,m]
       for(i in 1:dim(radj3area)[4]){
         
+        # radj <- radj3areaTMP[,,,i]
         radj <- radj3areaTMP[,,,i]
+        
         for(j in plotseq){
           if(i == dim(radj3area)[4] & j == max(plotseq)) next()
           plot(radj[,j,2], col = 'black', 
-               type = 'l', 
+               type = 'l',
                ylim = c(0,1000),
-               xlab = 'Iteration No.',
+               xlab = '',
                ylab =  'R_eq')
-          text(x = maxiter*0.5, y = 800,
+          text(x =1.5, y = 800,
                cex = 1.5, label = paste0('F = ',Ftest[j]))
           ## niter x fv x areas
           
-          lines(radj[,j,3], col = 'blue', type = 'p',pch = 19, cex = 1)
+          lines(radj[,j,3], col = 'blue', type = 'l',pch = 19, cex = 1)
+          lines(radj[,j,4], col = 'red', type = 'l',pch = 19, cex = 1)
           
+          
+          ## add iterated values (terminal)
+          points(2,rRef_proposed_radj[101,j,1,i], pch = 19, col = 'black')
+          points(2,rRef_proposed_radj[101,j,2,i], pch = 19, col = 'blue')
+          points(2,rRef_proposed_radj[101,j,3,i], pch = 19, col = 'red')
+          
+          
+          ## add R0/starts
+          # points(R0_list[[i]][1], pch = 5, col = 'black')
+          # points(R0_list[[i]][2], pch = 19, col = 'blue')
+          # points(R0_list[[i]][3], pch = 19, col = 'red')
         } ## end j (Fs)
       } ## end loop over RRs
       plot.new()
       legend('center',
-             col = c('black','blue'), 
-             legend = paste('Area',1:2), lty = c(1,NA), pch = c(NA, 19), cex = 1)
-      text(x = 0.5, y= 0.75, adj = 1,  labels = c('EQUAL','MIX')[m])
+             col = c('black','blue','red'), 
+             legend = c(paste('Area',1:3,'R_eq from Eigen'),
+                        paste('Area',1:3,'R_eq from Iter')),
+             lty = c(1,1,1,NA,NA,NA),
+             pch = c(NA, NA,NA,19,19,19),
+             cex = 0.75)
+      text(x = 0.5, y= 1, adj = 1,  labels = c('EQUAL','MIX')[m])
       
       # dev.off()
 } ##end loop over movement mats
@@ -547,7 +553,8 @@ for(m in 1:2){
       scale_color_manual(values = c('seagreen','goldenrod'), labels = c('current','proposed')) +
       scale_linetype_manual(values = c('solid','dashed'), labels = c('current','proposed'), guide=FALSE ) +
       labs(x = 'F', y = ifelse(RR == 1, 'Yield',""), color = "",
-           title = paste0(c('Equal (symmetric) movement','Asymmetric mixture movement')[m])) +
+           title = paste0(c('Unidirectional (source-sink) movement',
+                            'Asymmetric mixture movement')[m])) +
       scale_y_continuous(limits = c(0,120), breaks = seq(0,130,10)) +
       theme_sleek() + 
       theme(legend.position = if(RR<3) 'none' else c(0.75,0.5))

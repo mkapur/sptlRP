@@ -74,5 +74,5 @@ optim_loop <- function(Fv_i,
     } ## end k:maxiter
     ## save totals from final iteration
   return(list(Yield = sum(yield_FI), Biomass = sum(B_FI), 
-              Yield_i = yield_FI, Biomass_i = B_FI, radj = radj))
+              Yield_i = yield_FI, Biomass_i = B_FI, radj = last_req))
 }
