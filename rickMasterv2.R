@@ -484,8 +484,8 @@ for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
 
 ## plot radjf
 for(m in 1:1){#dim(radj3area)[5]){
-  # png(here('figs',paste0('R_eq_iterations_3area_',c('EQUAL','MIX')[m],'.png')),
-  #          height = 8.5, width = 11, unit = 'in', res = 600)
+  png(here('figs',paste0('R_eq_iterations_3area_',c('UniD','Mixture')[m],'.png')),
+           height = 8.5, width = 11, unit = 'in', res = 600)
 
       plotseq = c(11:13)
       par(mfrow = c(dim(radj3area)[4],
@@ -532,9 +532,9 @@ for(m in 1:1){#dim(radj3area)[5]){
              lty = c(1,1,1,NA,NA,NA),
              pch = c(NA, NA,NA,19,19,19),
              cex = 0.75)
-      text(x = 0.5, y= 1, adj = 1,  labels = c('EQUAL','MIX')[m])
+      text(x = 0.5, y= 1, adj = 1,  labels = c('Unidirectional','Mixture')[m])
       
-      # dev.off()
+      dev.off()
 } ##end loop over movement mats
 
 
