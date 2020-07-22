@@ -7,7 +7,7 @@ optim_loop <- function(Fv_i,
   radj <- matrix(NA, nrow = maxiter, ncol = narea)
 
   R0 <- R0_list[[rec_level_idx]] 
-  rec_level <- receq
+  rec_level <- R0# receq
   
   SB0_i <- doNage(Fv = rep(0,narea), 
                   X = movemat,
@@ -22,7 +22,7 @@ optim_loop <- function(Fv_i,
         rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
       } else{
         rdistUse <- recr_dist ## only after computing R_i
-        rlevelUse = rec_level# last_req # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
+        rlevelUse =  last_req # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
       }
 
       prop <- doNage( Fv = Fv_i, 
@@ -47,9 +47,9 @@ optim_loop <- function(Fv_i,
         
         
         # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
-        # SBPR_i <-  prop$SB_i[i]/((rleveltmp+0.01*R0[i])*rdistUse[i]) ## Rick's idea
+        SBPR_i <-  prop$SB_i[i]/((rleveltmp+0.99*R0[i])*rdistUse[i]) ## Rick's idea
 
-        SBPR_i <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
+        # SBPR_i <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
         
         YPR_i <- prop$Yield_i[i]/(rleveltmp*rdistUse[i])
         # YPR_i <- prop$Yield_i[i]/((rleveltmp+0.0001*R0[i])*rdistUse[i])
