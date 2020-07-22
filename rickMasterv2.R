@@ -310,7 +310,7 @@ for(RR in 1:4){
 save(areaopt,file = here("area_optimize_proposed_21iter.Rdata"))
 
 
-## TRIAL 3: Different movement and F configs ----
+## TRIAL 3: Eigen 2 Area
 rm(list = ls())
 narea <- 2
 nages <- 21
@@ -329,8 +329,8 @@ maxiter =  2 ## set to 1 to only use eigen
 Ftest <- seq(0,1,0.05)
 
 ## loop system wide F
-sys2area <- array(NA, dim = c(length(Ftest),3,3,3)) ## F x 3 x RR x Movemats
-radj2area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,3,3)) ## iters, Fv, 2 areas , RR x movements
+sys2area <- array(NA, dim = c(length(Ftest),3,length(R0_list),3)) ## F x 3 x RR x Movemats
+radj2area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list),3)) ## iters, Fv, 2 areas , RR x movements
 
 # https://setosa.io/ev/eigenvectors-and-eigenvalues/
 # A = matrix(c(0.8,0.2,0.2,0.8), byrow = TRUE, ncol=2) ## if equal movement will return original
@@ -339,7 +339,7 @@ radj2area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,3,3)) ## iters, Fv,
 # A = matrix(c(0.75,0.25,0.2,0.8), byrow = TRUE, ncol=2) ## if assym mixing
 A = matrix(c(0.9,0.1,1e-5,0.99999),byrow = TRUE, ncol=2) ## if unidirectional has problems
 r = eigen(A)
-V = r$vectors * sqrt(2) ## bc eigen function does a weird normalization thing
+# V = r$vectors * sqrt(2) ## bc eigen function does a weird normalization thing
 lam = r$values #* sqrt(2)
 V %*% diag(lam) %*% solve(V) ## gives back A, this is solvin Avt = lambdavt for A
 
@@ -350,13 +350,13 @@ abs(diag(V) * R0_list[[1]])
 for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   for(RR in 1:length(R0_list)){
     
-    if(m == 2){
+    # if(m == 2){
       ## for mixing, calculate eigen
       eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
       receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
-    } else{
-      receq = R0_list[[RR]]
-    }
+    # } else{
+      # receq = R0_list[[RR]]
+    # }
     
     for(Fv in 1:length(Ftest)){
       curr <- run_one_current(Fv_i = rep(Ftest[Fv],narea), 
@@ -380,21 +380,135 @@ for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   } ## end input rec levels
 } ## end movement approaches
 
+## plot yield curves
+plist2a <- barlist <- plist2a2 <- list();idx = 1
+for(m in 1:2){
+  for(RR in 1:length(R0_list)){
+    tmp <- data.frame(sys2area[,,RR,m])
+    names(tmp) <- c('Fv','current','proposed')
+    plist2a[[idx]] <- tmp %>% melt(id = 'Fv') %>%
+      ggplot(., aes(x = Fv, y = value, color = variable, linetype = variable)) +
+      geom_line(lwd = 1.1) +
+      scale_color_manual(values = c('seagreen','goldenrod'), labels = c('current','proposed')) +
+      scale_linetype_manual(values = c('solid','dashed'), labels = c('current','proposed'), guide=FALSE ) +
+      labs(x = 'F', y = ifelse(RR == 1, 'Yield',""), color = "",
+           title = paste0(c('Equal (symmetric) movement','Asymmetric mixture movement')[m])) +
+      scale_y_continuous(limits = c(0,120), breaks = seq(0,130,10)) +
+      theme_sleek() + 
+      theme(legend.position = if(RR<3) 'none' else c(0.75,0.5))
+    
+    barlist[[ifelse(idx >3, idx-3,idx)]] <- melt(data.frame(R0_list[[RR]])) %>%
+      mutate(Area = 1:2) %>%
+      ggplot(., aes(x = Area, y = value, fill = factor(Area))) +
+      geom_histogram(stat = 'identity',
+                     boundary = 0)+
+      scale_fill_grey()  +
+      annotate('text', x = 1:2, y = 200,
+               label = paste('Area',1:2),
+               color = c("white","grey22"), 
+               size = 3) +
+      scale_y_continuous(limits = c(0,1100)) +
+      theme_void()+
+      theme(legend.position = 'none')
+    
+    
+    idx = idx+1
+  }
+}
+
+for(RR in 1:length(plist2a)){
+  plist2a2[[RR]] <- ggdraw() +
+    draw_plot(plist2a[[RR]]) +
+    draw_plot(barlist[[ifelse(RR >3, RR-3, RR)]]+
+                annotate('text', x = 1.5, 
+                         y = 1100, 
+                         cex = 2,
+                         label = 'Initial Recruitment'), 
+              x = 0.7, y = 0.15,
+              width = .25, height = .25)
+}
+Rmisc::multiplot(plotlist = plist2a2,  cols = 3, 
+                 layout = rbind(c(1,2,3),c(4,5,6)))
+
+
+ggsave(Rmisc::multiplot(plotlist = plist3a2,  cols = 4, 
+                        layout = rbind(c(1,2,3,4),c(5,6,7,8))),
+       file = here('figs','Yield_comparisons_2area_eigen.png'),
+       width = 10, height = 8, unit = 'in', dpi = 520)
+
+## TRIAL 4: Eigen for 3 area model ----
+rm(list = ls())
+narea <- 3
+nages <- 21
+steep <- rep(0.7,3)
+recr_dist <- c(1,1,1) ## global recruits to areas
+
+R0_list <- list(c(420,330,250),
+                rev(c(420,330,250)),
+                c(333,333,333),
+                c(499,499,2))
+
+lapply(list.files(here("R"), full.names = TRUE), source)
+maxiter =  2 ## set to 1 to only use eigen
+Ftest <- seq(0,1,0.05)
+
+## loop system wide F
+sys3area <- array(NA, dim = c(length(Ftest),3,length(R0_list),2)) ## F x 3 x RR x Movemats
+radj3area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list),2)) ## iters, Fv, 2 areas , RR x movements
+
+for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
+  for(RR in 1:length(R0_list)){
+    
+    if(m == 2){
+      ## for mixing, calculate eigen
+      eigv <- eigen(list(X_ija[,,1], X_ija_MIX[,,1])[[m]])$vectors * sqrt(2)
+      receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
+      
+      eigv <- eigen(list(X_ija[,,1], X_ija_MIX[,,1])[[m]])$vectors * sqrt(2)
+      receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
+      
+    } else{
+      receq = R0_list[[RR]]
+    }
+    
+    for(Fv in 1:length(Ftest)){
+      curr <- run_one_current(Fv_i = rep(Ftest[Fv],narea), 
+                              rec_level_idx = RR, 
+                              recr_dist= recr_dist, 
+                              movemat = list(X_ija, X_ija_MIX)[[m]])
+      cat(curr$Yield,"\n")
+      prop <- optim_loop(Fv_i = rep(Ftest[Fv],narea), 
+                         rec_level_idx = RR, 
+                         receq= receq,
+                         recr_dist= recr_dist, movemat = list(X_ija, X_ija_MIX)[[m]])
+      
+      sys3area[Fv,1,RR,m] <- Ftest[Fv]
+      sys3area[Fv,2,RR,m] <- curr$Yield
+      sys3area[Fv,3,RR,m] <- prop$Yield
+      
+      radj3area[,Fv,2:4,RR,m] <- prop$radj
+      radj3area[,Fv,1,RR,m] <- Ftest[Fv]
+      
+      cat(m,"\t",RR,"\t",Fv,"\n")
+    } ## end Fs
+  } ## end input rec levels
+} ## end movement approaches
+
 ## plot radjf
-for(m in 1:2){#dim(radj2area)[5]){
-  # png(here('figs',paste0('R_eq_iterations_2area_',c('EQUAL','MIX')[m],'.png')),
+for(m in 1:2){#dim(radj3area)[5]){
+  # png(here('figs',paste0('R_eq_iterations_3area_',c('EQUAL','MIX')[m],'.png')),
   #          height = 8.5, width = 11, unit = 'in', res = 600)
 
       plotseq = c(10:15)
-      par(mfrow = c(dim(radj2area)[4],
+      par(mfrow = c(dim(radj3area)[4],
                     length(plotseq)),
           mar = c(5,5,1.5,1.5))
-      radj2areaTMP <- radj2area[,,,,m]
-      for(i in 1:dim(radj2area)[4]){
+      radj3areaTMP <- radj3area[,,,,m]
+      for(i in 1:dim(radj3area)[4]){
         
-        radj <- radj2areaTMP[,,,i]
+        radj <- radj3areaTMP[,,,i]
         for(j in plotseq){
-          if(i == dim(radj2area)[4] & j == max(plotseq)) next()
+          if(i == dim(radj3area)[4] & j == max(plotseq)) next()
           plot(radj[,j,2], col = 'black', 
                type = 'l', 
                ylim = c(0,1000),
@@ -422,33 +536,33 @@ for(m in 1:2){#dim(radj2area)[5]){
 
 
 ## plot yield curves
-plist2a <- barlist <- plist2a2 <- list();idx = 1
+plist3a <- barlist <- plist3a2 <- list();idx = 1
 for(m in 1:2){
   for(RR in 1:length(R0_list)){
-    tmp <- data.frame(sys2area[,,RR,m])
+    tmp <- data.frame(sys3area[,,RR,m])
     names(tmp) <- c('Fv','current','proposed')
-    plist2a[[idx]] <- tmp %>% melt(id = 'Fv') %>%
+    plist3a[[idx]] <- tmp %>% melt(id = 'Fv') %>%
     ggplot(., aes(x = Fv, y = value, color = variable, linetype = variable)) +
       geom_line(lwd = 1.1) +
       scale_color_manual(values = c('seagreen','goldenrod'), labels = c('current','proposed')) +
       scale_linetype_manual(values = c('solid','dashed'), labels = c('current','proposed'), guide=FALSE ) +
       labs(x = 'F', y = ifelse(RR == 1, 'Yield',""), color = "",
            title = paste0(c('Equal (symmetric) movement','Asymmetric mixture movement')[m])) +
-      # scale_y_continuous(limits = c(0,150), breaks = seq(0,130,10)) +
+      scale_y_continuous(limits = c(0,120), breaks = seq(0,130,10)) +
       theme_sleek() + 
       theme(legend.position = if(RR<3) 'none' else c(0.75,0.5))
     
-    barlist[[ifelse(idx >3, idx -3,idx)]] <- melt(data.frame(R0_list[[RR]])) %>%
-      mutate(Area = 1:2) %>%
+    barlist[[ifelse(idx >4, idx-4,idx)]] <- melt(data.frame(R0_list[[RR]])) %>%
+      mutate(Area = 1:3) %>%
       ggplot(., aes(x = Area, y = value, fill = factor(Area))) +
       geom_histogram(stat = 'identity',
                      boundary = 0)+
       scale_fill_grey()  +
-      annotate('text', x = 1:2, y = 200,
-               label = paste('Area',1:2),
-               color = c("white","black"), 
-               size = 3)+
-      scale_y_continuous(limits = c(0,1100)) +
+      annotate('text', x = 1:3, y = 200,
+               label = paste('Area',1:3),
+               color = c("white","grey88","grey22"), 
+               size = 2) +
+      scale_y_continuous(limits = c(0,550)) +
       theme_void()+
       theme(legend.position = 'none')
     
@@ -457,22 +571,22 @@ for(m in 1:2){
   }
 }
 
-for(RR in 1:length(plist2a)){
-  plist2a2[[RR]] <- ggdraw() +
-    draw_plot(plist2a[[RR]]) +
-    draw_plot(barlist[[ifelse(RR >3, RR-3, RR)]]+
-                annotate('text', x = 1.5, 
-                         y = c(550,750,1100)[[ifelse(RR >3, RR-3, RR)]], 
+for(RR in 1:length(plist3a)){
+  plist3a2[[RR]] <- ggdraw() +
+    draw_plot(plist3a[[RR]]) +
+    draw_plot(barlist[[ifelse(RR >4, RR-4, RR)]]+
+                annotate('text', x = 2, 
+                         y = 525, 
                          cex = 2,
                          label = 'Initial Recruitment'), 
               x = 0.7, y = 0.15,
               width = .25, height = .25)
 }
-Rmisc::multiplot(plotlist = plist2a2,  cols = 3, 
-                 layout = rbind(c(1,2,3),c(4,5,6)))
+Rmisc::multiplot(plotlist = plist3a2,  cols = 4, 
+                 layout = rbind(c(1,2,3,4),c(5,6,7,8)))
 
 
-ggsave(Rmisc::multiplot(plotlist = plist2a2,  cols = 3,
-                        layout = rbind(c(1,2,3),c(4,5,6))),
-       file = here('figs','Yield_comparisons_2area_eigen.png'),
+ggsave(Rmisc::multiplot(plotlist = plist3a2,  cols = 4, 
+                        layout = rbind(c(1,2,3,4),c(5,6,7,8))),
+       file = here('figs','Yield_comparisons_3area_eigen.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
