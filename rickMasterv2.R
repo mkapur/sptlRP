@@ -347,7 +347,7 @@ V %*% diag(lam) %*% solve(V) ## gives back A, this is solvin Avt = lambdavt for 
 abs(diag(V) * R0_list[[1]])
 
 
-for(m in 1:3){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
+for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   for(RR in 1:length(R0_list)){
     
     if(m == 2){
