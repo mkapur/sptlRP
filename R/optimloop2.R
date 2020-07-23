@@ -1,3 +1,8 @@
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
 optim_loop2 <- function(Fv_i,
                        rec_level_idx = 1,
                        movemat = X_ija,
@@ -79,14 +84,27 @@ optim_loop2 <- function(Fv_i,
     } ## end areas
     # if(k == maxiter){ ## store quantities
     if(k > 5){
-      ## stop iters if req hasn't changed more than 1%
-      if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05) & k < maxiter){
+      ## keep iterating if changing more than 5% in early iters
+      if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05) & k < 20){
         next()
-     }else if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  <=  0.05) | k == maxiter){
+        ## if it is still bouncing wildly after 20, use the mode
+      } else if(k > 20 & any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05)){
+        for (i in 1:narea) {
+          # min(sort(table(radj[15:21,i]),decreasing=TRUE)[1:2])
+          yield_FI[i] <-  YPR_i[i] * getmode(radj[20:k,i])
+          B_FI[i] <-    SBPR_i[i] * getmode(radj[20:k,i])
+          cat(Fv,k, i, 
+              # min(as.numeric(tail(names(sort(table(radj[15:k,i]))), 2))), 
+              getmode(radj[20:k,i]),
+              B_FI[i], yield_FI[i], "\n")
+        }
+        break("maxiter reached ",i,k)
+      ## if the changes are less than 5% or we've reached maxiter, end
+     }else if(all(round(abs(radj[k,]/radj[k-5,] - 1),2)  <=  0.05) | k == maxiter){
        for (i in 1:narea) {
          yield_FI[i] <-  YPR_i[i] *  last_req[i]
          B_FI[i] <-    SBPR_i[i] *  last_req[i]
-         cat(k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+         cat(Fv,k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
        }
         break("maxiter reached ",i,k)
       } ## end if neither 1%
