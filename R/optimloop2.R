@@ -4,10 +4,10 @@ getmode <- function(v) {
 }
 
 optim_loop2 <- function(Fv_i,
-                       rec_level_idx = 1,
-                       movemat = X_ija,
-                       recr_dist = c(1, 1, 1)
-                       ) {
+                        rec_level_idx = 1,
+                        movemat = X_ija,
+                        recr_dist = c(1, 1, 1)
+) {
   
   # rec_level <- R0 <- R0_list[[RR]]
   # proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
@@ -81,31 +81,56 @@ optim_loop2 <- function(Fv_i,
       
       # B_eq_i[v,i] <- propEq$B_equil
       last_req[i] <- propEq$R_equil ## gets overwritten each iteration
+      
+      
+      
     } ## end areas
+    
+    
+    
     # if(k == maxiter){ ## store quantities
     if(k > 5){
       ## keep iterating if changing more than 5% in early iters
-      if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05) & k < 20){
+      if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05) & k < 50){
         next()
-        ## if it is still bouncing wildly after 20, use the mode
-      } else if(k > 20 & any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05)){
+        ## if it is still bouncing wildly after 50, 
+        ## use the mode OR rescale it OR coerce depleted ones to 1
+      } else if(k > 50){
+        # last_req[which(radj[k,] < 1)] <- 1
+        # next()
+        # cat(Fv,k,i, rescale_req(movemat=movemat,new_req = last_req, p_ik = c(0.8,0.2)),"\n")
+        # last_req <- rescale_req(movemat=movemat,
+        #                        new_req = last_req, 
+        #                        p_ik = c(0.8,0.2))
+        # next()
         for (i in 1:narea) {
           # min(sort(table(radj[15:21,i]),decreasing=TRUE)[1:2])
-          yield_FI[i] <-  YPR_i[i] * getmode(radj[20:k,i])
-          B_FI[i] <-    SBPR_i[i] * getmode(radj[20:k,i])
-          cat(Fv,k, i, 
-              # min(as.numeric(tail(names(sort(table(radj[15:k,i]))), 2))), 
-              getmode(radj[20:k,i]),
+          yield_FI[i] <-  YPR_i[i] * getmode(radj[50:k,i])
+          B_FI[i] <-    SBPR_i[i] * getmode(radj[50:k,i])
+          cat(Fv,k, i,
+              # min(as.numeric(tail(names(sort(table(radj[15:k,i]))), 2))),
+              getmode(radj[50:k,i]),
               B_FI[i], yield_FI[i], "\n")
         }
         break("maxiter reached ",i,k)
-      ## if the changes are less than 5% or we've reached maxiter, end
-     }else if(all(round(abs(radj[k,]/radj[k-5,] - 1),2)  <=  0.05) | k == maxiter){
-       for (i in 1:narea) {
-         yield_FI[i] <-  YPR_i[i] *  last_req[i]
-         B_FI[i] <-    SBPR_i[i] *  last_req[i]
-         cat(Fv,k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
-       }
+        ## if the changes are less than 5% or we've reached maxiter, end
+      }else if(all(round(abs(radj[k,]/radj[k-5,] - 1),2)  <=  0.05) | k == maxiter){
+        for (i in 1:narea) {
+          yield_FI[i] <-  YPR_i[i] *  last_req[i]
+          B_FI[i] <-    SBPR_i[i] *  last_req[i]
+          cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+        } ## end areas
+        # } else {
+        #   ## had to manually calculate the eq, so use this
+        #   last_req <- rescale_req(movemat=movemat,
+        #                           new_req = last_req, 
+        #                           p_ik = c(0.8,0.2))
+        #   for (i in 1:narea) {
+        #     yield_FI[i] <-  YPR_i[i] *  last_req[i]
+        #     B_FI[i] <-    SBPR_i[i] *  last_req[i]
+        #     cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+        #   } ## end areas
+        # }
         break("maxiter reached ",i,k)
       } ## end if neither 1%
     } ## end K check
@@ -113,11 +138,11 @@ optim_loop2 <- function(Fv_i,
     
     # cat(k,i,last_req,yield_FI,"\n")
     
-   
+    
     # cat(last_req,yield_FI,"\n")
-
+    
   } ## end k:maxiter
-
+  
   
   ## save totals from final iteration
   return(list(Yield = sum(yield_FI), Biomass = sum(B_FI), 

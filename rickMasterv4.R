@@ -26,7 +26,7 @@ R0_list <- list(c(420,330,250),
 ## load functions & initialize OM
 lapply(list.files(here("R"), full.names = TRUE), source)
 
-Ftest <- seq(0,1,0.05)
+Ftest <- seq(0,1.25,0.05) ## 80% of 1.25 is 1.0, so examining full expl
 # rRef_current <- array(NA, dim = c(length(Ftest),3,length(R0_list)))
 
 
@@ -111,7 +111,7 @@ recr_dist <- c(1,1) ## global recruits to areas
 R0_list <- list(c(500,500), c(300,700), c(700,300))
 lapply(list.files(here("R"), full.names = TRUE), source)
 maxiter =  101 ## set to 1 to only use eigen
-Ftest <- seq(0,1,0.05)
+
 
 ## loop system wide F
 fyr_2area <- array(NA, dim = c(length(Ftest),3, length(R0_list))) ## F x 3  x RR 
@@ -122,12 +122,12 @@ for(RR in 1:length(R0_list)){
   # eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
   # receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
   for(Fv in 1:length(Ftest)){
-    curr <- run_one_current(Fv_i = c(Ftest[Fv]*0.8,Ftest[Fv]*0.2), #rep(Ftest[Fv],narea),  # 
+    curr <- run_one_current(Fv_i =rep(Ftest[Fv],narea),  # 
                             rec_level_idx = RR, 
                             recr_dist= recr_dist, 
                             movemat = X_ija_MIX2)
     # cat(curr$Yield,"\n")
-    prop <- optim_loop2(Fv_i = c(Ftest[Fv]*0.8,Ftest[Fv]*0.2), #rep(Ftest[Fv],narea),
+    prop <- optim_loop2(Fv_i = rep(Ftest[Fv],narea),#c(Ftest[Fv]*0.8,Ftest[Fv]*0.2), #
                         rec_level_idx = RR,
                         recr_dist= recr_dist,
                         movemat = X_ija_MIX2)
@@ -146,20 +146,23 @@ for(RR in 1:length(R0_list)){
   } ## end Fs
 } ## end input rec levels
 
-## plot yield comps solo and by area
-plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE)
-ggsave( plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE),
-        file = here('figs',paste0('Yield_comparisons_2area_buff0.005_5ppenalty_8020_',Sys.Date(),'.png')),
-        width = 10, height = 8, unit = 'in', dpi = 520)
-
-plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE)
-ggsave( plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE),
-file = here('figs',paste0('Yielda_comparisons_2area_buff0.005_5ppenalty_',Sys.Date(),'.png')),
-width = 10, height = 8, unit = 'in', dpi = 520)
-
 ## plot radj
 # png(here('figs',paste0('R_eq_iterations_2area_Buff=0.005_5ppenalty_Mixture_',
 #                        Sys.Date(),'.png')),
 #     height = 8.5, width = 11, unit = 'in', res = 600)
-plot_radj(radj_kvar = kvar_radj_2area, Fidx = 15:18)
+plot_radj(radj_kvar = kvar_radj_2area, Fidx = 15:20)
 # dev.off()
+
+
+## plot yield comps solo and by area
+plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE)
+# ggsave( plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE),
+#         file = here('figs',paste0('Yield_comparisons_2area_buff0.005_5ppenalty_8020_',Sys.Date(),'.png')),
+#         width = 10, height = 8, unit = 'in', dpi = 520)
+
+plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE)
+# ggsave( plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE),
+# file = here('figs',paste0('Yielda_comparisons_2area_buff0.005_5ppenalty_',Sys.Date(),'.png')),
+# width = 10, height = 8, unit = 'in', dpi = 520)
+
+
