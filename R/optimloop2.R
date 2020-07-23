@@ -1,10 +1,14 @@
 optim_loop2 <- function(Fv_i,
                        rec_level_idx = 1,
                        movemat = X_ija,
-                       globalR0 = 1000,
                        recr_dist = c(1, 1, 1)
                        ) {
   
+  # rec_level <- R0 <- R0_list[[RR]]
+  # proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
+  # proposed_i <- array(NA, dim = c(length(Ftest),3,narea), dimnames = list(NULL,c('Fv','Yield',"B"))) ## now for each area  ## define virgin biomass by AREA, does not change
+  # B_eq_i <- R_eq_i <- B_eq_i_INIT <- R_eq_i_INIT <- SB_Ri <- Yield_Ri <- matrix(NA, nrow =length(Ftest), ncol = narea)
+  # radj <- array(NA, dim = c(maxiter,length(Ftest),narea)) ## keeping track of convergence
   
   radj <- matrix(NA, nrow = maxiter, ncol = narea)
   
@@ -16,7 +20,7 @@ optim_loop2 <- function(Fv_i,
   ## NEW APPROACH - MOVEMAT DESIGNED RDIST
   # X_12 <- movemat[,,1][upper.tri(movemat[,,1])]
   # X_21 <- movemat[,,1][lower.tri(movemat[,,1])]
-  # rec_level <-  c(globalR0/(1+X_12/X_21),globalR0-globalR0/(1+X_12/X_21))
+  # rec_level <-  c(1000/(1+X_12/X_21),globalR0-1000/(1+X_12/X_21))
   # rec_level <-  c(sum(R0)/(1+X_12/X_21),sum(R0)-sum(R0)/(1+X_12/X_21))
   # R0 <- rec_level ## unchanging
   
@@ -59,16 +63,16 @@ optim_loop2 <- function(Fv_i,
       
       # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
       # SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
-      SBPR_i <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
+      SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
       
-      YPR_i[i] <- prop$Yield_i[i]/(rleveltmp*rdistUse[i])
+      YPR_i[i] <- prop$Yield_i[i]/(rleveltmp)
       # YPR_i <- prop$Yield_i[i]/((rleveltmp+0.05*R0[i])*rdistUse[i])
       
       
       
       ## Calc area-specific recruits using area-specific SB etc
       propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
-                                     Recr_virgin = R0[i], SPR_temp = SBPR_i)
+                                     Recr_virgin = R0[i], SPR_temp = SBPR_i[i])
       
       # B_eq_i[v,i] <- propEq$B_equil
       last_req[i] <- propEq$R_equil ## gets overwritten each iteration
@@ -82,7 +86,7 @@ optim_loop2 <- function(Fv_i,
        for (i in 1:narea) {
          yield_FI[i] <-  YPR_i[i] *  last_req[i]
          B_FI[i] <-    SBPR_i[i] *  last_req[i]
-         cat(k, i,  last_req[i], yield_FI[i], "\n")
+         cat(k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
        }
         break("maxiter reached ",i,k)
       } ## end if neither 1%
