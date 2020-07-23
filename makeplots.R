@@ -266,7 +266,7 @@ ggsave(last_plot(),
 #        legend = paste('Area',1:3), lty = 1, cex = 1.5)
 # 
 # dev.off()
-png(here('figs','R_eq_iterations_v4_xr.png'),
+png(here('figs','R_eq_iterations_3area_Buff=0.005_5ppenalty_Mixture.png'),
     height = 8.5, width = 11, unit = 'in', res = 600)
 
 plotseq = c(10:15)
@@ -282,6 +282,9 @@ for(i in 1:dim(rRef_proposed_radj)[4]){
       plot(radj[,j,1], col = 'black', 
            type = 'l', ylim = c(0,800), 
            xlab = 'Iteration No.',
+           xlim = c(0, max(min(which(is.na(radj[,j,1])),
+                                     min(which(is.na(radj[,j,2]))),
+                    min(which(is.na(radj[,j,3])))))),
            ylab =  'R_eq')
       text(x = maxiter*0.5, y = 600,
            cex = 1.5, label = paste0('F = ',Ftest[j]))
@@ -428,22 +431,22 @@ R_eq_i[,4] <- rowSums(R_eq_i)
      scale_color_manual(values = c('seagreen','goldenrod')) +
      labs(x = 'F', y = ifelse(i == 1, 'Yield',""), color = "") +
      theme_sleek() +
-     annotate('text', x = 0.75, y = 95,
-              color ='seagreen',
-              label = as.expression(bquote(F[MSY]~"="~.(labs[i])))) +
-     
-     annotate('text', x = 0.75, y = 85,
-              color ='goldenrod',
-              label = as.expression(bquote(F[MSY]~"="~.(labs[i+4])))) +
-     
-     annotate('text', x = 0.75, y = 75,
-              color ='seagreen',
-              label = as.expression(bquote(MSY~"="~
-                                             .(round(sysopt_curr[i,'YsysMSY'],2))))) +
-     annotate('text', x = 0.75, y = 65,
-              color ='goldenrod',
-              label = as.expression(bquote(MSY~"="~
-                                             .(round(sysopt[i,'YsysMSY'],2)))))+
+     # annotate('text', x = 0.75, y = 95,
+     #          color ='seagreen',
+     #          label = as.expression(bquote(F[MSY]~"="~.(labs[i])))) +
+     # 
+     # annotate('text', x = 0.75, y = 85,
+     #          color ='goldenrod',
+     #          label = as.expression(bquote(F[MSY]~"="~.(labs[i+4])))) +
+     # 
+     # annotate('text', x = 0.75, y = 75,
+     #          color ='seagreen',
+     #          label = as.expression(bquote(MSY~"="~
+     #                                         .(round(sysopt_curr[i,'YsysMSY'],2))))) +
+     # annotate('text', x = 0.75, y = 65,
+     #          color ='goldenrod',
+     #          label = as.expression(bquote(MSY~"="~
+     #                                         .(round(sysopt[i,'YsysMSY'],2)))))+
      
      theme(legend.position = if(i < 4) 'none' else c(0.75,0.5)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
  
@@ -463,7 +466,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
    
    }
 
- for(RR in 1:4){
+ for(RR in 1: length(R0_list)){
    plist2[[RR]] <- ggdraw() +
      draw_plot(p1list[[RR]] +   
                  annotate('text', x = 0, y = 95, 
@@ -478,8 +481,8 @@ R_eq_i[,4] <- rowSums(R_eq_i)
  }
  
  ggsave(  Rmisc::multiplot(plotlist = plist2,
-                           cols = 2),
-        file = here('figs',"Yield_comparison_Rref_Buffer=0.005_fmsy_21iter.png"),
+                           cols = length(R0_list)),
+        file = here('figs',"ccYield_comparison_Rref_BBuff=0.005_5ppenalty.png"),
         width = 10, height = 8, unit = 'in', dpi = 420)
  
 
@@ -494,7 +497,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
  A3 = round(c(areaopt[,4],sysopt_curr$FsysMSY),3)
  
  
- for(i in 1:4){
+ for(i in 1:length(R0_list)){
    
    proposed_i <-  rRef_proposed_i[,,,i]
    propi1 <- data.frame(proposed_i[,1:3,1])
@@ -515,19 +518,19 @@ R_eq_i[,4] <- rowSums(R_eq_i)
      scale_color_grey() + 
      scale_y_continuous(limits = c(0,65)) +
      
-     annotate('text', x = 0.75, y = 60,
-              color ='grey66',
-              label = as.expression(bquote(F[MSY]~"="~.(A1[i])))) +
-     annotate('text', x = 0.75, y = 55,
-              color ='grey44',
-              label = as.expression(bquote(F[MSY]~"="~.(A2[i])))) +
-     annotate('text', x = 0.75, y = 50,
-              color ='grey22',
-              label = as.expression(bquote(F[MSY]~"="~.(A3[i])))) +
-     annotate('text', x = 0.75, y = 45,
-              color ='blue',
-              label = as.expression(bquote(Total~Yield~"="~.(sum(areaopt[i,5:7]))))) +
-     
+     # annotate('text', x = 0.75, y = 60,
+     #          color ='grey66',
+     #          label = as.expression(bquote(F[MSY]~"="~.(A1[i])))) +
+     # annotate('text', x = 0.75, y = 55,
+     #          color ='grey44',
+     #          label = as.expression(bquote(F[MSY]~"="~.(A2[i])))) +
+     # annotate('text', x = 0.75, y = 50,
+     #          color ='grey22',
+     #          label = as.expression(bquote(F[MSY]~"="~.(A3[i])))) +
+     # annotate('text', x = 0.75, y = 45,
+     #          color ='blue',
+     #          label = as.expression(bquote(Total~Yield~"="~.(sum(areaopt[i,5:7]))))) +
+     # 
      theme_sleek() +
      theme(legend.position = 'none')
      # theme(legend.position = if(i < 4) 'none' else c(0.8,0.2)) #+ ggtitle("high oscillation problem -- conclude on 99th iteration")
@@ -547,7 +550,7 @@ R_eq_i[,4] <- rowSums(R_eq_i)
    
  }
 
- for(RR in 1:4){
+ for(RR in 1:length(R0_list)){
    plist2[[RR]] <- ggdraw() +
      draw_plot(p1list[[RR]] +   
                  annotate('text', x = 0, y = 60, 
@@ -562,9 +565,8 @@ R_eq_i[,4] <- rowSums(R_eq_i)
  }
  
  ggsave( Rmisc::multiplot(plotlist = plist2,
-                          cols = 2)
-          ,
-         file = here('figs',"YieldvF_Area_Rref_Buffer=0.005_Fopt.png"),
+                          cols = 3),
+         file = here('figs',"YieldvF_Area_3area_Buff=0.005_5ppenalty_Mixture.png"),
          width = 10, height = 8, unit = 'in', dpi = 420) 
  
 
