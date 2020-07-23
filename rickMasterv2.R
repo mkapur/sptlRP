@@ -20,8 +20,7 @@ recr_dist <- c(1,1,1) ## global recruits to areas
 
 R0_list <- list(c(420,330,250),
                 rev(c(420,330,250)),
-                c(333,333,333),
-                c(499,499,2)) #,
+                c(333,333,333))
                 # c(2,2,499),
                 # c(420,330,1000))
 ## each area has its own R0
@@ -143,7 +142,7 @@ for(RR in 1:dim(rRef_proposed)[3]){
    
         
         # SB_Ri[v,i] <- prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## on k = 1 will just be rleveltemp
-        SB_Ri[v,i] <-  prop$SB_i[i]/((rleveltmp+0.01*R0[i])*rdistUse[i]) ## Rick's idea
+        SB_Ri[v,i] <-  prop$SB_i[i]/((rleveltmp+0.005*R0[i])*rdistUse[i]) ## Rick's idea
         # if( SB_Ri[v,i] > SB0_i[i]) SB_Ri[v,i] <- SB0_i[i] ## penalty for dividing small numbers
         
         # if(k > 2){
@@ -168,15 +167,35 @@ for(RR in 1:dim(rRef_proposed)[3]){
         B_eq_i[v,i] <- propEq$B_equil
         R_eq_i[v,i] <- propEq$R_equil ## gets overwritten each iteration
         
-        if(k == maxiter){ ## store quantities
-          proposed_i[v,'Fv',i] <- Ftest[v]
-          proposed_i[v,'Yield',i] <-  Yield_Ri[v,i]*R_eq_i[v,i]
-          proposed_i[v,'B',i] <-    SB_Ri[v,i] *R_eq_i[v,i]
-          # cat("B \t",v,k,i,  proposed_i[v,'B',i], "\n")
-          cat("Yield \t",v,k,i,  proposed_i[v,'B',i], "\n")
-          
-        } ## end k max
+        # if(k == maxiter){ ## store quantities
+        #   proposed_i[v,'Fv',i] <- Ftest[v]
+        #   proposed_i[v,'Yield',i] <-  Yield_Ri[v,i]*R_eq_i[v,i]
+        #   proposed_i[v,'B',i] <-    SB_Ri[v,i] *R_eq_i[v,i]
+        #   # cat("B \t",v,k,i,  proposed_i[v,'B',i], "\n")
+        #   cat("Yield \t",v,k,i,  proposed_i[v,'B',i], "\n")
+        #   
+        # } ## end k max
       } ## end areas
+      # if(k == maxiter){ ## store quantities
+      if(k > 5){
+        ## stop iters if req hasn't changed more than 1%
+        if(any(round(abs( rRef_proposed_radj[k,v,,RR]/
+                          rRef_proposed_radj[k-5,v,,RR] - 1),2)  > 0.05) & k < maxiter){
+          next()
+        }else if(any(round(abs( rRef_proposed_radj[k,v,,RR]/
+                                rRef_proposed_radj[k-5,v,,RR] - 1),2) <=  0.05) | k == maxiter){
+          for (i in 1:narea) {
+              proposed_i[v,'Fv',i] <- Ftest[v]
+              proposed_i[v,'Yield',i] <-  Yield_Ri[v,i]*R_eq_i[v,i]
+              proposed_i[v,'B',i] <-    SB_Ri[v,i] *R_eq_i[v,i]
+                cat("Yield \t",v,k,i,  proposed_i[v,'B',i], "\n")
+          }
+          break("maxiter reached ",i,k)
+        } ## end if neither 1%
+      } ## end K check
+        
+        
+      # } ## end areas
       # cat("SB_i \t",v,k,i, prop$SB_i, "\n")
       # cat("SBPR \t",v,k,i, SB_Ri[v,], "\n")
       # cat("NEWREQ \t",v,k,i, R_eq_i[v,], "\n")
@@ -318,39 +337,34 @@ steep <- rep(0.7,3)
 recr_dist <- c(1,1) ## global recruits to areas
 
 
-R0_list <- list(c(500,500),
-                rev(c(700,300)),
-                c(998,2))
+R0_list <- list(c(500,500), c(300,700), c(700,300))
+               
 
 
 
 lapply(list.files(here("R"), full.names = TRUE), source)
-maxiter =  2 ## set to 1 to only use eigen
+maxiter =  101 ## set to 1 to only use eigen
 Ftest <- seq(0,1,0.05)
 
 ## loop system wide F
 sys2area <- array(NA, dim = c(length(Ftest),3,length(R0_list),3)) ## F x 3 x RR x Movemats
 radj2area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list),3)) ## iters, Fv, 2 areas , RR x movements
 
-
-
-
-for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
+for(m in 2:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   for(RR in 1:length(R0_list)){
-    
-    eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
-    receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
-
+    # eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
+    # receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
     for(Fv in 1:length(Ftest)){
-      curr <- run_one_current(Fv_i = rep(Ftest[Fv],narea), 
+      curr <- run_one_current(Fv_i = c(Ftest[Fv]*1,Ftest[Fv]*1), #rep(Ftest[Fv],narea), 
                               rec_level_idx = RR, 
                               recr_dist= recr_dist, 
                               movemat = list(X_ija_EQUAL, X_ija_MIX2)[[m]])
       cat(curr$Yield,"\n")
-      prop <- optim_loop(Fv_i = rep(Ftest[Fv],narea), 
-                         rec_level_idx = RR, 
-                         receq= receq,
-                         recr_dist= recr_dist, movemat = list(X_ija_EQUAL, X_ija_MIX2,X_ija_UNI2)[[m]])
+      prop <- optim_loop2(Fv_i = rep(Ftest[Fv],narea), 
+                         rec_level_idx = RR,
+                         globalR0 = 1000,
+                         recr_dist= recr_dist,
+                         movemat = list(X_ija_EQUAL, X_ija_MIX2)[[m]])
       sys2area[Fv,1,RR,m] <- Ftest[Fv]
       sys2area[Fv,2,RR,m] <- curr$Yield
       sys2area[Fv,3,RR,m] <- prop$Yield
@@ -363,11 +377,64 @@ for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   } ## end input rec levels
 } ## end movement approaches
 
+
+## plot radjf
+# for(m in 2:2){#dim(radj3area)[5]){
+  # png(here('figs',paste0('R_eq_iterations_2area_Buff=0.005_5ppenalty_',c('Equal','Mixture')[m],'.png')),
+      # height = 8.5, width = 11, unit = 'in', res = 600)
+  
+  plotseq = c(15:20)
+  par(mfrow = c(dim(radj2area)[4],
+                length(plotseq)),
+      mar = c(5,5,1.5,1.5))
+
+  for(i in 1:dim(radj2area)[4]){
+    
+    radj <-    radj2area[,,,i]
+    # radj <- radj2areaTMP
+    
+    for(j in plotseq){
+      if(i == dim(radj2area)[4] & j == max(plotseq)) next()
+      plot(radj[,j,2], col = 'black', 
+           type = 'l',
+           ylim = c(0,1000),
+           # xlim = c(0,10),
+           # xlim = c(0, max(min(which(is.na(radj[,j,2]))),
+           #                 min(which(is.na(radj[,j,3]))))),
+           xlab = 'Iteration No',
+           ylab =  'R_eq')
+      text(x = max(min(which(is.na(radj[,j,2]))),
+                  min(which(is.na(radj[,j,3]))))/2, y = 800,
+           cex = 1.5, label = paste0('F = ',Ftest[j]))
+      ## niter x fv x areas
+      
+      lines(radj[,j,3], col = 'blue', type = 'p',pch = 19, cex = 1)
+
+      
+      ## add R0/starts
+      # points(R0_list[[i]][1], pch = 5, col = 'black')
+      # points(R0_list[[i]][2], pch = 19, col = 'blue')
+      # points(R0_list[[i]][3], pch = 19, col = 'red')
+    } ## end j (Fs)
+  } ## end loop over RRs
+  plot.new()
+  legend('center',
+         col = c('black','blue','red'), 
+         legend = c(paste('Area',1:2,'R_eq Iteration')),
+                    # paste('Area',1:2,'R_eq from last iter')),
+         lty = c(1,NA,1,NA,NA,NA),
+         pch = c(NA, 1,NA,19,19,19),
+         cex = 0.75)
+  text(x = 0.5, y= 1, adj = 1,  labels = c('50% Symmetric','Mixture')[m])
+  
+  dev.off()
+
+
 ## plot yield curves
 plist2a <- barlist <- plist2a2 <- list();idx = 1
-for(m in 1:2){
+# for(m in 2:2){
   for(RR in 1:length(R0_list)){
-    tmp <- data.frame(sys2area[,,RR,m])
+    tmp <- data.frame(sys2area[,,RR])
     names(tmp) <- c('Fv','current','proposed')
     plist2a[[idx]] <- tmp %>% melt(id = 'Fv') %>%
       ggplot(., aes(x = Fv, y = value, color = variable, linetype = variable)) +
@@ -376,11 +443,11 @@ for(m in 1:2){
       scale_linetype_manual(values = c('solid','dashed'), labels = c('current','proposed'), guide=FALSE ) +
       labs(x = 'F', y = ifelse(RR == 1, 'Yield',""), color = "",
            title = paste0(c('Equal (symmetric) movement','Asymmetric mixture movement')[m])) +
-      scale_y_continuous(limits = c(0,120), breaks = seq(0,130,10)) +
+      # scale_y_continuous(limits = c(0,120), breaks = seq(0,130,10)) +
       theme_sleek() + 
       theme(legend.position = if(RR<3) 'none' else c(0.75,0.5))
     
-    barlist[[ifelse(idx >3, idx-3,idx)]] <- melt(data.frame(R0_list[[RR]])) %>%
+    barlist[[ifelse(idx >2, idx-2,idx)]] <- melt(data.frame(R0_list[[RR]])) %>%
       mutate(Area = 1:2) %>%
       ggplot(., aes(x = Area, y = value, fill = factor(Area))) +
       geom_histogram(stat = 'identity',
@@ -397,12 +464,12 @@ for(m in 1:2){
     
     idx = idx+1
   }
-}
+# }
 
 for(RR in 1:length(plist2a)){
   plist2a2[[RR]] <- ggdraw() +
     draw_plot(plist2a[[RR]]) +
-    draw_plot(barlist[[ifelse(RR >3, RR-3, RR)]]+
+    draw_plot(barlist[[ifelse(RR >2, RR-2, RR)]]+
                 annotate('text', x = 1.5, 
                          y = 1100, 
                          cex = 2,
@@ -410,17 +477,17 @@ for(RR in 1:length(plist2a)){
               x = 0.7, y = 0.15,
               width = .25, height = .25)
 }
-Rmisc::multiplot(plotlist = plist2a2,  cols = 3, 
-                 layout = rbind(c(1,2,3),c(4,5,6)))
+Rmisc::multiplot(plotlist = plist2a2,  cols = 2, 
+                 layout = rbind(c(1,2),c(3,4)))
 
 
-ggsave(Rmisc::multiplot(plotlist = plist3a2,  cols = 4, 
-                        layout = rbind(c(1,2,3,4),c(5,6,7,8))),
-       file = here('figs','Yield_comparisons_2area_eigen.png'),
+ggsave(Rmisc::multiplot(plotlist = plist2a2,  cols = 3), 
+                        # layout = rbind(c(1,2),c(3,4))),
+       file = here('figs','Yield_comparisons_2area_Buff=0.005_5ppenalty_8020.png'),
        width = 10, height = 8, unit = 'in', dpi = 520)
 
 ## TRIAL 4: Eigen for 3 area model ----
-rm(list = ls())
+# rm(list = ls())
 narea <- 3
 nages <- 21
 steep <- rep(0.7,3)
@@ -428,8 +495,7 @@ recr_dist <- c(1,1,1) ## global recruits to areas
 
 R0_list <- list(c(420,330,250),
                 rev(c(420,330,250)),
-                c(333,333,333),
-                c(499,499,2))
+                c(333,333,333))
 
 lapply(list.files(here("R"), full.names = TRUE), source)
 maxiter =  2 ## set to 1 to only use eigen
@@ -437,9 +503,10 @@ Ftest <- seq(0,1,0.05)
 
 ## loop system wide F
 sys3area <- array(NA, dim = c(length(Ftest),3,length(R0_list),2)) ## F x 3 x RR x Movemats
-radj3area <- array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list),2)) ## iters, Fv, 2 areas , RR x movements
+radj3area <- array(NA, dim = c(maxiter,length(Ftest),
+                               narea+1,length(R0_list),2)) ## iters, Fv, 2 areas , RR x movements
 
-for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
+for(m in 2:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
   for(RR in 1:length(R0_list)){
     
     if(m == 2){
@@ -483,9 +550,10 @@ for(m in 1:2){ #1:length(list(X_ija_EQUAL, X_ija_MIX2))){
 } ## end movement approaches
 
 ## plot radjf
-for(m in 1:1){#dim(radj3area)[5]){
-  png(here('figs',paste0('R_eq_iterations_3area_',c('UniD','Mixture')[m],'.png')),
-           height = 8.5, width = 11, unit = 'in', res = 600)
+for(m in 2:2){#dim(radj3area)[5]){
+  # png(here('figs',paste0('R_eq_iterations_3area_',
+                         # c('UniD','Mixture')[m],'.png')),
+           # height = 8.5, width = 11, unit = 'in', res = 600)
 
       plotseq = c(11:13)
       par(mfrow = c(dim(radj3area)[4],
@@ -528,13 +596,13 @@ for(m in 1:1){#dim(radj3area)[5]){
       legend('center',
              col = c('black','blue','red'), 
              legend = c(paste('Area',1:3,'R_eq from Eigen'),
-                        paste('Area',1:3,'R_eq from Iter')),
+                        paste('Area',1:3,'R_eq from last iter')),
              lty = c(1,1,1,NA,NA,NA),
              pch = c(NA, NA,NA,19,19,19),
              cex = 0.75)
       text(x = 0.5, y= 1, adj = 1,  labels = c('Unidirectional','Mixture')[m])
       
-      dev.off()
+      # dev.off()
 } ##end loop over movement mats
 
 
