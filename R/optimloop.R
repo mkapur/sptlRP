@@ -2,12 +2,12 @@ optim_loop <- function(Fv_i,
                        rec_level_idx = 1,
                        movemat = X_ija,
                        recr_dist = c(1, 1, 1),
-                       receq = receq) {
+                       receq = c(1000/1.8, 1000-1000/1.8)) {
   
   radj <- matrix(NA, nrow = maxiter, ncol = narea)
 
   R0 <- R0_list[[rec_level_idx]] 
-  rec_level <- R0# receq
+  rec_level <-  receq
   
   SB0_i <- doNage(Fv = rep(0,narea), 
                   X = movemat,
@@ -47,9 +47,9 @@ optim_loop <- function(Fv_i,
         
         
         # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
-        SBPR_i <-  prop$SB_i[i]/((rleveltmp+0.99*R0[i])*rdistUse[i]) ## Rick's idea
+        # SBPR_i <-  prop$SB_i[i]/((rleveltmp+0.05*R0[i])*rdistUse[i]) ## Rick's idea
 
-        # SBPR_i <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
+        SBPR_i <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
         
         YPR_i <- prop$Yield_i[i]/(rleveltmp*rdistUse[i])
         # YPR_i <- prop$Yield_i[i]/((rleveltmp+0.0001*R0[i])*rdistUse[i])
@@ -65,13 +65,14 @@ optim_loop <- function(Fv_i,
 
         if(k == maxiter){ ## store quantities
           yield_FI[i] <-  YPR_i*  last_req[i]
-          cat(k,i,YPR_i,   last_req[i] ,  yield_FI[i],"\n")
           B_FI[i] <-    SBPR_i *  last_req[i]
          
           
         } ## end if k max
       } ## end areas
     } ## end k:maxiter
+  cat(k,i,last_req,"\n")
+  
     ## save totals from final iteration
   return(list(Yield = sum(yield_FI), Biomass = sum(B_FI), 
               Yield_i = yield_FI, Biomass_i = B_FI, radj = last_req))
