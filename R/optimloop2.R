@@ -1,3 +1,4 @@
+
 getmode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
@@ -6,8 +7,7 @@ getmode <- function(v) {
 optim_loop2 <- function(Fv_i,
                         rec_level_idx = 1,
                         movemat = X_ija,
-                        recr_dist = c(1, 1, 1)
-) {
+                        recr_dist = c(1, 1, 1), currReq = NA){
   
   # rec_level <- R0 <- R0_list[[RR]]
   # proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
@@ -34,7 +34,7 @@ optim_loop2 <- function(Fv_i,
                   rdist = recr_dist,
                   refR = rec_level)$SB_i
   
-  last_req <- yield_FI <- B_FI <- SBPR_i <- YPR_i <- NULL
+  last_req <- first_req <- yield_FI <- B_FI <- SBPR_i <- YPR_i <- NULL
   for(k in 1:maxiter){ ## Loop over steps A & B
     
     if(k == 1){
@@ -42,7 +42,7 @@ optim_loop2 <- function(Fv_i,
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
     } else{
       rdistUse <- recr_dist ## only after computing R_i
-      rlevelUse = last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
+      rlevelUse = last_req + rec_level #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
     }
     
     prop <- doNage( Fv = Fv_i, 
@@ -65,86 +65,130 @@ optim_loop2 <- function(Fv_i,
       # radj[k,v,i] <- rleveltmp
       radj[k,i] <- rleveltmp ## store this
       
-      
+
       # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
       # SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
       SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
-      
+      # cat(k,i, prop$SB_i[i],"\n")
+      # cat(k,i, SBPR_i[i],"\n")
+
       YPR_i[i] <- prop$Yield_i[i]/(rleveltmp)
-      # YPR_i <- prop$Yield_i[i]/((rleveltmp+0.05*R0[i])*rdistUse[i])
-      
-      
+      # YPR_i[i] <- prop$Yield_i[i]/((rleveltmp+0.005*R0[i]))
+      # cat(k,i, YPR_i[i],"\n")
       
       ## Calc area-specific recruits using area-specific SB etc
       propEq <- Equil_Spawn_Recr_Fxn(steepness = steep[i], SSB_virgin = SB0_i[i],
                                      Recr_virgin = R0[i], SPR_temp = SBPR_i[i])
       
+  
+      if(k == 1) first_req[i] <- propEq$R_equil
       # B_eq_i[v,i] <- propEq$B_equil
       last_req[i] <- propEq$R_equil ## gets overwritten each iteration
-      
-      
-      
     } ## end areas
+    # cat(Ftest[Fv],k, YPR_i, SBPR_i,last_req,"\n")
     
+    # if(k == 1) { plot(rep(k,2), SBPR_i, col = c('black','blue'),
+    #                   pch = 19,ylim = c(0,0.1), xlim = c(1,101))}
+    # points(rep(k,2), SBPR_i, col = c('black','blue'),pch = 19)
     
-    
+    # if(k == 1) { plot(rep(k,2), YPR_i, col = c('black','blue'),
+    #                   pch = 19,ylim = c(0,0.25), xlim = c(1,101))}
+    # points(rep(k,2), YPR_i, col = c('black','blue'),pch = 19)
     # if(k == maxiter){ ## store quantities
-    if(k > 5){
+    if(k > 2 ){
       ## keep iterating if changing more than 5% in early iters
-      if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05) & k < 50){
-        next()
+      # if(any(round(abs(radj[k,]/radj[k-1,] - 1),2)  > 0.1) & k < maxiter){
+        # next()
         ## if it is still bouncing wildly after 50, 
         ## use the mode OR rescale it OR coerce depleted ones to 1
-      } else if(k > 50){
+      # } else if(any(round(abs(radj[k,]/radj[k-5,] - 1),2)  > 0.05) & k > 50){
         # last_req[which(radj[k,] < 1)] <- 1
         # next()
         # cat(Fv,k,i, rescale_req(movemat=movemat,new_req = last_req, p_ik = c(0.8,0.2)),"\n")
         # last_req <- rescale_req(movemat=movemat,
-        #                        new_req = last_req, 
-        #                        p_ik = c(0.8,0.2))
+        #                        new_req = currReq,
+        #                        p_ik = c(0,0))#,1-c(rec_level/sum(rec_level))) #c(0,1))
         # next()
-        for (i in 1:narea) {
-          # min(sort(table(radj[15:21,i]),decreasing=TRUE)[1:2])
-          yield_FI[i] <-  YPR_i[i] * getmode(radj[50:k,i])
-          B_FI[i] <-    SBPR_i[i] * getmode(radj[50:k,i])
-          cat(Fv,k, i,
-              # min(as.numeric(tail(names(sort(table(radj[15:k,i]))), 2))),
-              getmode(radj[50:k,i]),
-              B_FI[i], yield_FI[i], "\n")
-        }
-        break("maxiter reached ",i,k)
+        # for (i in 1:narea) {
+          
+          ## use mode
+          # yield_FI[i] <-  YPR_i[i] * getmode(radj[50:k,i])
+          # B_FI[i] <-    SBPR_i[i] * getmode(radj[50:k,i])
+          # radj[k,i] <- getmode(radj[50:k,i])
+          
+          ## use min mode
+          # yield_FI[i] <-  YPR_i[i] * min(as.numeric(tail(names(sort(table(radj[45:k,i]))), 2)))
+          # B_FI[i] <-    SBPR_i[i] * min(as.numeric(tail(names(sort(table(radj[45:k,i]))), 2)))
+          ## overwrite radj to show what was used
+          # radj[k,i] <- min(as.numeric(tail(names(sort(table(radj[45:k,i]))), 2)))
+          #
+          ## use first iteration
+          # yield_FI[i] <-  YPR_i[i] * first_req[i]
+          # B_FI[i] <-    SBPR_i[i] * first_req[i]
+          # radj[k,i] <-  first_req[i]
+          
+          ## use whatever last-req returned from main function
+          # yield_FI[i] <-  YPR_i[i] * last_req[i]
+          # B_FI[i] <-    SBPR_i[i] * last_req[i]
+          # radj[k,i] <-  first_req[i]
+          # 
+          # cat(Fv,k, i,
+          #     # 
+          #     min(as.numeric(tail(names(sort(table(radj[15:k,i]))), 2))),
+          #     getmode(radj[50:k,i]),
+          #     B_FI[i], yield_FI[i], "\n")
+        # }
+        # break("maxiter reached ",i,k)
         ## if the changes are less than 5% or we've reached maxiter, end
-      }else if(all(round(abs(radj[k,]/radj[k-5,] - 1),2)  <=  0.05) | k == maxiter){
+      # }else 
+      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.1) | 
+         all(round(abs(radj[k,]/radj[2,])) == 1)  |
+         k == maxiter){
+        # cat('done',"\n")
+        # Yield = sum(YPR_i)*sum(last_req)
+        # Yield = sum(YPR_i*last_req)
         for (i in 1:narea) {
           yield_FI[i] <-  YPR_i[i] *  last_req[i]
           B_FI[i] <-    SBPR_i[i] *  last_req[i]
           cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
-        } ## end areas
-        # } else {
-        #   ## had to manually calculate the eq, so use this
-        #   last_req <- rescale_req(movemat=movemat,
-        #                           new_req = last_req, 
-        #                           p_ik = c(0.8,0.2))
-        #   for (i in 1:narea) {
-        #     yield_FI[i] <-  YPR_i[i] *  last_req[i]
-        #     B_FI[i] <-    SBPR_i[i] *  last_req[i]
-        #     cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
-        #   } ## end areas
-        # }
-        break("maxiter reached ",i,k)
-      } ## end if neither 1%
+            # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+          } ## end areas
+          # } else {
+          #   ## had to manually calculate the eq, so use this
+          #   last_req <- rescale_req(movemat=movemat,
+          #                           new_req = last_req, 
+          #                           p_ik = c(0.8,0.2))
+          #   for (i in 1:narea) {
+          #     yield_FI[i] <-  YPR_i[i] *  last_req[i]
+          #     B_FI[i] <-    SBPR_i[i] *  last_req[i]
+          #     cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+          #   } ## end areas
+          # }
+          break("maxiter reached ",i,k)
+        } ## end if neither 1%
     } ## end K check
     # } ## end areas
-    
-    # cat(k,i,last_req,yield_FI,"\n")
-    
-    
+  
     # cat(last_req,yield_FI,"\n")
     
   } ## end k:maxiter
   
+  # data.frame(radj) %>% filter(!is.na(X1)) %>% mutate(X2/X1) ## 1.6
+  # data.frame(radj) %>% filter(!is.na(X1)) %>% mutate(X1/X2) ## 0.62
+  # 
+  # Fv_i = 0.8*c(0.8,0.2)
+  # radj <- matrix(NA, nrow = maxiter, ncol = narea)
+  
+
   
   ## save totals from final iteration
-  return(list(Yield = sum(yield_FI), Biomass = sum(B_FI), 
-              Yield_i = yield_FI, Biomass_i = B_FI, radj = radj))
+  return(list(
+    Yield = sum(yield_FI),
+    Biomass = sum(B_FI),
+    Yield_i = yield_FI,
+    Biomass_i = B_FI,
+    radj = radj,
+    last_req = last_req, ## what was used for Yield Calc
+    last_YPR = YPR_i ## ratio mult for Yield
+  ))
 }
