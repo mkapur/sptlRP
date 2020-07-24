@@ -45,7 +45,7 @@ for(i in 1:dim(X_ija)[3]){
 }
 } else if (narea == 2){
 
-  X_ija_EQUAL <- X_ija_NULL2 <- X_ija_MIX2 <- X_ija_UNI2 <- array(NA, dim = c(narea,narea,nages))
+  X_ija_EQUAL <- X_ija_NULL2 <- X_ija_MIX2 <-X_ija_MIX2b <- X_ija_UNI2 <- array(NA, dim = c(narea,narea,nages))
 
   for(a in 1:2){ ## only two areas have movement
     for(g in 1:dim(X_ija_EQUAL)[3]){ ## loop ages
@@ -59,12 +59,19 @@ for(i in 1:dim(X_ija)[3]){
         X_ija_MIX2[2,2,g] <- 0.75 
         X_ija_MIX2[1,1,g] <- 0.8 
         X_ija_MIX2[1,2,g] <- 0.2
+        
+        X_ija_MIX2b[2,1,g] <- 0.5 
+        X_ija_MIX2b[2,2,g] <- 0.5 
+        X_ija_MIX2b[1,1,g] <- 0.8 
+        X_ija_MIX2b[1,2,g] <- 0.2
+        
         X_ija_EQUAL[1,1,g]  <- X_ija_EQUAL[2,2,g] <- 0.5
         X_ija_EQUAL[1,2,g]  <- X_ija_EQUAL[2,1,g] <- 0.5
       } else{
-        X_ija_EQUAL[a,,g] <- X_ija_MIX2[a,,g] <- X_ija_UNI2[a,,g] <- 0 ## no movement at older ages
+        X_ija_EQUAL[a,,g] <- X_ija_MIX2[a,,g] <- X_ija_MIX2b[a,,g] <- X_ija_UNI2[a,,g] <- 0 ## no movement at older ages
         diag(X_ija_EQUAL[,,g]) <- 1 
         diag(X_ija_MIX2[,,g]) <- 1 
+        diag(X_ija_MIX2b[,,g]) <- 1 
         # cat( a, " ",diag(X_ija[,,g]) ,"\n")
       } # end else
     } ## end ages
