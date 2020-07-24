@@ -7,7 +7,8 @@ getmode <- function(v) {
 optim_loop2 <- function(Fv_i,
                         rec_level_idx = 1,
                         movemat = X_ija,
-                        recr_dist = c(1, 1, 1), currReq = NA){
+                        recr_dist = c(1, 1, 1), 
+                        currReq = NA){
   
   # rec_level <- R0 <- R0_list[[RR]]
   # proposed <- data.frame(Fv = NA, Yield = NA, B = NA)
@@ -42,7 +43,7 @@ optim_loop2 <- function(Fv_i,
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
     } else{
       rdistUse <- recr_dist ## only after computing R_i
-      rlevelUse = last_req + rec_level #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
+      rlevelUse = last_req + (0.5*rec_level) #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
     }
     
     prop <- doNage( Fv = Fv_i, 
@@ -69,8 +70,8 @@ optim_loop2 <- function(Fv_i,
       # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
       # SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
       SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
-      # cat(k,i, prop$SB_i[i],"\n")
-      # cat(k,i, SBPR_i[i],"\n")
+      cat(k,i, prop$SB_i[i],"\n")
+      cat(k,i, SBPR_i[i],"\n")
 
       YPR_i[i] <- prop$Yield_i[i]/(rleveltmp)
       # YPR_i[i] <- prop$Yield_i[i]/((rleveltmp+0.005*R0[i]))
@@ -95,7 +96,7 @@ optim_loop2 <- function(Fv_i,
     #                   pch = 19,ylim = c(0,0.25), xlim = c(1,101))}
     # points(rep(k,2), YPR_i, col = c('black','blue'),pch = 19)
     # if(k == maxiter){ ## store quantities
-    if(k > 2 ){
+    if(k > 20){
       ## keep iterating if changing more than 5% in early iters
       # if(any(round(abs(radj[k,]/radj[k-1,] - 1),2)  > 0.1) & k < maxiter){
         # next()
@@ -139,10 +140,12 @@ optim_loop2 <- function(Fv_i,
           #     B_FI[i], yield_FI[i], "\n")
         # }
         # break("maxiter reached ",i,k)
-        ## if the changes are less than 5% or we've reached maxiter, end
+        ## if the changes are less than 5%
+      ## or the ra
+      ## or we've reached maxiter, end
       # }else 
-      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.1) | 
-         all(round(abs(radj[k,]/radj[2,])) == 1)  |
+      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) | 
+         # all(round(abs(radj[k,]/radj[2,])) == 1)  |
          k == maxiter){
         # cat('done',"\n")
         # Yield = sum(YPR_i)*sum(last_req)
