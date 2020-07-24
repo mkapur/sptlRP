@@ -43,7 +43,7 @@ optim_loop2 <- function(Fv_i,
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
     } else{
       rdistUse <- recr_dist ## only after computing R_i
-      rlevelUse = last_req + (0.5*rec_level) #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
+      rlevelUse = last_req + (1*rec_level) #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
     }
     
     prop <- doNage( Fv = Fv_i, 
