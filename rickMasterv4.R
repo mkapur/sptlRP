@@ -108,7 +108,7 @@ rm(list = ls())
 
 narea <- 2
 nages <- 21
-steep <- rep(0.7,3)
+steep <- rep(0.7,2)
 recr_dist <- c(1,1) ## global recruits to areas
 # R0_list <- list(c(500,500), c(300,700), c(700,300))
 # R0_list <- list(c(50,50), c(30,70), c(70,30))
@@ -140,14 +140,18 @@ for(s in 1:3){
       curr <- run_one_current(Fv_i = Ftest[Fv]*splt,
                               rec_level_idx = RR, 
                               recr_dist= recr_dist, 
-                              movemat = X_ija_NULL2)
+                              movemat = X_ija_MIX2)
       # cat(curr$Yield,"\n")
       current_Req <- curr$R_ESUMB
-      prop <- optim_loop2(Fv_i = Ftest[Fv]*splt, #rep(Ftest[Fv],narea),#
-                          rec_level_idx = RR,
-                          recr_dist= recr_dist,
-                          movemat = X_ija_NULL2,
-                          currReq = current_Req)
+      # prop <- optim_loop2(Fv_i = Ftest[Fv]*splt, #rep(Ftest[Fv],narea),#
+      #                     rec_level_idx = RR,
+      #                     recr_dist= recr_dist,
+      #                     movemat = X_ija_MIX2,
+      #                     currReq = current_Req)
+      
+      prop <- abloop(Fv_i = Ftest[Fv]*splt, 
+                     rec_level_idx = RR,
+                     movemat = X_ija_MIX2)
       
       # cat(Ftest[Fv], sum(prop$radj[min(which(is.na(prop$radj)))-1,]),current_Req,"\n")
       # cat(Ftest[Fv], prop$Yield,curr$Yield,"\n")
@@ -171,27 +175,27 @@ for(s in 1:3){
   } ## end input rec levels
   
   ## plot radj
-  # png(here('figs',paste0('R_eq_iterations_2area_Buff=0.005_5ppenalty_Mixture_',
-  #                        paste(splt,collapse = "_"),"_",
-  #                        Sys.Date(),'.png')),
-  #     height = 8.5, width = 11, unit = 'in', res = 600)
-  plot_radj(radj_kvar = kvar_radj_2area, Fidx = 10:15)
-  # dev.off()
+  png(here('figs',paste0('R_eq_ABloop_2area_Buff=0.005_5ppenalty_Mixture_',
+                         paste(splt,collapse = "_"),"_",
+                         Sys.Date(),'.png')),
+      height = 8.5, width = 11, unit = 'in', res = 600)
+  plot_radj(radj_kvar = kvar_radj_2area, Fidx = 17:21)
+  dev.off()
   
   ## plot yield comps solo and by area
   plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE)
-  # ggsave( plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE),
-  #         file = here('figs',paste0('Yield_comparisons_2area_buff0.005_5ppenalty_',
-  #                                   paste(splt,collapse = "_"),"_",
-  #                                   Sys.Date(),'.png')),
-  #         width = 10, height = 8, unit = 'in', dpi = 520)
+  ggsave( plot_yield_curves(sys_matrix = fyr_2area, byarea = FALSE),
+          file = here('figs',paste0('Yield_comparisons_ABloop_2area_buff0.005_5ppenalty_',
+                                    paste(splt,collapse = "_"),"_",
+                                    Sys.Date(),'.png')),
+          width = 10, height = 8, unit = 'in', dpi = 520)
   
   plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE) 
-  # ggsave( plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE),
-  #         file = here('figs',paste0('Yielda_comparisons_2area_buff0.005_5ppenalty_',
-  #                                   paste(splt,collapse = "_"),"_",
-  #                                   Sys.Date(),'.png')),
-  #         width = 10, height = 8, unit = 'in', dpi = 520)
+  ggsave( plot_yield_curves(sys_matrix  = far_2area, byarea = TRUE),
+          file = here('figs',paste0('Yielda_comparisons_ABloop_2area_buff0.005_5ppenalty_',
+                                    paste(splt,collapse = "_"),"_",
+                                    Sys.Date(),'.png')),
+          width = 10, height = 8, unit = 'in', dpi = 520)
   
   
 }
