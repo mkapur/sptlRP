@@ -4,7 +4,7 @@
 ## movement happens only below age 6, and is unidirectional from areas 1 and 2 to area 3
 
 ## load data and introduce some demographic variation among areas
-dat0 <- read.table(here("HOME3.txt"), header = T)
+dat0 <- read.table(here::here("HOME3.txt"), header = T)
 dat <- array(NA, dim = c(nrow(dat0),ncol(dat0),narea)) ## placeholder
 
 for(i in 1:narea) dat[,,i] <- as.matrix(dat0)
