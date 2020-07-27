@@ -84,7 +84,7 @@ abloop <- function(Fv_i,
         for (i in 1:narea) {
           yield_FI[i] <-  YPR_i[i] *  last_req[i]
           B_FI[i] <-    SBPR_i[i] *  last_req[i]
-          cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+          # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
           # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
         } ## end areas
 
