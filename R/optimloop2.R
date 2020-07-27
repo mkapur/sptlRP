@@ -6,9 +6,7 @@ getmode <- function(v) {
 
 optim_loop2 <- function(Fv_i,
                         rec_level_idx = 1,
-                        movemat = X_ija,
-                        recr_dist = c(1, 1, 1), 
-                        currReq = NA){
+                        movemat = X_ija){
   
   radj <- matrix(NA, nrow = maxiter, ncol = narea)
   
@@ -66,7 +64,7 @@ optim_loop2 <- function(Fv_i,
         for (i in 1:narea) {
           yield_FI[i] <-  YPR_i[i] *  last_req[i]
           B_FI[i] <-    SBPR_i[i] *  last_req[i]
-          cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
+          # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
         } ## end areas
         
         break("maxiter reached ",i,k)
