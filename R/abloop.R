@@ -59,7 +59,7 @@ abloop <- function(Fv_i,
       
       # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
       # SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
-      SBPR_i[i] <-  prop$SB_i[i]/rleveltmp#+0.005*R0[i]) ## Rick's idea
+      SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
 
       YPR_i[i] <- prop$Yield_i[i]/(rleveltmp)
       # YPR_i[i] <- prop$Yield_i[i]/((rleveltmp+0.005*R0[i]))
