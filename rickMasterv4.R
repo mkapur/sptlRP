@@ -15,14 +15,12 @@ require(ggplot2, quietly = T)
 
 
 ## 2-area model with mixture movement ----
-rm(list = ls())
-
 narea <- 2
 nages <- 21
 steep <- rep(0.7,2)
 recr_dist <- c(1,1) ## global recruits to areas
-R0_list <- list(c(500,500), c(300,700), c(700,300))
-# R0_list <- list(c(50,50), c(30,70), c(70,30))
+# R0_list <- list(c(500,500), c(300,700), c(700,300))
+R0_list <- list(c(500,500)*0.5, c(300,700)*0.5, c(700,300)*0.5)
 # R0_list <- list(c(450,450), c(250,650), c(650,250))
 
 lapply(list.files(here::here("R"), full.names = TRUE), source)
@@ -32,7 +30,7 @@ master_plots <- master_plots_area <- list();idx = 1
 for(s in 1:3){
   splt <- list(c(1,1),
                c(0.7,0.3),
-               c(0.4,0.6))[[s]]
+               c(0.2,0.8))[[s]]
   
   ## custom Ftest to max at 1
   Ftest <- seq(0,1/min(splt),0.05) ## 80% of 1.25 is 1.0, so examining full expl
@@ -44,8 +42,6 @@ for(s in 1:3){
   kvar_radj_2area <-kvar_radj_2areaAB<-  array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list))) ## iters, Fv, 2 areas , RR x movements
   
   for(RR in 1:length(R0_list)){
-    # eigv <- eigen(list(X_ija_EQUAL[,,1], X_ija_MIX2[,,1], X_ija_UNI2[,,1])[[m]])$vectors * sqrt(2)
-    # receq = abs(diag(eigv) * R0_list[[RR]]) #eigv*R0_list[[RR]]
     for(Fv in 1:length(Ftest)){
       curr <- run_one_current(Fv_i = Ftest[Fv]*splt,
                               rec_level_idx = RR,
@@ -58,7 +54,7 @@ for(s in 1:3){
       
       abprop <- abloop(Fv_i = Ftest[Fv]*splt, 
                      rec_level_idx = RR,
-                     movemat = X_ija_MIX2)
+                     movemat = X_ija_MIX2b)
 
       fyr_2area[Fv,1,RR] <- Ftest[Fv]
       fyr_2area[Fv,2,RR] <- curr$Yield
@@ -80,25 +76,34 @@ for(s in 1:3){
   } ## end input rec levels
   
   ## plot radj
-  # png(here('figs',paste0('R_eq_ABloop_2area_Buff=0.005_5ppenalty_Mixture_',
-  #                        paste(splt,collapse = "_"),"_",
-  #                        Sys.Date(),'.png')),
-  #     height = 8.5, width = 11, unit = 'in', res = 600)
-  # plot_radj(radj_kvar = kvar_radj_2areaAB, Fidx = 17:21)
-  # dev.off()
+  png(here('figs',paste0('R_eq_ABsyntax_2area_Buff=0.005_5ppenalty_MIX2b_',
+                         paste(splt,collapse = "_"),"_",
+                         Sys.Date(),'.png')),
+      height = 8.5, width = 11, unit = 'in', res = 600)
+  plot_radj(radj_kvar = kvar_radj_2areaAB, Fidx = 12:16)
+  dev.off()
   
-  ## plot yield comps solo and by area
-  cat(idx,"\n")
+  
+  png(here('figs',paste0('R_eq_SSsyntax_2area_Buff=0.005_5ppenalty_MIX2b_',
+                         paste(splt,collapse = "_"),"_",
+                         Sys.Date(),'.png')),
+      height = 8.5, width = 11, unit = 'in', res = 600)
+  plot_radj(radj_kvar = kvar_radj_2area, Fidx = 12:16)
+  dev.off()
+  
+  # ## plot yield comps solo and by area
+  # cat(idx,"\n")
   for(i in 1:length(R0_list)){
     master_plots[[idx]] <- plot_yield_curves(sys_matrix = fyr_2area,
                                              byarea = FALSE,
                                              splitid = s)[[i]]
-    
-    master_plots_area[[idx]] <- plot_yield_curves(sys_matrix  = far_2area, 
+
+    master_plots_area[[idx]] <- plot_yield_curves(sys_matrix  = far_2area,
+                                                  splitid = s,
                                                   byarea = TRUE)[[i]]
     idx = idx+1
   }
-  
+
 
   ## save individual pik x 3
   # ggsave(Rmisc::multiplot(
@@ -119,20 +124,40 @@ for(s in 1:3){
 
 ggsave( Rmisc::multiplot(plotlist = master_plots, 
                          layout = matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)),
-        file = here::here('figs', paste0("Yields_total_mix2b_",Sys.Date(),'.png')),
+        file = here::here('figs', paste0("Yields_total_MIX2b_",Sys.Date(),'.png')),
         width = 10, height = 8, unit = 'in', dpi = 520)
 
 ggsave( Rmisc::multiplot(plotlist = master_plots_area, 
                          layout = matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)),
-        file = here::here('figs',paste0("Yields_area_mix2b_",  Sys.Date(),'.png')),
+        file = here::here('figs',paste0("Yields_area_MIX2b_",  Sys.Date(),'.png')),
         width = 10, height = 8, unit = 'in', dpi = 520)
 ## TRIAL 2: Optimizing F ----
 
+
+
+
+plot(0:1000, abSRR(alpha = alph[1],  beta = bet[1],  
+                   SPR_temp = 0:1000/R0_list[[1]][1])$R_equil,
+     ylim = c(0,1000))
+
+for(i in 0:1000){
+  points(i, Equil_Spawn_Recr_Fxn(steepness = 0.7, 
+                                 SSB_virgin = SB0_i[1],
+                                 Recr_virgin = R0[1],
+                                 SPR_temp  = (i)/R0_list[[1]][1])$R_equil,
+         col = 'blue')
+}
+
+
 ## functions to optimize ----
 dfx.dxSYS <- function(Fv_test,RLI, movemat = X_ija_MIX2, pik = c(1,1) ){
+  
   y1 <- optim_loop2(Fv_i = pik*(Fv_test-0.001),
                     rec_level_idx = RLI, 
                     movemat = movemat)$Yield
+  
+  cat('SS',y1,'\n')
+  
   y2 <- optim_loop2(Fv_i =  pik*(Fv_test+0.001), 
                     rec_level_idx = RLI,
                     movemat = movemat)$Yield
@@ -142,14 +167,21 @@ dfx.dxSYS <- function(Fv_test,RLI, movemat = X_ija_MIX2, pik = c(1,1) ){
 
 
 dfx.dxSYSab <- function(Fv_test,RLI, movemat = X_ija_MIX2, pik = c(1,1)  ){
+  
   y1 <- abloop(Fv_i =  pik*(Fv_test-0.001), 
-               rec_level_idx = RLI, movemat = movemat)$Yield
+               rec_level_idx = RLI, 
+               movemat = movemat)$Yield
+  
+  cat('ab',y1,'\n')
+  
   y2 <- abloop(Fv_i = pik*(Fv_test+0.001), 
                rec_level_idx = RLI,
                movemat = movemat)$Yield
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }
+
+
 dfx.dxSYS_curr <-  function(Fv_test,RLI, movemat = X_ija_MIX2, pik = c(1,1)  ){
   y1 <- run_one_current(Fv_i = pik*(Fv_test-0.001), 
                         rec_level_idx = RLI, 
@@ -164,7 +196,7 @@ dfx.dxSYS_curr <-  function(Fv_test,RLI, movemat = X_ija_MIX2, pik = c(1,1)  ){
 
 ## 2A F sys @ both approaches ----
 sysopt <- sysoptAB <- array(NA, dim = c(3,8,3)) ## RR X cols x S
-# names(sysopt[,1:3]) <- c('RR','FsysMSY','BsysMSY','YsysMSY',
+# names(sysopt[,1:3]) <- c('RR','FsysMSY','','YsysMSY',BsysMSY
                          # 'YA1','YA2','BA1','BA2')
 
 
@@ -174,7 +206,7 @@ sysopt_curr <- array(NA, dim = c(3,4,3))
 
 for(s in 1:3){
   splt <- list(c(1,1),
-               c(0.6,0.4),
+               c(0.7,0.3),
                c(0.2,0.8))[[s]]
   Ftest <- seq(0,1/min(splt),0.05) ## 80% of 1.25 is 1.0, so examining full expl
   
@@ -185,14 +217,15 @@ for(s in 1:3){
     sysopt[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYS,
                                          RLI = 1,
                                          pik = splt,
-                                           interval = c(0.02,1))[1])
+                                         movemat = X_ija_MIX2,
+                                         interval = c(0.02,1))[1])
     
     
     
     run_at_msy <- optim_loop2(
-      Fv_i = rep(sysopt[RR, 2, s], narea),
+      Fv_i = splt*sysopt[RR, 2, s],
       rec_level_idx = RR,
-      movemat = X_ija_MIX2b
+      movemat = X_ija_MIX2
     )
     sysopt[RR,3,s] <- run_at_msy$Yield
     sysopt[RR,4,s] <- run_at_msy$Biomass
@@ -202,11 +235,13 @@ for(s in 1:3){
     
     ## proposed AB
     sysoptAB[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYSab,
-                                           RLI = 1,      pik = splt,
-                                           
-                                           interval = c(0.02,1))[1])
-    run_at_msy <- abloop(Fv_i = rep(  sysoptAB[RR,2,s],narea),
-                         movemat  = X_ija_MIX2b,
+                                           RLI = 1,  
+                                           pik = splt,
+                                           movemat = X_ija_MIX2,
+                                           interval = c(0.02,ifelse(s == 1, 0.55,1)))[1])
+    
+    run_at_msy <- abloop(Fv_i = splt*sysoptAB[RR,2,s],
+                         movemat  = X_ija_MIX2,
                          rec_level_idx = RR)
     sysoptAB[RR,3,s] <- run_at_msy$Yield
     sysoptAB[RR,4,s] <- run_at_msy$Biomass
@@ -217,9 +252,11 @@ for(s in 1:3){
     sysopt_curr[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYS_curr, 
                                               RLI = RR,
                                               pik = splt,
+                                              movemat = X_ija_MIX2,
                                               interval = c(0.02,1))[1])
-    curr_at_FMSY <- run_one_current(Fv_i = rep(  sysopt_curr[RR,2,s],narea),  
-                                    movemat  = X_ija_MIX2b,
+    
+    curr_at_FMSY <- run_one_current(Fv_i =  splt*sysopt_curr[RR,2,s],  
+                                    movemat  = X_ija_MIX2,
                                     rec_level_idx = RR)
     
     sysopt_curr[RR,3,s] <- curr_at_FMSY$Yield
@@ -228,74 +265,74 @@ for(s in 1:3){
   } # end RR
 } ## end split
 
-save(sysopt,file = here::here("sys_optimize_proposed_ss_MIX2b.Rdata"))
-save(sysoptAB,file = here::here("sys_optimize_proposed_AB_MIX2b.Rdata"))
-save(sysopt_curr,file = here::here("sys_optimize_current_MIX2b.Rdata"))
+save(sysopt,file = here::here("sys_optimize_proposed_ss_MIX2.Rdata"))
+save(sysoptAB,file = here::here("sys_optimize_proposed_AB_MIX2.Rdata"))
+save(sysopt_curr,file = here::here("sys_optimize_current_MIX2.Rdata"))
 
 ## 2B F_i @ proposed ----
 
-minFunc <- function(F1,F2,RLI){
-  minus <- as.numeric(c(F1 - 0.001, F2 - 0.001))
-  plus <- as.numeric(c(F1 +0.001, F2 + 0.001))
-  y1 <- optim_loop2(Fv_i = minus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
-  y2 <- optim_loop2(Fv_i = plus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
-  appx <- abs(y2-y1)/(0.002) ## system yield again
-  return(appx)
-}
-
-minFuncAB <- function(F1,F2,RLI){
-  minus <- as.numeric(c(F1 - 0.001, F2 - 0.001))
-  plus <- as.numeric(c(F1 +0.001, F2 + 0.001))
-  y1 <- abloop(Fv_i = minus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
-  y2 <- abloop(Fv_i = plus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
-  appx <- abs(y2-y1)/(0.002) ## system yield again
-  return(appx)
-}
-
-
-areaopt <- areaoptAB <- data.frame('RR' = NA, 
-                      'F1' = NA, 'F2' = NA,
-                      'YA1' = NA, 'YA2' = NA, 
-                      'BA1' = NA, 'BA2' = NA, 
-                      'CURRENT_YIELD')
-for(RR in 1:3){
-  areaopt[RR,'RR'] <- areaoptAB[RR,'RR'] <- RR
-  ##proposed srr
-  FVTEMP <-  coef(mle(minFunc,
-                      start = list(F1 = 0.025, F2 = 0.025),
-                      method = "L-BFGS-B",
-                      fixed = list( RLI = RR), ## subsetting eq method
-                      lower = c(0.02, 0.02), upper = c(0.4,0.4)))[1:2]
-  
-  run_at_msy <- optim_loop2(Fv_i = FVTEMP, rec_level_idx = RR,movemat = X_ija_MIX2)
-  areaopt[RR,2:3] <- FVTEMP
-  areaopt[RR,4:5] <- round(run_at_msy$Yield_i,2)
-  areaopt[RR,6:7] <- round(run_at_msy$Biomass_i,2)
-  
-  curr_at_ftemp <- run_one_current(Fv_i =   as.numeric(areaopt[RR,2:3]), 
-                                   rec_level_idx = RR,movemat = X_ija_MIX2)
-  areaopt[RR, 'CURRENT_YIELD'] <-   curr_at_ftemp$Yield
-  ## proposed ab
-  FVTEMP <-  coef(mle(minFuncAB,
-                      start = list(F1 = 0.025, F2 = 0.025),
-                      method = "L-BFGS-B",
-                      fixed = list( RLI = RR), ## subsetting eq method
-                      lower = c(0.02, 0.02), upper = c(0.4,0.4)))[1:2]
-  
-  run_at_msy <- abloop(Fv_i = FVTEMP, rec_level_idx = RR,movemat = X_ija_MIX2)
-  areaoptAB[RR,2:3] <- FVTEMP
-  areaoptAB[RR,4:5] <- round(run_at_msy$Yield_i,2)
-  areaoptAB[RR,6:7] <- round(run_at_msy$Biomass_i,2)
-  
-  curr_at_ftemp <- run_one_current(Fv_i =   as.numeric(areaoptAB[RR,2:3]), 
-                                   rec_level_idx = RR,
-                                   movemat = X_ija_MIX2)
-  areaoptAB[RR, 'CURRENT_YIELD'] <-curr_at_ftemp$Yield
- 
-}
-
-save(areaopt,file = here("area_optimize_proposed_ss.Rdata"))
-save(areaoptAB,file = here("area_optimize_proposed_AB.Rdata"))
+# minFunc <- function(F1,F2,RLI){
+#   minus <- as.numeric(c(F1 - 0.001, F2 - 0.001))
+#   plus <- as.numeric(c(F1 +0.001, F2 + 0.001))
+#   y1 <- optim_loop2(Fv_i = minus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
+#   y2 <- optim_loop2(Fv_i = plus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
+#   appx <- abs(y2-y1)/(0.002) ## system yield again
+#   return(appx)
+# }
+# 
+# minFuncAB <- function(F1,F2,RLI){
+#   minus <- as.numeric(c(F1 - 0.001, F2 - 0.001))
+#   plus <- as.numeric(c(F1 +0.001, F2 + 0.001))
+#   y1 <- abloop(Fv_i = minus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
+#   y2 <- abloop(Fv_i = plus, rec_level_idx = RLI, movemat = X_ija_MIX2)$Yield
+#   appx <- abs(y2-y1)/(0.002) ## system yield again
+#   return(appx)
+# }
+# 
+# 
+# areaopt <- areaoptAB <- data.frame('RR' = NA, 
+#                       'F1' = NA, 'F2' = NA,
+#                       'YA1' = NA, 'YA2' = NA, 
+#                       'BA1' = NA, 'BA2' = NA, 
+#                       'CURRENT_YIELD')
+# for(RR in 1:3){
+#   areaopt[RR,'RR'] <- areaoptAB[RR,'RR'] <- RR
+#   ##proposed srr
+#   FVTEMP <-  coef(mle(minFunc,
+#                       start = list(F1 = 0.025, F2 = 0.025),
+#                       method = "L-BFGS-B",
+#                       fixed = list( RLI = RR), ## subsetting eq method
+#                       lower = c(0.02, 0.02), upper = c(0.4,0.4)))[1:2]
+#   
+#   run_at_msy <- optim_loop2(Fv_i = FVTEMP, rec_level_idx = RR,movemat = X_ija_MIX2)
+#   areaopt[RR,2:3] <- FVTEMP
+#   areaopt[RR,4:5] <- round(run_at_msy$Yield_i,2)
+#   areaopt[RR,6:7] <- round(run_at_msy$Biomass_i,2)
+#   
+#   curr_at_ftemp <- run_one_current(Fv_i =   as.numeric(areaopt[RR,2:3]), 
+#                                    rec_level_idx = RR,movemat = X_ija_MIX2)
+#   areaopt[RR, 'CURRENT_YIELD'] <-   curr_at_ftemp$Yield
+#   ## proposed ab
+#   FVTEMP <-  coef(mle(minFuncAB,
+#                       start = list(F1 = 0.025, F2 = 0.025),
+#                       method = "L-BFGS-B",
+#                       fixed = list( RLI = RR), ## subsetting eq method
+#                       lower = c(0.02, 0.02), upper = c(0.4,0.4)))[1:2]
+#   
+#   run_at_msy <- abloop(Fv_i = FVTEMP, rec_level_idx = RR,movemat = X_ija_MIX2)
+#   areaoptAB[RR,2:3] <- FVTEMP
+#   areaoptAB[RR,4:5] <- round(run_at_msy$Yield_i,2)
+#   areaoptAB[RR,6:7] <- round(run_at_msy$Biomass_i,2)
+#   
+#   curr_at_ftemp <- run_one_current(Fv_i =   as.numeric(areaoptAB[RR,2:3]), 
+#                                    rec_level_idx = RR,
+#                                    movemat = X_ija_MIX2)
+#   areaoptAB[RR, 'CURRENT_YIELD'] <-curr_at_ftemp$Yield
+#  
+# }
+# 
+# save(areaopt,file = here("area_optimize_proposed_ss.Rdata"))
+# save(areaoptAB,file = here("area_optimize_proposed_AB.Rdata"))
 
 # 
 # 
