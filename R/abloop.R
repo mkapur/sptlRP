@@ -33,7 +33,7 @@ abloop <- function(Fv_i,
     } else{
       rdistUse <- recr_dist ## only after computing R_i
       # rlevelUse = last_req + (1*rec_level) #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
-      rlevelUse = last_req #+ rec_level
+      rlevelUse = last_req + rec_level
     }
     
     prop <- doNage( Fv = Fv_i, 
@@ -69,7 +69,7 @@ abloop <- function(Fv_i,
       # propEq <- abSRR(alpha = a[i], beta = b[i], biomass = prop$SB_i[i])
       propEq <- abSRR(alpha = alph[i], 
                       beta = bet[i], 
-                      biomass = prop$SB_i[i])
+                      SPR_temp =  SBPR_i[i])
       
       
       # if(k == 1) first_req[i] <- propEq$R_equil
