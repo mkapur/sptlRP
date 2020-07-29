@@ -1,9 +1,3 @@
-
-getmode <- function(v) {
-  uniqv <- unique(v)
-  uniqv[which.max(tabulate(match(v, uniqv)))]
-}
-
 optim_loop2 <- function(Fv_i,
                         rec_level_idx = 1,
                         movemat = X_ija){
