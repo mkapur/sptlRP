@@ -5,9 +5,7 @@ abloop <- function(Fv_i,
                         movemat = X_ija){
 
   radj <- matrix(NA, nrow = maxiter, ncol = narea)
-  
-  
-  ## ORIGINAL APPROACH - USER PROVIDED R0_I
+
   R0 <- R0_list[[rec_level_idx]]
   rec_level <- R0
 
@@ -17,8 +15,6 @@ abloop <- function(Fv_i,
                   refR = rec_level)$SB_i
   
   ## get alpha, beta to match inputs
-  ## alpha = max recruits asymptoptes 1/b, b is ssb needed to produce half
-
   ## fixed for each sim -- did this to match previous sims
   alph = (SB0_i/R0)*(1-steep)/(4*steep)
   bet = (5*steep-1)/(4*steep*R0)
@@ -29,11 +25,10 @@ abloop <- function(Fv_i,
     
     if(k == 1){
       rdistUse <- recr_dist ## no distribution now; full rec-level in each area
-      rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
+      rlevelUse <- rec_level ## pre-specified No recruits in area, currently R0
     } else{
       rdistUse <- recr_dist ## only after computing R_i
-      # rlevelUse = last_req + (1*rec_level) #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
-      rlevelUse = last_req + rec_level
+      rlevelUse <- last_req + rec_level
     }
     
     prop <- doNage( Fv = Fv_i, 
@@ -51,41 +46,26 @@ abloop <- function(Fv_i,
       } else{
         rleveltmp = rlevelUse[i]
       }
-      # if(round(rleveltmp) == 0) next() ## end iteration if rec is now zero
-      # cat(v, k,i,rleveltmp,"\n")
-      # radj[k,v,i] <- rleveltmp
       radj[k,i] <- rleveltmp ## store this
-      
-      
-      # rRef_proposed_radj[k,v,i,RR] <- rleveltmp
-      # SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp*rdistUse[i]) ## Rick's idea
+
       SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
 
       YPR_i[i] <- prop$Yield_i[i]/(rleveltmp)
-      # YPR_i[i] <- prop$Yield_i[i]/((rleveltmp+0.005*R0[i]))
-      # cat(k,i, YPR_i[i],"\n")
-      
+
       ## Calc area-specific recruits using area-specific SB etc
-      # propEq <- abSRR(alpha = a[i], beta = b[i], biomass = prop$SB_i[i])
       propEq <- abSRR(alpha = alph[i], 
                       beta = bet[i], 
                       SPR_temp =  SBPR_i[i])
-      
-      
-      # if(k == 1) first_req[i] <- propEq$R_equil
-      # B_eq_i[v,i] <- propEq$B_equil
+
       last_req[i] <- propEq$R_equil ## gets overwritten each iteration
     } ## end areas
-    # cat(Ftest[Fv],k, YPR_i, SBPR_i,last_req,"\n")
-    
+
     # cat(k,radj[k,],"\n")
     if(k > 20){
       if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) |  k == maxiter){
         for (i in 1:narea) {
           yield_FI[i] <-  YPR_i[i] *  last_req[i]
           B_FI[i] <-    SBPR_i[i] *  last_req[i]
-          # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
-          # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
         } ## end areas
 
         break("maxiter reached ",i,k)

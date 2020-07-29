@@ -41,8 +41,7 @@ optim_loop2 <- function(Fv_i,
       radj[k,i] <- rleveltmp ## store this
       
       SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp+0.005*R0[i]) ## Rick's idea
-      # SBPR_i[i] <-  prop$SB_i[i]/(rleveltmp) ## Rick's idea
-      
+
       YPR_i[i] <- prop$Yield_i[i]/(rleveltmp)
       
       ## Calc area-specific recruits using area-specific SB etc
@@ -53,15 +52,11 @@ optim_loop2 <- function(Fv_i,
     } ## end areas
     
     if(k > 20){
-      
-      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) | 
-         k == maxiter){
+      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) |     k == maxiter){
         for (i in 1:narea) {
           yield_FI[i] <-  YPR_i[i] *  last_req[i]
           B_FI[i] <-    SBPR_i[i] *  last_req[i]
-          # cat(Ftest[Fv],k, i,  last_req[i], B_FI[i], yield_FI[i], "\n")
         } ## end areas
-        
         break("maxiter reached ",i,k)
       } ## end if neither 1%
     } ## end K check
