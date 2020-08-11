@@ -107,7 +107,7 @@ plot_yield_curves <- function(sys_matrix,
     for(i in 1:length(R0_list)){
       propI <- data.frame( sys_matrix[,,i])
       names(propI) <- c('Fv',paste('SS Syntax Area',1:narea),paste('a/b Syntax Area',1:narea))
-      p1list[[i]] <- propI[,1:2] %>% 
+      p1list[[i]] <- propI[,1:3] %>% 
         melt(id = c("Fv")) %>%
         ggplot( ., aes(x = Fv, y = value, color = variable, linetype = variable)) +
         geom_line(lwd = 1.1) +
