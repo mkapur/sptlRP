@@ -100,9 +100,9 @@ for(s in 1:3){
 
 ## Run Algo and plot Yields vs Ftotal by secnario ----
 
-# load("C:/Users/mkapur/Dropbox/UW/sptlRP/sys_optimize_current_MIX2.Rdata") ## syopt_curr
-# load("C:/Users/mkapur/Dropbox/UW/sptlRP/sys_optimize_proposed_AB_MIX2.Rdata") ## sysoptAB
-# load("C:/Users/mkapur/Dropbox/UW/sptlRP/sys_optimize_proposed_ss_MIX2.Rdata") ## sysopt
+load("C:/Users/mkapur/Dropbox/UW/sptlRP/sys_optimize_current_MIX2.Rdata") ## syopt_curr
+load("C:/Users/mkapur/Dropbox/UW/sptlRP/sys_optimize_proposed_AB_MIX2.Rdata") ## sysoptAB
+load("C:/Users/mkapur/Dropbox/UW/sptlRP/sys_optimize_proposed_ss_MIX2.Rdata") ## sysopt
 
 
 master_plots <- master_plots_area <- list();idx = 1
@@ -187,12 +187,12 @@ for(s in 1:3){
 
 ggsave( Rmisc::multiplot(plotlist = master_plots, 
                          layout = matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)),
-        file = here::here('figs', paste0("Yields_total_MIX2b_",Sys.Date(),'.png')),
+        file = here::here('figs', paste0("Yields_total_MIX2_",Sys.Date(),'.png')),
         width = 10, height = 8, unit = 'in', dpi = 520)
 
 ggsave( Rmisc::multiplot(plotlist = master_plots_area, 
                          layout = matrix(1:9, nrow = 3, ncol = 3, byrow = TRUE)),
-        file = here::here('figs',paste0("Yields_area_MIX2b_",  Sys.Date(),'.png')),
+        file = here::here('figs',paste0("Yields_area_MIX2_",  Sys.Date(),'.png')),
         width = 10, height = 8, unit = 'in', dpi = 520)
 
 
