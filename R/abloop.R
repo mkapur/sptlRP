@@ -54,19 +54,21 @@ abloop <- function(Fv_i,
                       SPR_temp =  SBPR_i[i])
 
       last_req[i] <- propEq$R_equil ## gets overwritten each iteration
+      yield_FI[i] <-  YPR_i[i] *  last_req[i]
+      B_FI[i] <-    SBPR_i[i] *  last_req[i]
     } ## end areas
 
     # cat(k,radj[k,],"\n")
-    if(k > 20){
-      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) |  k == maxiter){
-        for (i in 1:narea) {
-          yield_FI[i] <-  YPR_i[i] *  last_req[i]
-          B_FI[i] <-    SBPR_i[i] *  last_req[i]
-        } ## end areas
-
-        break("maxiter reached ",i,k)
-      } ## end if neither 1%
-    } ## end K check
+    # if(k > 20){
+    #   if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) |  k == maxiter){
+    #     for (i in 1:narea) {
+    #       yield_FI[i] <-  YPR_i[i] *  last_req[i]
+    #       B_FI[i] <-    SBPR_i[i] *  last_req[i]
+    #     } ## end areas
+    # 
+    #     break("maxiter reached ",i,k)
+    #   } ## end if neither 1%
+    # } ## end K check
 
   } ## end k:maxiter
 
