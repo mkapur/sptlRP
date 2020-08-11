@@ -26,7 +26,7 @@ steep <- rep(0.7,2)
 R0_list <- list(c(500,500)*0.5, c(300,700)*0.5, c(700,300)*0.5)
 
 lapply(list.files(here::here("R"), full.names = TRUE), source)
-maxiter =  101 
+maxiter =  21 
 
 
 ## Find Ftotal MSY for plotting ----
@@ -118,23 +118,23 @@ for(s in 1:3){
   
   ## loop system wide F
   fyr_2area <- array(NA, dim = c(length(Ftest),4, length(R0_list))) ## F x 3  x RR 
-  far_2area<- array(NA, dim = c(length(Ftest),2*narea+1, length(R0_list))) ## F x 3 x narea x RR 
-  kvar_radj_2area <-kvar_radj_2areaAB<-  array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list))) ## iters, Fv, 2 areas , RR x movements
+  far_2area <- array(NA, dim = c(length(Ftest),2*narea+1, length(R0_list))) ## F x 3 x narea x RR 
+  kvar_radj_2area <- kvar_radj_2areaAB <-  array(NA, dim = c(maxiter,length(Ftest),narea+1,length(R0_list))) ## iters, Fv, 2 areas , RR x movements
   
   for(RR in 1:length(R0_list)){
     for(Fv in 1:length(Ftest)){
       curr <- run_one_current(Fv_i = Ftest[Fv]*splt,
                               rec_level_idx = RR,
-                              movemat = X_ija_MIX2b)
+                              movemat = X_ija_MIX2)
       # cat(curr$Yield,"\n")
       current_Req <- curr$R_ESUMB
       prop <- optim_loop2(Fv_i = Ftest[Fv]*splt, #rep(Ftest[Fv],narea),#
                           rec_level_idx = RR,
-                          movemat = X_ija_MIX2b)
+                          movemat = X_ija_MIX2)
       
       abprop <- abloop(Fv_i = Ftest[Fv]*splt, 
                      rec_level_idx = RR,
-                     movemat = X_ija_MIX2b)
+                     movemat = X_ija_MIX2)
 
       fyr_2area[Fv,1,RR] <- Ftest[Fv]
       fyr_2area[Fv,2,RR] <- curr$Yield

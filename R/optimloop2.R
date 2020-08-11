@@ -11,23 +11,19 @@ optim_loop2 <- function(Fv_i,
   
   SB0_i <- doNage(Fv = rep(0,narea), 
                   X = movemat,
-                  rdist = recr_dist,
                   refR = rec_level)$SB_i
   
   last_req <- first_req <- yield_FI <- B_FI <- SBPR_i <- YPR_i <- NULL
   for(k in 1:maxiter){ ## Loop over steps A & B
     
     if(k == 1){
-      rdistUse <- recr_dist ## no distribution now; full rec-level in each area
       rlevelUse = rec_level ## pre-specified No recruits in area, currently R0
     } else{
-      rdistUse <- recr_dist ## only after computing R_i
       rlevelUse = last_req + (1*rec_level) #last_req# round(last_req,2)# last_req  # c(R_eq_i[v,1:2], max(1,round(R_eq_i[v,3],0)))
     }
     
     prop <- doNage( Fv = Fv_i, 
                     X = movemat,
-                    rdist = rdistUse,
                     refR = rlevelUse) 
     # call Equ_Spawn_Recr_Fxn for each area to get B_equil and R_equil from SPB/R and SR parms
     for(i in 1:narea){ ## will overwrite second time
@@ -51,15 +47,15 @@ optim_loop2 <- function(Fv_i,
       last_req[i] <- propEq$R_equil ## gets overwritten each iteration
     } ## end areas
     
-    if(k > 20){
-      if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) |     k == maxiter){
-        for (i in 1:narea) {
-          yield_FI[i] <-  YPR_i[i] *  last_req[i]
-          B_FI[i] <-    SBPR_i[i] *  last_req[i]
-        } ## end areas
-        break("maxiter reached ",i,k)
-      } ## end if neither 1%
-    } ## end K check
+    # if(k > 20){
+    #   if(all(round(abs(radj[k,]/radj[k-1,] - 1),2)  <=  0.05) |     k == maxiter){
+    #     for (i in 1:narea) {
+    #       yield_FI[i] <-  YPR_i[i] *  last_req[i]
+    #       B_FI[i] <-    SBPR_i[i] *  last_req[i]
+    #     } ## end areas
+    #     break("maxiter reached ",i,k)
+    #   } ## end if neither 1%
+    # } ## end K check
   } ## end k:maxiter
   ## save totals from final iteration
   return(list(

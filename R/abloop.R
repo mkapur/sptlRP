@@ -11,7 +11,6 @@ abloop <- function(Fv_i,
 
   SB0_i <- doNage(Fv = rep(0,narea), 
                   X = movemat,
-                  rdist = recr_dist,
                   refR = rec_level)$SB_i
   
   ## get alpha, beta to match inputs
@@ -24,16 +23,13 @@ abloop <- function(Fv_i,
   for(k in 1:maxiter){ ## Loop over steps A & B
     
     if(k == 1){
-      rdistUse <- recr_dist ## no distribution now; full rec-level in each area
       rlevelUse <- rec_level ## pre-specified No recruits in area, currently R0
     } else{
-      rdistUse <- recr_dist ## only after computing R_i
       rlevelUse <- last_req + rec_level
     }
     
     prop <- doNage( Fv = Fv_i, 
                     X = movemat,
-                    rdist = rdistUse,
                     refR = rlevelUse) 
     
     
