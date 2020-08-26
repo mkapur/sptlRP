@@ -160,7 +160,7 @@ for(s in 1:3){
   #                        paste(splt,collapse = "_"),"_",
   #                        Sys.Date(),'.png')),
   #     height = 8.5, width = 11, unit = 'in', res = 600)
-  # plot_radj(radj_kvar = kvar_radj_2areaAB, Fidx = 12:16)
+  plot_radj(radj_kvar = kvar_radj_2area, Fidx = 20:25)
   # dev.off()
   # 
   # 
