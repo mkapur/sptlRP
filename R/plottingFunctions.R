@@ -210,30 +210,3 @@ plot_radj <- function(radj_kvar, Fidx = 10:15){
 }
 
 
-## Xija ----
-# plist = list()
-# for(g in c(1,6)){ ## loop ages
-#   plist[[ifelse(g == 1,1,2)]] <-  data.frame(X_ija_MIX2b[,,g]) %>% 
-#     mutate('FRM' = 1:narea) %>%
-#     melt(id = 'FRM') %>%
-#     ggplot(., aes(x = FRM, y = variable, fill = value)) +
-#     geom_tile() + 
-#     ggsidekick::theme_sleek() +
-#     theme(legend.position = 'none',
-#           axis.ticks = element_blank(),
-#           axis.text = element_text(size = 10),
-#           axis.title = element_text(size = 10)) +
-#     scale_x_continuous(expand = c(0,0), breaks = 1:narea,
-#                        labels = paste("Area",1:narea)) +
-#     scale_y_discrete(expand = c(0,0), labels = paste("Area",1:narea))+
-#     geom_text(aes(label = value), colour = 'white', size = 10) +
-#     labs(x = "Area From", y = "Area To", 
-#          title = ifelse(g < 6, paste('Ages 1-5'), "Ages 6+")) 
-#   
-# }
-# 
-# ggsave(Rmisc::multiplot(plotlist = plist, 
-#                         layout = matrix(c(1,2),
-#                                         nrow = 1, byrow = TRUE) ),
-#        file = here('figs','X_ija_MIX2b.png'),
-#        width = 5, height = 3, unit = 'in', dpi = 520)
