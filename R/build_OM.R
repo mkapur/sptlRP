@@ -5,12 +5,19 @@
 
 ## load data and introduce some demographic variation among areas
 dat0 <- read.table(here::here("omdata.txt"), header = T)
+
+for(a in 1:nrow(dat0)){
+  ## ascending logistic function for selex [a50,a95]
+  dat0[a,5:6] <- 1/ ( 1 + exp(-log(19) * (a -  5) / ( 10-5)))
+  ## ascending logistic function for fec
+  dat0[a,2] <- 1/ ( 1 + exp(-log(19) * (a -  3) / ( 7-3)))
+}
+
 dat <- array(NA, dim = c(nrow(dat0),ncol(dat0),narea)) ## placeholder
 
 for(i in 1:narea) dat[,,i] <- as.matrix(dat0)
 
 if(narea == 3){
-
   X_ija_NULL <- array(0, dim = c(narea,narea,nages))
   X_ija_MIX <- array(0, dim = c(narea,narea,nages))
   X_ija <- array(NA, dim = c(narea,narea,nages))
@@ -18,7 +25,7 @@ for(a in 1:2){ ## only two areas have movement
 
   for(g in 1:dim(X_ija)[3]){ ## loop ages
     diag(X_ija_NULL[,,g]) <- rep(1, length(  diag(X_ija_NULL[,,g])))
-    if(g < 6 & a == 1){
+    if(g < 10 & a == 1){
       X_ija[a,3,g] <-   X_ija_MIX[a,3,g]  <- 0.05 ## 20% movement from a to a3
       X_ija[a,a,g] <-   X_ija_MIX[a,a,g] <- 0.95 ## retained
       X_ija_MIX[3,1,g] <- 0.3 ## send 20% back from a3
@@ -32,8 +39,6 @@ for(a in 1:2){ ## only two areas have movement
       diag(X_ija[,,g]) <- 1 
       diag(X_ija_MIX[,,g]) <- 1 
       # cat( a, " ",diag(X_ija[,,g]) ,"\n")
-      
-      
     } # end else
   } ## end ages
 } ## end areas
@@ -50,7 +55,7 @@ for(i in 1:dim(X_ija)[3]){
   for(a in 1:2){ ## only two areas have movement
     for(g in 1:dim(X_ija_EQUAL)[3]){ ## loop ages
       diag(X_ija_NULL2[,,g]) <- rep(1, length(  diag(X_ija_NULL2[,,g])))
-      if(g < 6){
+      if(g < 10){
         X_ija_UNI2[1,1:2,g] <- 0.5
         X_ija_UNI2[2,1,g] <- 0
         X_ija_UNI2[2,2,g] <- 1
