@@ -2,7 +2,7 @@
 doNage <- function(X = X_ija, ## input movement matrix
                    indat = dat, ## with bio info
                    Fv = rep(0,narea),
-                   M = 0.15,
+                   M = c(0.2,10, 0.15,11), ## time varying M
                    refR = rec_level, ## all areas
                    constSelex = 0.25){
   
@@ -15,7 +15,8 @@ doNage <- function(X = X_ija, ## input movement matrix
     for(a in 1:nages){
       if(a == 1) NSurv_sai[sex,a,] <- N_sai[sex,a,] <- 0.5*refR ## distribute R to areas according to recr_dist
        for(i in 1:narea){ ## loop areas within ages
-        Z_sai[sex,a,i] <- M + constSelex*Fv[i] ## disregard selex
+        # Z_sai[sex,a,i] <- M + constSelex*Fv[i] ## disregard selex
+        Z_sai[sex,a,i] <- M[a] + dat[a,4+sex,i]*Fv[i] ## include selex
         
         ## Calc Survivors for each area-age
         if(a > 1  & a < max(nages)) {
@@ -43,7 +44,7 @@ doNage <- function(X = X_ija, ## input movement matrix
         
         if(sex == 1)    SB_ai[a,i]  <-  B_sai[1,a,i]*indat[a,2,i]
         ## Calc Yield for each area-age   
-        Yield_sai[sex,a,i] <- constSelex*Fv[i]*B_sai[sex,a,i] ## disregard selex
+        Yield_sai[sex,a,i] <- dat[a,4+sex,i]*Fv[i]*B_sai[sex,a,i] ## disregard selex
       } # end subareas i 
     } ## end ages
   } ## end sexes
