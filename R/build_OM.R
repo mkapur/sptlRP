@@ -10,6 +10,7 @@ for(a in 1:nrow(dat0)){
   ## ascending logistic function for fec
   dat0[a,2] <- 1/ ( 1 + exp(-log(19) * (a -  3) / ( 7-3)))
 }
+dat0$M_age =  c(rep(0.2,10), rep(0.15,11))
 
 dat <- array(NA, dim = c(nrow(dat0),ncol(dat0),narea)) ## placeholder
 for(i in 1:narea) dat[,,i] <- as.matrix(dat0)
@@ -17,24 +18,44 @@ for(i in 1:narea) dat[,,i] <- as.matrix(dat0)
 
 ## plot inputs by area ----
 png( here('figs','inputs_by_2area.png'),
-     width = 8, height = 4, unit = 'in', res = 520)
-par(mfrow = c(3,1), 
-    mar = c(4,5,1,1))
-dattemp <- as.data.frame(dat[,,a])
+     width = 8, height = 8, unit = 'in', res = 520)
+dattemp <- as.data.frame(dat[,,1]) ## inputs are the same by area
 names(dattemp) = names(dat0)
+
+par(mfrow = c(2,2), 
+    mar = c(4,4,1,1))
 ## F Fecundity
-with(dattemp, plot(Fecundity ~ Age, type = 'l', lwd = 2, yaxt = 'n', ylim = c(0,1.05),
-                   ylab = 'Fecundity (females)', col = 'grey22',  cex.lab= 1.5))
-axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
-## M/F weights
-with(dattemp, plot(Wght.f. ~ Age, type = 'l', lwd = 2, ylim = c(0,2), 
-                   ylab = 'Weight (Both Sexes)', col = 'grey22',  cex.lab= 1.5))
+with(dattemp, plot(Fecundity ~ Age, type = 'l', lwd = 2,yaxt = 'n',
+                   xaxt = 'n', ylim = c(0,1.05),
+                   ylab = 'Fecundity (females)', col = 'grey44'))
+axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1)
+axis(1, at  = seq(0,21,1), labels = seq(0,21,1), cex.axis =1)
+text(0,1,"A", cex = 2, col = 'grey22')
+## weight
+with(dattemp, plot(Wght.f. ~ Age, type = 'l', lwd = 2, ylim = c(0,2),  yaxt = 'n',
+                   xaxt = 'n',
+                   ylab = 'Weight (Both Sexes)', col = 'grey44'))
+axis(2, at  = seq(0,2,0.5), labels = seq(0,2,0.5), cex.axis =1)
+axis(1, at  = seq(0,21,1), labels = seq(0,21,1), cex.axis =1)
+text(0,2,"B", cex = 2, col = 'grey22')
 ## M/F selex
 with(dattemp, plot(Sel.f. ~ Age, type = 'l', lwd = 2, 
-                   yaxt = 'n', ylim = c(0,1), ylab = 'Selectivity (Both Sexes)',
-                   col = 'grey22',  cex.lab= 1.5))
-axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1.5)
-# legend('bottomright', legend = c('Female','Male'), col = c('seagreen4','goldenrod'), lwd = 2)
+                   yaxt = 'n',
+                   xaxt = 'n', ylim = c(0,1), ylab = 'Selectivity (Both Sexes)',
+                   col = 'grey44'))
+axis(2, at  = seq(0,1.0,0.25), labels = seq(0,1.0,0.25), cex.axis =1)
+axis(1, at  = seq(0,21,1), labels = seq(0,21,1), cex.axis =1)
+text(0,1,"C", cex = 2, col = 'grey22')
+## Mortality at age
+with(dattemp, plot(M_age ~ Age, type = 'l', lwd = 2, 
+                   ylim = c(0,0.5),
+                   yaxt = 'n',
+                   xaxt = 'n',  
+                   ylab = 'Natural Mortality (Both Sexes)',
+                   col = 'grey44'))
+axis(2, at  = seq(0,0.5,0.1), labels = seq(0,0.5,0.1), cex.axis =1)
+axis(1, at  = seq(0,21,1), labels = seq(0,21,1), cex.axis =1)
+text(0,0.5,"D", cex = 2, col = 'grey22')
 dev.off()
 
 ## build x_ija----
@@ -129,32 +150,64 @@ for(a in 1:2){ ## only two areas have movement
 # } ## end only 2 areas
 
 ## plot xija----
-# plist = list()
-# for(g in c(1,11)){ ## loop ages
-#   plist[[ifelse(g == 1,1,2)]] <-  data.frame(X_ija_10[,,g]) %>%
-#     mutate('FRM' = 1:narea) %>%
-#     reshape2::melt(id = 'FRM') %>%
-#     ggplot(., aes(x = FRM, y = variable, fill = value)) +
-#     geom_tile() +
-#     ggsidekick::theme_sleek() +
-#     theme(legend.position = 'none',
-#           axis.ticks = element_blank(),
-#           axis.text = element_text(size = 10),
-#           axis.title = element_text(size = 10)) +
-#     scale_x_continuous(expand = c(0,0), breaks = 1:narea,
-#                        labels = paste("Area",1:narea)) +
-#     scale_y_discrete(expand = c(0,0), labels = paste("Area",1:narea))+
-#     geom_text(aes(label = value), colour = 'white', size = 10) +
-#     labs(x = "Area From", y = "Area To",
-#          title = ifelse(g < 6, paste('Ages 1-10'), "Ages 11+"))
-# 
-# }
 
-# ggsave(Rmisc::multiplot(plotlist = plist,
-#                         layout = matrix(c(1,2),
-#                                         nrow = 1, byrow = TRUE) ),
-#        file = here('figs','X_ija_10.png'),
-#        width = 5, height = 3, unit = 'in', dpi = 520)
+p_all <-  data.frame(X_ija_all[,,1]) %>%
+  mutate('FRM' = 1:narea) %>%
+  reshape2::melt(id = 'FRM') %>%
+  ggplot(., aes(x = FRM, y = variable, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient(low = 'grey22', high = 'grey66') +
+  ggsidekick::theme_sleek() +
+  theme(legend.position = 'none',
+        axis.ticks = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10)) +
+  scale_x_continuous(expand = c(0,0), breaks = 1:narea,
+                     labels = paste("Area",1:narea)) +
+  scale_y_discrete(expand = c(0,0), labels = paste("Area",1:narea))+
+  geom_text(aes(label = value), colour = 'white', size = 10) +
+  labs(x = "Area From", y = "Area To",
+       title = 'Scenario 1 Movement (all ages)')
+
+p_10_1 <-  data.frame(X_ija_10[,,1]) %>%
+    mutate('FRM' = 1:narea) %>%
+    reshape2::melt(id = 'FRM') %>%
+    ggplot(., aes(x = FRM, y = variable, fill = value)) +
+    geom_tile() +
+    ggsidekick::theme_sleek() +
+    theme(legend.position = 'none',
+          axis.ticks = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 10)) +
+    scale_x_continuous(expand = c(0,0), breaks = 1:narea,
+                       labels = paste("Area",1:narea)) +
+    scale_y_discrete(expand = c(0,0), labels = paste("Area",1:narea))+
+    geom_text(aes(label = value), colour = 'white', size = 10) +
+    labs(x = "Area From", y = "Area To",
+  title =  paste('Scenario 2 Movement (Ages 1-10)'))
+p_10_11 <-  data.frame(X_ija_10[,,10]) %>%
+  mutate('FRM' = 1:narea) %>%
+  reshape2::melt(id = 'FRM') %>%
+  ggplot(., aes(x = FRM, y = variable, fill = value)) +
+  geom_tile() +
+  ggsidekick::theme_sleek() +
+  theme(legend.position = 'none',
+        axis.ticks = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 10)) +
+  scale_x_continuous(expand = c(0,0), breaks = 1:narea,
+                     labels = paste("Area",1:narea)) +
+  scale_y_discrete(expand = c(0,0), labels = paste("Area",1:narea))+
+  geom_text(aes(label = value), colour = 'white', size = 10) +
+  labs(x = "Area From", y = "Area To",
+       title =   "Scenario 2 Movement (Ages 11+)")
+  # 
+require(patchwork)
+
+
+ggsave(p_all / (p_10_1  | p_10_11),
+       file = here('figs','X_ija_2scen.png'),
+       width = 8, height = 10, unit = 'in', dpi = 520)
 
 ## return unfished spawning biomass depending on method
 getSB0 <- function(eq_method){
