@@ -2,7 +2,7 @@
 doNage <- function(X = X_ija, ## input movement matrix
                    indat = dat, ## with bio info
                    Fv = rep(0,narea),
-                   M = c(0.2,10, 0.15,11), ## time varying M
+                   M = c(rep(0.2,10), rep(0.15,11)), ## time varying M
                    refR = rec_level, ## all areas
                    constSelex = 0.25){
   
