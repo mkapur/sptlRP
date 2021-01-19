@@ -1,5 +1,5 @@
 ## Toy Example Master
-## M Sosa Kapur kapurm@uw.edu - Summer 2020
+## M Sosa Kapur kapurm@uw.edu - Summer 2020 update Fa 2020
 ## Code to reproduce analyses presented in Kapur et al.
 ## Eq Quantities for next generation of spatial assessment models
 
@@ -23,8 +23,7 @@ require(ggplot2, quietly = T)
 narea <- 2
 nages <- 21
 steep <- rep(0.7,2)
-R0_list <- list(c(500,500)*0.5, c(300,700)*0.5, c(700,300)*0.5)
-
+R0_list <- list(c(500,500), c(300,700), c(700,300)) ## starting R0 scenarioss
 lapply(list.files(here::here("R"), full.names = TRUE), source)
 maxiter =  21 
 
@@ -41,12 +40,12 @@ for(s in 1:3){
   
   for(RR in 1:3){
     
-    # ## PROPOSED
+    ## PROPOSED
     sysopt[RR,1,s] <-   sysoptAB[RR,1,s] <-  sysopt_curr[RR,1,s] <- RR
     sysopt[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYS,
                                          RLI = 1,
                                          pik = splt,
-                                         movemat = X_ija_MIX2,
+                                         movemat = X_ija_all,
                                          interval = c(0.02,1))[1])
     
     
@@ -54,7 +53,7 @@ for(s in 1:3){
     run_at_msy <- optim_loop2(
       Fv_i = splt*sysopt[RR, 2, s],
       rec_level_idx = RR,
-      movemat = X_ija_MIX2
+      movemat = X_ija_all
     )
     sysopt[RR,3,s] <- run_at_msy$Yield
     sysopt[RR,4,s] <- run_at_msy$Biomass
@@ -66,26 +65,27 @@ for(s in 1:3){
     sysoptAB[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYSab,
                                            RLI = 1,  
                                            pik = splt,
-                                           movemat = X_ija_MIX2,
+                                           movemat = X_ija_all,
                                            interval = c(0.02,ifelse(s == 1, 0.55,1)))[1])
     
     run_at_msy <- abloop(Fv_i = splt*sysoptAB[RR,2,s],
-                         movemat  = X_ija_MIX2,
+                         movemat  = X_ija_all,
                          rec_level_idx = RR)
     sysoptAB[RR,3,s] <- run_at_msy$Yield
     sysoptAB[RR,4,s] <- run_at_msy$Biomass
     
     sysoptAB[RR,5:6,s] <- run_at_msy$Yield_i
     sysoptAB[RR,7:8,s] <- run_at_msy$Biomass_i  
+    
     ## current
     sysopt_curr[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYS_curr, 
                                               RLI = RR,
                                               pik = splt,
-                                              movemat = X_ija_MIX2,
+                                              movemat = X_ija_all,
                                               interval = c(0.02,1))[1])
     
     curr_at_FMSY <- run_one_current(Fv_i =  splt*sysopt_curr[RR,2,s],  
-                                    movemat  = X_ija_MIX2,
+                                    movemat  = X_ija_all,
                                     rec_level_idx = RR)
     
     sysopt_curr[RR,3,s] <- curr_at_FMSY$Yield
@@ -125,16 +125,16 @@ for(s in 1:3){
     for(Fv in 1:length(Ftest)){
       curr <- run_one_current(Fv_i = Ftest[Fv]*splt,
                               rec_level_idx = RR,
-                              movemat = X_ija_MIX2)
+                              movemat = X_ija_all)
       # cat(curr$Yield,"\n")
       current_Req <- curr$R_ESUMB
       prop <- optim_loop2(Fv_i = Ftest[Fv]*splt, #rep(Ftest[Fv],narea),#
                           rec_level_idx = RR,
-                          movemat = X_ija_MIX2)
+                          movemat = X_ija_all)
       
       abprop <- abloop(Fv_i = Ftest[Fv]*splt, 
                      rec_level_idx = RR,
-                     movemat = X_ija_MIX2)
+                     movemat = X_ija_all)
 
       fyr_2area[Fv,1,RR] <- Ftest[Fv]
       fyr_2area[Fv,2,RR] <- curr$Yield
@@ -160,7 +160,7 @@ for(s in 1:3){
   #                        paste(splt,collapse = "_"),"_",
   #                        Sys.Date(),'.png')),
   #     height = 8.5, width = 11, unit = 'in', res = 600)
-  plot_radj(radj_kvar = kvar_radj_2area, Fidx = 20:25)
+  # plot_radj(radj_kvar = kvar_radj_2area, Fidx = 20:25)
   # dev.off()
   # 
   # 
