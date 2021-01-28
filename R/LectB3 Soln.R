@@ -127,7 +127,7 @@ Spawn0_byage <- FindEqn(FF = 0, R0_i = R_init, R_use = R_init, finding_sb0 = TRU
 Spawn0 <- c(sum(Spawn0_byage[1:3]),sum(Spawn0_byage[4:6]))## unfished spawning biomass by area
 
 # Part 1 (yield vs F)
-FFs <- seq(from=0,to=2,by=0.01)
+FFs <- seq(from=0,to=1,by=0.01)
 Yields <- SSYields <-  OGYields <- rep(0,length(FFs))
 Spawn <- SSSpawn <- OGSpawn <- rep(0,length(FFs))
 # Rused <- matrix(NA, length(FFs), Narea)
@@ -139,10 +139,10 @@ for (II in 1:length(FFs)){
   OGSpawn[II] <- sum(OGPrj$Neqn* maturity_vector) ## expected N spawners at F
   for(k in 1:2){
     if(k == 1){
-      R_use_prop = R_use_SS = R_init
+      R_use_prop = R_use_SS = R_init ## start all off at the same values
     } else if(k > 1){
-      R_use_prop <- ModelPrj$R_new#+R_init #ModelPrj$R_new ## use last iteration
-      cat(k,R_use_prop,"\n")
+      R_use_prop <- ModelPrj$R_new+R_init #ModelPrj$R_new ## use last iteration
+      # cat(k,R_use_prop,"\n")
       R_use_SS <- SSPrj$R_global #ModelPrj$R_new ## use last iteration
     }
     ModelPrj <- FindEqn(FFs[II], R0_i = R_init, R_use = R_use_prop) ## equilbrium numbers given F
@@ -156,7 +156,7 @@ for (II in 1:length(FFs)){
     SSYields[II] <- SSPrj$Catch ## yield at F
     SSSpawn[II] <- sum(ModelPrj$Neqn * maturity_vector)  ## expected N spawners at F
     
-    # cat("RIN" , FFs[II],k,   R_use_prop,R_use_SS, "\n")
+    cat("FF ", FFs[II]," k ", k, " Ruse prop ",  R_use_prop, " Ruse ss ",R_use_SS, "\n")
     # cat(FFs[II],k, ModelPrj$Neqn,"\t",   SSPrj$Neqn ,"\n")
     # cat("SPAWN" , FFs[II],k,     Spawn[II],      SSSpawn[II] , "\n")
     # cat("SBPR" ,FFs[II],k,     Spawn[II]/R_use_prop, SSSpawn[II]/R_use_SS, "\n")
@@ -166,7 +166,7 @@ for (II in 1:length(FFs)){
 } ## end Fs
 # par(mfrow=c(2,1),oma=c(1,1,1,1))
 plot(FFs,Yields,xlab="Fishing effort",ylab="Yield",type="l",lty=1,
-     col  = 'red', ylim = c(0,5))
+     col  = 'red', ylim = c(0,2))
 lines(FFs,OGYields,xlab="Fishing effort",ylab="Yield",type="l",lty=1)
 lines(FFs,SSYields,xlab="Fishing effort",ylab="Yield",type="l",lty=1, col = 'blue')
 legend('topright', legend = c('No SRR','SRR by Area (proposed method)', 'Global SRR'),
