@@ -69,7 +69,7 @@ makeDat <- function(nage = 20, narea =2, wa,
     plot(dat[,v,1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v],
          col = alpha('black',0.5),
          ylim = c(0,ifelse(vals[v]!='weight',1,100)))
-    text(x = 19, y = ifelse(vals[v]!='weight',0.95,905), label = LETTERS[v-1], cex = 1.5)
+    text(x = 19, y = ifelse(vals[v]!='weight',0.95,95), label = LETTERS[v-1], cex = 1.5)
     if(v == 2){
       legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
              pch = 19, col = alpha(c('black','blue'),0.5))
