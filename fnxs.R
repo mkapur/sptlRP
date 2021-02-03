@@ -66,13 +66,15 @@ makeDat <- function(nage = 20, narea =2, wa,
   par(mfrow = c(2,2))
   for(v in 2:length(vals)){
     age <- 0:20
-    plot(dat[,v,1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v], 
+    plot(dat[,v,1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v],
+         col = alpha('black',0.5),
          ylim = c(0,ifelse(vals[v]!='weight',1,100)))
+    text(x = 19, y = ifelse(vals[v]!='weight',0.95,905), label = LETTERS[v-1], cex = 1.5)
     if(v == 2){
       legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
-             pch = 19, col = c('black','blue'))
+             pch = 19, col = alpha(c('black','blue'),0.5))
     }
-    points(dat[,v,2] ~ age, type = 'p', pch = 19,col = 'blue')
+    points(dat[,v,2] ~ age, type = 'p', pch = 19,col = alpha('blue',0.5),)
   }
   dev.off()
   cat("saved 2x2 input data figure in figs \n")
