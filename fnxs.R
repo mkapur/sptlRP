@@ -68,6 +68,10 @@ makeDat <- function(nage = 20, narea =2, wa,
     age <- 0:20
     plot(dat[,v,1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v], 
          ylim = c(0,ifelse(vals[v]!='weight',1,100)))
+    if(v == 2){
+      legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
+             pch = 19, col = c('black','blue'))
+    }
     points(dat[,v,2] ~ age, type = 'p', pch = 19,col = 'blue')
   }
   dev.off()
