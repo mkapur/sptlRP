@@ -114,24 +114,24 @@ makeDat <- function(nage = 20, narea =2,
 ## generate arrays with NAA, BPR, SBPR and YPR with natal record
 ## a given array slice (third dim) lets us track the fate of individuals spawned in that area.
 ## thus we must add rows across slices if we want totals in-area.
-doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
+doPR <- function(dat,narea = 2, nage =20, FF = c(0,0)){
   NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea))
   NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
   for(slice in 1:narea){
     ## Calc Survivors for each area-age within slice
-    for(age in 2:nages){
+    for(age in 2:nage){
       for(area in 1:narea){
         ## First calc survivors within area
-        if(age > 1  & age < max(nages)) {
+        if(age > 1  & age < max(nage)) {
           NPR_SURV[area,age,slice] <- NPR_SURV[area,age-1,slice]*dat[age,'mortality',slice]
         } ## end age < maxage
-        if(age == max(nages)){
-          NPR_SURV[area,age,slice] <-NPR_SURV[area,nages-1,slice]*dat[age,'mortality',slice]/(1-dat[age,'mortality',slice])
+        if(age == max(nage)){
+          NPR_SURV[area,age,slice] <-NPR_SURV[area,nage-1,slice]*dat[age,'mortality',slice]/(1-dat[age,'mortality',slice])
         } ## end plus group
       } ## end survivors-in-area
     } ## end ages 2:nage
     for(area in 1:narea){ 
-      for(age in 2:nages){
+      for(age in 2:nage){
         pLeave = NCome = 0
         for(jarea in 1:narea){
           if(area != jarea){
@@ -143,7 +143,7 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
         ## note, they are fished "before" moving; so NCome includes fishery deaths experienced in area-from
         if(age >1) NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*(1-FF[area]) + NCome
       } ## end ages 2:nage
-      for(age in 0:nages){
+      for(age in 0:nage){
         BPR[area,age,slice] <-  NPR[area,age,slice]*dat[age,"weight",area] ## weight in 3 and 4 col
         SBPR[area,age,slice] <-  BPR[area,age,slice]*dat[age,"maturity",area]
         ## Calc Yield for each area-age   
