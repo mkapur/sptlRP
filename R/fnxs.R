@@ -110,11 +110,12 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
         for(jarea in 1:narea){
           if(area != jarea){
             pLeave = pLeave + (1-dat[age,"proportion_stay",area])
-            NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice]
+            NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice]*(1-FF[jarea])
             # cat(NCome,"\n")
           } # end i != j
         } # end subareas j
-        if(age >1) NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice] + NCome
+        ## note, they are fished "before" moving; so NCome includes fishery deaths experienced in area-from
+        if(age >1) NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*(1-FF[area]) + NCome
         BPR[area,age,slice] <-  NPR[area,age,slice]*dat[age,"weight",area] ## weight in 3 and 4 col
         SBPR[area,age,slice] <-  BPR[area,age,slice]*dat[age,"maturity",area]
         ## Calc Yield for each area-age   
