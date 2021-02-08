@@ -7,33 +7,54 @@ logistic <- function(a,a50,a95){
 }
 
 bh <- function(h, prop, r0, b0, bcurr){
-  num <- prop*4*h*r0*bcurr/b0
-  denom1 <- bcurr*(5*h-1)
-  denom2 <- bcurr/b0*(1-h)
-  rec = num/(denom1+denom2)
+  rec = NULL
+  for(i in 1:narea){
+    num <- prop*4*h*r0*bcurr$SB_A1/b0$SB_A1
+    denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h-1)
+    denom2 <- (1-h)
+    rec[i] = num/(denom1+denom2)
+  }
+  # cat(num, "\n")
+  # cat(denom1,"\n")
+  # cat(denom2,"\n")
+  # cat(rec,"\n")
   return(rec)
 }
 getSB <- function(passR, passRprop, SBPR_F){
-  
+  SBPR_F_A1 <- sum(SBPR_F[1,,1],SBPR_F[1,,2])
+  SBPR_F_A2 <- sum(SBPR_F[2,,1],SBPR_F[2,,2])
+  SB_A1 <- SBPR_F_A1*passR*passRprop
+  SB_A2 <- SBPR_F_A2*passR*(1-passRprop)
+  return(list('SB_A1'=SB_A1,"SB_A2"=SB_A2))
   
 }
 getYield <- function(passR, passRprop, YPR_F){
-  
-  
+  ## yield in Area 1 is in first row of each array slice
+  YPR_F_A1 <- sum(YPR_F[1,,1],YPR_F[1,,2])
+  YPR_F_A2 <- sum(YPR_F[2,,1],YPR_F[2,,2])
+  Yield_A1 <- YPR_F_A1*passR*passRprop
+  Yield_A2 <- YPR_F_A2*passR*(1-passRprop)
+  return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
-getExpR <- function(passR, passRprop, SBPR_F, SBPR_0){
+getExpR <- function(passR, passRprop, SB_F, SB_0){
   ## calculate SB_0 given passed pars
-  SB_0 <- getSB(passR, passRprop, SBPR_0)
+  # SB_0 <- getSB(passR, passRprop, SBPR_0)
   ## calculate SB_F given passed pars and SBPR_F
-  SB_F <- getSB(passR, passRprop, SBPR_F) 
+  # SB_F <- getSB(passR, passRprop, SBPR_F) 
   ## now use these in the bev-holt, be sure to use the global inputs
-  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_input, b0 = SB_0, bcuff = SB_F)
+  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F)
+  return(Rexp)
 }
 
-optimFunc <- function(passR, passRprop){
-  ## do getExpR to get ExpR
-  obsR <- Rbar*c(Rprop,1-Rprop)
-  obj <- sum((stuff$obsR - stuff$expR)^2)
+optimFunc <- function(par,SBPR_0,SBPR_F){
+  passR <- par[1]; passRprop <- par[2]
+  ## get sbprf and sbpr0 given pars
+  ## the sbprF changes with F 
+  sb_0 <- getSB(passR ,passRprop, SBPR_0)
+  sb_F <- getSB(passR ,passRprop, SBPR_F)
+  Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0)
+  obsR <- passR*c(passRprop,1-passRprop)
+  obj <- sum((obsR - Rexp)^2)
   return(obj)
 }
 ## set up readable data frame with movement, selex, wtage, maturity inputs for each area
@@ -109,8 +130,8 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
         } ## end plus group
       } ## end survivors-in-area
     } ## end ages 2:nage
-    for(age in 2:nages){
-      for(area in 1:narea){ 
+    for(area in 1:narea){ 
+      for(age in 2:nages){
         pLeave = NCome = 0
         for(jarea in 1:narea){
           if(area != jarea){
@@ -127,8 +148,8 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
         SBPR[area,age,slice] <-  BPR[area,age,slice]*dat[age,"maturity",area]
         ## Calc Yield for each area-age   
         YPR[area,age,slice] <- dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice] ## disregard selex
-      } # end subareas i 
-    } ## end ages 0:nage
+      } ## end ages 0:nage
+    } ## end areas
   } ## end slices (array)
   return(list("NPR"=NPR,"BPR"=BPR,"SBPR"=SBPR,"YPR"=YPR))
 } ## end func
