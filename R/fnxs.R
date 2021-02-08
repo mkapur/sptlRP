@@ -6,7 +6,7 @@ logistic <- function(a,a50,a95){
   return(val)
 }
 
-bh <- function(h, prop, r0, b0, bcurr){
+bh <- function(h, prop, r0, b0, bcurr,narea = 2){
   rec = NULL
   for(i in 1:narea){
     num <- prop*4*h*r0*bcurr$SB_A1/b0$SB_A1
@@ -55,6 +55,7 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0)
   obsR <- passR*c(passRprop,1-passRprop)
   obj <- sum((obsR - Rexp)^2)
+  # obj <- ifelse(abs(obj) == Inf,'')
   return(obj)
 }
 ## set up readable data frame with movement, selex, wtage, maturity inputs for each area
@@ -114,7 +115,7 @@ makeDat <- function(nage = 20, narea =2,
 ## generate arrays with NAA, BPR, SBPR and YPR with natal record
 ## a given array slice (third dim) lets us track the fate of individuals spawned in that area.
 ## thus we must add rows across slices if we want totals in-area.
-doPR <- function(dat,narea = 2, nage =20, FF = c(0,0)){
+doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea))
   NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
   for(slice in 1:narea){
