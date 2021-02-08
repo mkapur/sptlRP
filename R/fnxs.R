@@ -14,8 +14,12 @@ bh <- function(h, prop, r0, b0, bcurr){
   return(rec)
 }
 getSB <- function(passR, passRprop, SBPR_F){
+  
+  
 }
 getYield <- function(passR, passRprop, YPR_F){
+  
+  
 }
 getExpR <- function(passR, passRprop, SBPR_F, SBPR_0){
   ## calculate SB_0 given passed pars
@@ -48,7 +52,7 @@ makeDat <- function(nage = 20, narea =2,
   for(area in 1:narea){
     for(age in 0:(nage+1)){
       
-      dat[age,"age",area] <- age
+      dat[age,"age",area] <- age-1
       
       dat[age,"proportion_stay",area] <- 1 ## recruits stay put
       if(age <10 & age > 1) dat[age,"proportion_stay",area] <- min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
@@ -116,12 +120,14 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
         } # end subareas j
         ## note, they are fished "before" moving; so NCome includes fishery deaths experienced in area-from
         if(age >1) NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*(1-FF[area]) + NCome
+      } ## end ages 2:nage
+      for(age in 0:nages){
         BPR[area,age,slice] <-  NPR[area,age,slice]*dat[age,"weight",area] ## weight in 3 and 4 col
         SBPR[area,age,slice] <-  BPR[area,age,slice]*dat[age,"maturity",area]
         ## Calc Yield for each area-age   
         YPR[area,age,slice] <- dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice] ## disregard selex
       } # end subareas i 
-    } ## end ages
+    } ## end ages 0:nage
   } ## end slices (array)
   
   return(list("NPR"=NPR,"BPR"=BPR,"SBPR"=SBPR,"YPR"=YPR))
