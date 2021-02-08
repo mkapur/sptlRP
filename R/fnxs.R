@@ -108,7 +108,8 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
           NPR_SURV[area,age,slice] <-NPR_SURV[area,nages-1,slice]*dat[age,'mortality',slice]/(1-dat[age,'mortality',slice])
         } ## end plus group
       } ## end survivors-in-area
-      
+    } ## end ages 2:nage
+    for(age in 2:nages){
       for(area in 1:narea){ 
         pLeave = NCome = 0
         for(jarea in 1:narea){
@@ -129,7 +130,6 @@ doPR <- function(dat,narea = 2, nages =20, FF = c(0,0)){
       } # end subareas i 
     } ## end ages 0:nage
   } ## end slices (array)
-  
   return(list("NPR"=NPR,"BPR"=BPR,"SBPR"=SBPR,"YPR"=YPR))
 } ## end func
 
