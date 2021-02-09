@@ -26,17 +26,16 @@ optim_loop <- function(FFs,i){
 }
 
 dfx.dxSYS <- function(Fv_test){
+  
+  opt0 <- optim_loop(FFs=Fv_test-0.001, i = NA)
+  opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
+  yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
+  y1 <- yields$Yield_A1+yields$Yield_A2
+  opt0 <- optim_loop(FFs=Fv_test+0.001, i = NA)
+  opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
+  yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
+  y2 <- yields$Yield_A1+yields$Yield_A2
 
-
-  yields <- getYield(passR = out[i,'estRbar'], passRprop =   out[i,'estRprop'], YPR_F = tmp$YPR)
-  y1 <- yields[1];  y2 <- yields[2];
-
-  y1 <- optim_loop2(Fv_i = pik*(Fv_test-0.001),
-                    rec_level_idx = RLI,
-                    movemat = movemat)$Yield
-  y2 <- optim_loop2(Fv_i =  pik*(Fv_test+0.001),
-                    rec_level_idx = RLI,
-                    movemat = movemat)$Yield
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }
