@@ -1,5 +1,45 @@
 ## functions used
 
+## takes F, performs optimization and returns derived quants at Rbar hat rprop hat
+optim_loop <- function(FFs,i){
+  if(is.na(i)){ ## for uniroot
+    tmp <- doPR(dat,FF = FFs)
+  } else{
+    ## for testing
+    tmp <- doPR(dat,FF = as.numeric(c(FFs[i,]))) 
+  }
+  
+  tmp0 <-  doPR(dat,FF = c(0,0) )
+  ## optimize this
+  opt_temp <- optim(par = c(4,0.6),
+                    SBPR_F = tmp$SBPR,
+                    SBPR_0 = tmp0$SBPR,
+                    lower = c(1E-4,1E-4),
+                    upper = c(NA,1),
+                    method = "L-BFGS-B",
+                    fn = optimFunc, hessian = FALSE,
+                    control = list(
+                      maxit = 1000,
+                      ndeps = rep(1e-4,2)))
+  
+  return(list("opt_temp"=opt_temp,"tmp0"=tmp0,"tmp"=tmp))
+}
+
+dfx.dxSYS <- function(Fv_test){
+
+
+  yields <- getYield(passR = out[i,'estRbar'], passRprop =   out[i,'estRprop'], YPR_F = tmp$YPR)
+  y1 <- yields[1];  y2 <- yields[2];
+
+  y1 <- optim_loop2(Fv_i = pik*(Fv_test-0.001),
+                    rec_level_idx = RLI,
+                    movemat = movemat)$Yield
+  y2 <- optim_loop2(Fv_i =  pik*(Fv_test+0.001),
+                    rec_level_idx = RLI,
+                    movemat = movemat)$Yield
+  appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  return(appx)
+}
 
 logistic <- function(a,a50,a95){
   val <- 1/(1+exp(-log(19)*((a-a50)/(a95-a50))))
