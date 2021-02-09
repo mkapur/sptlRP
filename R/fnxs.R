@@ -8,7 +8,7 @@ optim_loop <- function(FFs,i){
     ## for testing
     tmp <- doPR(dat,FF = as.numeric(c(FFs[i,]))) 
   }
-  
+  # cat(is.na(tmp),"\n")
   tmp0 <-  doPR(dat,FF = c(0,0) )
   ## optimize this
   opt_temp <- optim(par = c(4,0.6),
@@ -24,18 +24,21 @@ optim_loop <- function(FFs,i){
   
   return(list("opt_temp"=opt_temp,"tmp0"=tmp0,"tmp"=tmp))
 }
-
+# https://stackoverflow.com/questions/32600722/uniroot-in-r-when-there-are-two-unknowns
 dfx.dxSYS <- function(Fv_test){
-  
-  opt0 <- optim_loop(FFs=Fv_test-0.001, i = NA)
+  ## right now these are sequential (meaning f is equal in each area)
+  opt0 <- optim_loop(FFs=rep(Fv_test-0.001,2), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
+  ## override negative yields
+  
   y1 <- yields$Yield_A1+yields$Yield_A2
-  opt0 <- optim_loop(FFs=Fv_test+0.001, i = NA)
+  # cat(y1,'\n')
+  opt0 <- optim_loop(FFs=rep(Fv_test-0.001,2), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
   y2 <- yields$Yield_A1+yields$Yield_A2
-
+  # cat(y2,'\n')
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   return(appx)
 }
@@ -71,8 +74,8 @@ getYield <- function(passR, passRprop, YPR_F){
   ## yield in Area 1 is in first row of each array slice
   YPR_F_A1 <- sum(YPR_F[1,,1],YPR_F[1,,2])
   YPR_F_A2 <- sum(YPR_F[2,,1],YPR_F[2,,2])
-  Yield_A1 <- YPR_F_A1*passR*passRprop
-  Yield_A2 <- YPR_F_A2*passR*(1-passRprop)
+  Yield_A1 <- ifelse(YPR_F_A1*passR*passRprop>0,YPR_F_A1*passR*passRprop,0)
+  Yield_A2 <-  ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
 getExpR <- function(passR, passRprop, SB_F, SB_0){
