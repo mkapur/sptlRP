@@ -34,8 +34,6 @@ dfx.dxSYS <- function(Fv_test, Fv_prop){
   opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
-  ## override negative yields
-  
   y1 <- yields$Yield_A1+yields$Yield_A2
   # cat(y1,'\n')
   opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
