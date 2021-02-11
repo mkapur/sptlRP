@@ -78,7 +78,10 @@ out2 <- data.frame()
 for(i in 1:nrow(propmsy)){
   out2[i,'FMSY'] <- propmsy[i,'FMSY']
   out2[i,'Fprop'] <- propmsy[i,'Fprop']
-  out2[i,'FF_Area1'] <- propmsy[i,'Fprop']*propmsy[i,'FMSY'];   out2[i,'FF_Area2'] <- (1-propmsy[i,'Fprop'])*propmsy[i,'FMSY']
+  FFs <- c(propmsy[i,'Fprop']*propmsy[i,'FMSY'],(1-propmsy[i,'Fprop'])*propmsy[i,'FMSY'] )
+  out2[i,'FF_Area1'] <- FFs[1]
+  out2[i,'FF_Area2'] <- FFs[2]
+  
   opt0 <- optim_loop(FFs,i)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   out2[i,'estRbar'] <- opt_temp$par[1];  out2[i,'estRprop'] <- opt_temp$par[2];
@@ -97,11 +100,13 @@ for(i in 1:nrow(propmsy)){
   rm(tmp)
 }
 out$tyield <- out$Yield_A1+out$Yield_A2
-out$fprop <- out$Yield_A1/(out$Yield_A1+out$Yield_A2)
+out$fprop <- out$FF_Area1/(out$FF_Area1+out$FF_Area2)
 out[which.max(out$tyield),]
 
 out2$tyield <- out2$Yield_A1+out2$Yield_A2
 out2[out2 < 0] <- NA
+out2[which.max(out2$tyield),]  
+
 
 ggplot(out, aes(x = FF_Area1, y=FF_Area2 , fill = FF_Area1/(FF_Area1+FF_Area2) )) +
   scale_color_viridis_c(na.value = 'white') +
@@ -138,6 +143,6 @@ out2 %>%
   # facet_wrap(~Area) +
   labs(x = 'Fprop', y = 'FMSY', fill = 'Yield in area') 
 
-out2[which.max(out2$tyield),]  
+
 ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY_tyield.png')))
   
