@@ -24,28 +24,14 @@ steep = 0.75
 FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
 out <- data.frame()
 for(i in 1:nrow(FFs)){
-  
   out[i,'FF_Area1'] <- FFs[i,1];   out[i,'FF_Area2'] <- FFs[i,2]
-  tmp <- doPR(dat,FF = as.numeric(c(FFs[i,]))) 
-  tmp0 <-  doPR(dat,FF = c(0,0) )
- 
-  ## optimize this
-  opt_temp <- optim(par = c(4,0.6),
-        SBPR_F = tmp$SBPR,
-        SBPR_0 = tmp0$SBPR,
-        lower = c(1E-4,1E-4),
-        upper = c(NA,1),
-        method = "L-BFGS-B",
-        fn = optimFunc, hessian = FALSE,
-        control = list(
-                       maxit = 1000,
-                       ndeps = rep(1e-4,2)))
-
+  opt0 <- optim_loop(FFs,i)
+  opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   out[i,'estRbar'] <- opt_temp$par[1];  out[i,'estRprop'] <- opt_temp$par[2];
 
   ## derived quants at optimized value
   yields <- getYield(passR = out[i,'estRbar'], passRprop =   out[i,'estRprop'], YPR_F = tmp$YPR)
-  out[i,'Yield_A1'] <- yields[1];  out[i,'Yield_A2'] <- yields[2]; ## build this
+  out[i,'Yield_A1'] <- yields[1];  out[i,'Yield_A2'] <- yields[2]; 
   sbs <- getSB(passR = out[i,'estRbar'], passRprop = out[i,'estRprop'], SBPR_F = tmp$SBPR)
   out[i,'SB_A1'] <- sbs[1];  out[i,'SB_A2'] <- sbs[2];
   sb0 <- getSB(passR = out[i,'estRbar'], passRprop = out[i,'estRprop'], SBPR_F = tmp0$SBPR)
@@ -59,10 +45,99 @@ for(i in 1:nrow(FFs)){
 source(here('R','figs.R'))
 
 ## now to optimize in 2d space via uniroot
-# dfx.dxSYS_curr
-# sysopt_curr[RR,2,s] <- as.numeric(uniroot(f = dfx.dxSYS_curr, 
-#                                           RLI = RR,
-#                                           pik = splt,
-#                                           movemat = X_ija_all,
-#                                           interval = c(0.02,1))[1])
+# dfx.dxSYS_curr - test that it works in 1d
+# as.numeric(uniroot(f = dfx.dxSYS, 
+#                    # Fv_prop = 0.5,
+#                    # interval = c(1e-4,1),
+#                    lower = 0.01, upper =2)[1])
+# # FvtestVec <- seq(0.01,2,0.01)
 
+# https://stackoverflow.com/questions/57173162/function-for-uniroot-that-has-two-parameters-that-need-to-be-run-across-a-vector
+## the example above actually has 3 pars and he optimizes over 2 known vectors
+## the mapply will return the best F value given proportion
+FpropVec <- seq(0.01,1,0.01) ## all possible proportions of F in Area 1
+fbest <-
+  mapply(
+    function(Fv_prop)
+      uniroot(f = dfx.dxSYS, 
+                         interval = c(0.02,5),
+                         Fv_prop = Fv_prop)[1],
+    FpropVec)
+propmsy <- data.frame('Fprop' = FpropVec,'FMSY' = matrix(unlist(fbest)))  
+ggplot(propmsy, aes(y = FMSY,x = Fprop)) +
+  geom_line(lwd = 1.1) +
+  scale_y_continuous(limits = c(0.5,1)) +
+  theme_sleek() +
+  labs(x = 'Proportion F applied to Area 1', y = 'FMSY')
+ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY.png')))
+
+
+## now take those best values and return ssb, yield etc
+## this is telling us where the best yield actually occurs, as a function of both
+out2 <- data.frame()
+for(i in 1:nrow(propmsy)){
+  out2[i,'FMSY'] <- propmsy[i,'FMSY']
+  out2[i,'Fprop'] <- propmsy[i,'Fprop']
+  out2[i,'FF_Area1'] <- propmsy[i,'Fprop']*propmsy[i,'FMSY'];   out2[i,'FF_Area2'] <- (1-propmsy[i,'Fprop'])*propmsy[i,'FMSY']
+  opt0 <- optim_loop(FFs,i)
+  opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
+  out2[i,'estRbar'] <- opt_temp$par[1];  out2[i,'estRprop'] <- opt_temp$par[2];
+  
+  ## derived quants at optimized value
+  yields <- getYield(passR = out2[i,'estRbar'], passRprop =   out2[i,'estRprop'], YPR_F = tmp$YPR)
+  out2[i,'Yield_A1'] <- yields[1];  out2[i,'Yield_A2'] <- yields[2]; 
+  sbs <- getSB(passR = out2[i,'estRbar'], passRprop = out2[i,'estRprop'], SBPR_F = tmp$SBPR)
+  out2[i,'SB_A1'] <- sbs[1];  out2[i,'SB_A2'] <- sbs[2];
+  sb0 <- getSB(passR = out2[i,'estRbar'], passRprop = out2[i,'estRprop'], SBPR_F = tmp0$SBPR)
+  out2[i,'SB0_A1'] <- sb0[1];  out2[i,'SB0_A2'] <- sb0[2];
+  rexp <- getExpR(passR = out2[i,'estRbar'], passRprop =   out2[i,'estRprop'],SB_F = sbs, SB_0 =sb0)
+  out2[i,'expR_A1'] <- rexp[1];  out2[i,'expR_A2'] <- rexp[2];
+  obsr <- out2[i,'estRbar']*c(out2[i,'estRprop'],1-out2[i,'estRprop'])
+  out2[i,'obsR_A1'] <- obsr[1];  out2[i,'obsR_A2'] <- obsr[2];
+  rm(tmp)
+}
+out$tyield <- out$Yield_A1+out$Yield_A2
+out$fprop <- out$Yield_A1/(out$Yield_A1+out$Yield_A2)
+out[which.max(out$tyield),]
+
+out2$tyield <- out2$Yield_A1+out2$Yield_A2
+out2[out2 < 0] <- NA
+
+ggplot(out, aes(x = FF_Area1, y=FF_Area2 , fill = FF_Area1/(FF_Area1+FF_Area2) )) +
+  scale_color_viridis_c(na.value = 'white') +
+  theme_sleek() +
+  geom_tile() + coord_equal() 
+ggplot(out2, aes(x = FF_Area1, y=FF_Area2 , fill = Fprop )) +
+  scale_color_viridis_c(na.value = 'white') +
+  theme_sleek() +
+  geom_tile() + coord_equal() 
+
+out2 %>%
+  ggplot(., aes(y = FMSY,x = Fprop, color =tyield )) +
+  geom_point() +
+  scale_y_continuous(limits = c(0.5,1)) +
+  scale_color_viridis_c(na.value = 'white') +
+  theme_sleek() +
+  labs(x = 'Proportion F applied to Area 1', y = 'FMSY', color = 'Total Yield')
+
+
+## plot propF x fmsy x yield
+out2 %>%
+  select(FMSY,Fprop,tyield) %>%
+  # reshape2::melt(id = c("FMSY","Fprop")) %>%
+  # mutate(Area = substr(variable,7,8), yield = value) %>%
+  # select(-variable,-value) %>%
+  ggplot(., aes(y = FMSY, x = Fprop, color = tyield)) +
+  # geom_tile() +
+    geom_point() +
+  # coord_equal() +
+  # ggsidekick::theme_sleek() + 
+  scale_y_continuous(expand = c(0,0), limits = c(0.57,0.85), breaks = seq(0.57,0.85,0.01)) + 
+  scale_x_continuous(expand = c(0,0), limits = c(0,1), breaks = seq(0,1,0.01)) +
+  # scale_fill_viridis_c(option = 'magma',na.value = 'white') +
+  # facet_wrap(~Area) +
+  labs(x = 'Fprop', y = 'FMSY', fill = 'Yield in area') 
+
+out2[which.max(out2$tyield),]  
+ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY_tyield.png')))
+  
