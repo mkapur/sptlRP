@@ -42,7 +42,7 @@ for(i in 1:nrow(FFs)){
   out[i,'obsR_A1'] <- obsr[1];  out[i,'obsR_A2'] <- obsr[2];
   rm(tmp)
 }
-source(here('R','figs.R'))
+
 
 ## now to optimize in 2d space via uniroot
 # dfx.dxSYS_curr - test that it works in 1d
@@ -64,12 +64,6 @@ fbest <-
                          Fv_prop = Fv_prop)[1],
     FpropVec)
 propmsy <- data.frame('Fprop' = FpropVec,'FMSY' = matrix(unlist(fbest)))  
-ggplot(propmsy, aes(y = FMSY,x = Fprop)) +
-  geom_line(lwd = 1.1) +
-  scale_y_continuous(limits = c(0.5,1)) +
-  theme_sleek() +
-  labs(x = 'Proportion F applied to Area 1', y = 'FMSY')
-ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY.png')))
 
 
 ## now take those best values and return ssb, yield etc
@@ -82,7 +76,7 @@ for(i in 1:nrow(propmsy)){
   out2[i,'FF_Area1'] <- FFs[1]
   out2[i,'FF_Area2'] <- FFs[2]
   
-  opt0 <- optim_loop(FFs,i)
+  opt0 <- optim_loop(FFs,i =NA) ## already specified
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   out2[i,'estRbar'] <- opt_temp$par[1];  out2[i,'estRprop'] <- opt_temp$par[2];
   
@@ -103,46 +97,10 @@ out$tyield <- out$Yield_A1+out$Yield_A2
 out$fprop <- out$FF_Area1/(out$FF_Area1+out$FF_Area2)
 out[which.max(out$tyield),]
 
+
 out2$tyield <- out2$Yield_A1+out2$Yield_A2
 out2[out2 < 0] <- NA
-out2[which.max(out2$tyield),]  
+out2[which.max(out2$tyield),]
 
 
-ggplot(out, aes(x = FF_Area1, y=FF_Area2 , fill = FF_Area1/(FF_Area1+FF_Area2) )) +
-  scale_color_viridis_c(na.value = 'white') +
-  theme_sleek() +
-  geom_tile() + coord_equal() 
-ggplot(out2, aes(x = FF_Area1, y=FF_Area2 , fill = Fprop )) +
-  scale_color_viridis_c(na.value = 'white') +
-  theme_sleek() +
-  geom_tile() + coord_equal() 
-
-out2 %>%
-  ggplot(., aes(y = FMSY,x = Fprop, color =tyield )) +
-  geom_point() +
-  scale_y_continuous(limits = c(0.5,1)) +
-  scale_color_viridis_c(na.value = 'white') +
-  theme_sleek() +
-  labs(x = 'Proportion F applied to Area 1', y = 'FMSY', color = 'Total Yield')
-
-
-## plot propF x fmsy x yield
-out2 %>%
-  select(FMSY,Fprop,tyield) %>%
-  # reshape2::melt(id = c("FMSY","Fprop")) %>%
-  # mutate(Area = substr(variable,7,8), yield = value) %>%
-  # select(-variable,-value) %>%
-  ggplot(., aes(y = FMSY, x = Fprop, color = tyield)) +
-  # geom_tile() +
-    geom_point() +
-  # coord_equal() +
-  # ggsidekick::theme_sleek() + 
-  scale_y_continuous(expand = c(0,0), limits = c(0.57,0.85), breaks = seq(0.57,0.85,0.01)) + 
-  scale_x_continuous(expand = c(0,0), limits = c(0,1), breaks = seq(0,1,0.01)) +
-  # scale_fill_viridis_c(option = 'magma',na.value = 'white') +
-  # facet_wrap(~Area) +
-  labs(x = 'Fprop', y = 'FMSY', fill = 'Yield in area') 
-
-
-ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY_tyield.png')))
-  
+source(here('R','figs.R'))
