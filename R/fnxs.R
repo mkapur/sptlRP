@@ -25,9 +25,13 @@ optim_loop <- function(FFs,i){
   return(list("opt_temp"=opt_temp,"tmp0"=tmp0,"tmp"=tmp))
 }
 # https://stackoverflow.com/questions/32600722/uniroot-in-r-when-there-are-two-unknowns
-dfx.dxSYS <- function(Fv_test){
-  ## right now these are sequential (meaning f is equal in each area)
-  opt0 <- optim_loop(FFs=rep(Fv_test-0.001,2), i = NA)
+## we have two unknowns, similar to R setup, which are F input and Fprop
+## First we take integration of our funciton wrt x (call this g(a))
+
+
+dfx.dxSYS <- function(Fv_test, Fv_prop){
+  ## Fv_prop indicates proportion of Fv_test applied in A1
+  opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
   ## override negative yields
@@ -74,8 +78,8 @@ getYield <- function(passR, passRprop, YPR_F){
   ## yield in Area 1 is in first row of each array slice
   YPR_F_A1 <- sum(YPR_F[1,,1],YPR_F[1,,2])
   YPR_F_A2 <- sum(YPR_F[2,,1],YPR_F[2,,2])
-  Yield_A1 <- ifelse(YPR_F_A1*passR*passRprop>0,YPR_F_A1*passR*passRprop,0)
-  Yield_A2 <-  ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
+  Yield_A1 <- YPR_F_A1*passR*passRprop# ifelse(YPR_F_A1*passR*passRprop>0,YPR_F_A1*passR*passRprop,0)
+  Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
 getExpR <- function(passR, passRprop, SB_F, SB_0){
