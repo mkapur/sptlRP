@@ -35,6 +35,7 @@ ggsave(last_plot(),
 
 
 ##  F vs Composite SSB and Yield plots ----
+## heatmap with msy overlaid
 FSB <- out %>%
   mutate(SB_Total = SB_A1+SB_A2) %>%
   select(FF_Area1,FF_Area2, SB_Total) %>%
@@ -44,7 +45,7 @@ FSB <- out %>%
   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = SB)) +
   geom_tile() +
   coord_equal() +
-  ggsidekick::theme_sleek() + 
+  ggsidekick::theme_sleek() + theme(legend.position = 'top') +  
   scale_x_continuous(expand = c(0,0)) + 
   scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(na.value = 'white') +
@@ -52,7 +53,8 @@ FSB <- out %>%
        y = 'F in Area 2', 
        fill = 'Total SB') 
 
-FYIELD <- out %>%
+FYIELD <-
+out %>%
   mutate(Yield_Total = Yield_A1+Yield_A2) %>%
   select(FF_Area1,FF_Area2, Yield_Total) %>%  
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
@@ -61,19 +63,55 @@ FYIELD <- out %>%
   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = yield)) +
   geom_tile() +
   coord_equal() +
-  ggsidekick::theme_sleek() + 
+  ggsidekick::theme_sleek() + theme(legend.position = 'top') +
   scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
-  labs(x = 'F in Area 1', 
-       y = 'F in Area 2',
-       fill = 'Total Yield') 
+  scale_color_viridis_c(option = 'magma',na.value = 'white') +
+  ## add the locations of FMSY
+  geom_point(data = out2, aes(x = FF_Area1, y = FF_Area2), color = 'grey66', size = 2)+
+  geom_point(data = out2, aes(x = out2[which.max(tyield),'FF_Area1'],
+                              y = out2[which.max(tyield),'FF_Area2']), 
+             color = 'blue', size = 2, pch =15)+
+  annotate('text',
+           x = out2[which.max(out2$tyield),'FF_Area1']*1.15,
+           y = out2[which.max(out2$tyield),'FF_Area2']*1.15, 
+           size = 3,
+           color ='blue',
+           label = as.expression(bquote(MSY[Total]~"="~.(round(out2[which.max(out2$tyield),'tyield']))))) +
+  annotate('text', 
+           x = out2[which.max(out2$tyield),'FF_Area1']*1.17,
+           y = out2[which.max(out2$tyield),'FF_Area2']*1.07, 
+           size = 3,
+           color ='blue',
+           label = as.expression(bquote(F[MSY_Total]~"="~.(round(out2[which.max(out2$tyield),'FMSY'],2))))) +
+  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
 
 
 
-FSB/FYIELD
+FSB |FYIELD
 ggsave(last_plot(),
        height = 10, width = 8, dpi = 520,
        file = here('figs',paste0(Sys.Date(),"-FvsSBandYield_Total.png")))
+
+
+##  F vs recruitment
+FR <-
+  out %>%
+  mutate(obsR_total = obsR_A1+obsR_A2) %>%
+  select(FF_Area1,FF_Area2, obsR_total) %>%  
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  mutate(Area = substr(variable,7,8), obsR = value) %>%
+  select(-variable,-value) %>% 
+  ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = obsR)) +
+  geom_tile() +
+  coord_equal() +
+  ggsidekick::theme_sleek() + theme(legend.position = 'top') +
+  scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
+  scale_fill_viridis_c(option = 'magma',na.value = 'white') 
+FR
+ggsave(last_plot(),
+       height = 10, width = 8, dpi = 520,
+       file = here('figs',paste0(Sys.Date(),"-FvsR_Total.png")))
 
 
 
