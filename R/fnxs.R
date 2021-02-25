@@ -27,9 +27,23 @@ optim_loop <- function(FFs,i){
 # https://stackoverflow.com/questions/32600722/uniroot-in-r-when-there-are-two-unknowns
 ## we have two unknowns, similar to R setup, which are F input and Fprop
 ## First we take integration of our funciton wrt x (call this g(a))
+dfx.dxSYS_global <- function(Fv_test, Fv_prop){
+  ## Fv_prop indicates proportion of Fv_test applied in A1
+  opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
+  opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
+  yields <- getYield(passR = R0_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
+  y1 <- yields$Yield_A1+yields$Yield_A2
+  # cat(y1,'\n')
+  opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
+  opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
+  yields <- getYield(passR = R0_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
+  y2 <- yields$Yield_A1+yields$Yield_A2
+  # cat(y2,'\n')
+  appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  return(appx)
+}
 
-
-dfx.dxSYS <- function(Fv_test, Fv_prop){
+dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   ## Fv_prop indicates proportion of Fv_test applied in A1
   opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
