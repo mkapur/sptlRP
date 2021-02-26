@@ -117,9 +117,8 @@ new <- out_use %>%
   geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2), fill = NA,
              color = 'purple', size = 2, alpha = 0.3) +
   geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
-                                  y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2'],
-                                  fill = tyield),
-             color = 'purple', size = 2, pch =15)+
+                                  y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']),
+             fill = NA,    color = 'purple', size = 2, pch =15)+
   annotate('text',
            x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1']*0.85,
            y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*1, 
