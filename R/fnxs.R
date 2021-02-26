@@ -18,6 +18,7 @@ makeOut2 <- function(propmsy){
     out2[i,'Fprop',1:2] <- propmsy[i,'Fprop']
     out2[i,'FMSY',1] <- propmsy[i,'FMSY_new']
     out2[i,'FMSY',2] <- propmsy[i,'FMSY_global']
+    
     FFs_new <- c(propmsy[i,'Fprop']*propmsy[i,'FMSY_new'],(1-propmsy[i,'Fprop'])*propmsy[i,'FMSY_new'] )
     FFs_global <- c(propmsy[i,'Fprop']*propmsy[i,'FMSY_global'],(1-propmsy[i,'Fprop'])*propmsy[i,'FMSY_global'] )
     
@@ -306,7 +307,7 @@ makeDat <- function(nage = 20, narea =2,
       dat[age,"proportion_stay",area] <- 1 ## recruits stay put
       ## do descending pstay from 1 (full sedentary) to Xija (whatever the terminal sedentary prop is)
       if(age <10 & age > 1) dat[age,"proportion_stay",area] <- 1+age*(1-pStay[area])/-9
-        # min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
+      # if(age <10 & age > 1) dat[age,"proportion_stay",area] <- min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
       if(age >= 10) dat[age,"proportion_stay",area] <- pStay[area]
       if(all(pStay == 1)) dat[age,"proportion_stay",area] <- 1 ## no movement exception
       dat[age,"weight",area] <- wa[area] * age 
