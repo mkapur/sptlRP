@@ -71,18 +71,18 @@
 #   geom_point(data = out_use2, aes(x = FF_Area1, y = FF_Area2), color = 'grey66', size = 2)+
 #   geom_point(data = out_use2, aes(x = out_use2[which.max(tyield),'FF_Area1'],
 #                               y = out_use2[which.max(tyield),'FF_Area2']), 
-#              color = 'blue', size = 2, pch =15)+
+#              color = 'purple', size = 2, pch =15)+
 #   annotate('text',
 #            x = out_use2[which.max(out_use2$tyield),'FF_Area1']*1.15,
 #            y = out_use2[which.max(out_use2$tyield),'FF_Area2']*1.15, 
 #            size = 3,
-#            color ='blue',
+#            color ='purple',
 #            label = as.expression(bquote(MSY[Total]~"="~.(round(out_use2[which.max(out_use2$tyield),'tyield']))))) +
 #   annotate('text', 
 #            x = out_use2[which.max(out_use2$tyield),'FF_Area1']*1.17,
 #            y = out_use2[which.max(out_use2$tyield),'FF_Area2']*1.07, 
 #            size = 3,
-#            color ='blue',
+#            color ='purple',
 #            label = as.expression(bquote(F[MSY_Total]~"="~.(round(out_use2[which.max(out_use2$tyield),'FMSY'],2))))) +
 #   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
 # 
@@ -92,12 +92,12 @@
 # ggsave(last_plot(),
 #        height = 10, width = 8, dpi = 520,
 #        file = here('figs',paste0(Sys.Date(),"-FvsSBandYield_Total.png")))
-
-out_use <- data.frame(out[,,'new']) 
 out2_new <- data.frame(out2[,,'new'])
 out2_global <- data.frame(out2[,,'old'])
 
-out_use %>%
+
+out_use <- data.frame(out[,,'new']) 
+new <- out_use %>%
   select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
   # mutate(Area = substr(variable,7,8), yield = value) %>%
@@ -112,16 +112,16 @@ out_use %>%
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
   ## add the locations of FMSY from new method
   geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
-             color = 'blue', size = 2, alpha = 0.3) +
+             color = 'purple', size = 2, alpha = 0.3) +
   geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
                                   y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2'],
                                   fill = tyield),
-             color = 'blue', size = 2, pch =15)+
+             color = 'purple', size = 2, pch =15)+
   annotate('text',
            x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1']*0.85,
            y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*1, 
            size = 3,
-           color = 'blue',
+           color = 'purple',
            label = as.expression(bquote(MSY[Optim]~
                                           "="~.(round(out2_new[which.max(out2_new[,'tyield']),
                                                                'tyield']))))) +
@@ -129,40 +129,37 @@ out_use %>%
            x = out2_new[which.max(out2_new$tyield),'FF_Area1']*0.85,
            y = out2_new[which.max(out2_new$tyield),'FF_Area2']*0.9,
            size = 3,
-           color ='blue',
+           color ='purple',
            label = as.expression(bquote(F[MSY_Optim]~"="~.
                                         (round(out2_new[which.max(out2_new$tyield),'FMSY'],2))))) +
   ## add the locations of FMSY from global method
-  geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
-             color = 'grey22', size = 2, alpha = 0.3) +
-  geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
-                                  y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2'],
-                                  fill = tyield),
-             color = 'grey22', size = 2, pch =15)+
-  annotate('text',
-           x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*1.1,
-           y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*1.15, 
-           size = 3,
-           color ='grey22',
-           label = as.expression(bquote(MSY[Global]~
-                                          "="~.(round(out2_global[which.max(out2_global[,'tyield']),
-                                                               'tyield']))))) +
-  annotate('text',
-           x = out2_global[which.max(out2_global$tyield),'FF_Area1']*1.12,
-           y = out2_global[which.max(out2_global$tyield),'FF_Area2']*0.95,
-           size = 3,
-           color ='grey22',
-           label = as.expression(bquote(F[MSY_Global]~"="~.
-                                        (round(out2_global[which.max(out2_global$tyield),'FMSY']))))) +
+  # geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
+  #            color = 'navy', size = 2, alpha = 0.3) +
+  # geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
+  #                                    y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2'],
+  #                                    fill = tyield),
+  #            color = 'navy', size = 2, pch =15)+
+  # annotate('text',
+  #          x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*1.1,
+  #          y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*1.15, 
+  #          size = 3,
+  #          color ='navy',
+  #          label = as.expression(bquote(MSY[Global]~
+  #                                         "="~.(round(out2_global[which.max(out2_global[,'tyield']),
+  #                                                                 'tyield']))))) +
+  # annotate('text',
+  #          x = out2_global[which.max(out2_global$tyield),'FF_Area1']*1.12,
+  #          y = out2_global[which.max(out2_global$tyield),'FF_Area2']*0.95,
+  #          size = 3,
+  #          color ='navy',
+  #          label = as.expression(bquote(F[MSY_Global]~"="~.
+  #                                       (round(out2_global[which.max(out2_global$tyield),'FMSY']))))) +
   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
-ggsave(last_plot(),
-       height = 10, width = 8, dpi = 520,
-       file = here('figs',paste0(Sys.Date(),"-FvsYield_compare.png")))
 
 ##  F vs recruitment
-FR <-
-  out_use %>%
-  mutate(obsR_total = obsR_A1+obsR_A2) %>%
+fr_new <- out_use %>%
+  # mutate(obsR_total = obsR_A1+obsR_A2) %>%
+  mutate(obsR_total = expR_A1+expR_A2) %>%
   select(FF_Area1,FF_Area2, obsR_total) %>%  
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
   mutate(Area = substr(variable,7,8), obsR = value) %>%
@@ -173,10 +170,79 @@ FR <-
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
   scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'magma',na.value = 'white') 
-FR
-ggsave(last_plot(),
+
+
+
+ggsave(fr_new  ,
        height = 10, width = 8, dpi = 520,
-       file = here('figs',paste0(Sys.Date(),"-FvsR_Total.png")))
+       file = here('figs',paste0(Sys.Date(),,"-",SCENARIO,"-FvsR_Total.png")))
+
+out_use <- data.frame(out[,,'old']) 
+global <- out_use %>%
+  select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  # mutate(Area = substr(variable,7,8), yield = value) %>%
+  mutate(yield = value) %>%
+  select(-variable,-value) %>% 
+  ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = yield)) +
+  geom_tile() +
+  coord_equal() +
+  ggsidekick::theme_sleek() + theme(legend.position = 'top') +
+  scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
+  scale_fill_viridis_c(option = 'cividis')+
+  ## add the locations of FMSY from new method
+  # geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
+  #            color = 'purple', size = 2, alpha = 0.3) +
+  # geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
+  #                                 y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2'],
+  #                                 fill = tyield),
+  #            color = 'purple', size = 2, pch =15)+
+  # annotate('text',
+  #          x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1']*0.85,
+  #          y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*1, 
+  #          size = 3,
+  #          color = 'purple',
+  #          label = as.expression(bquote(MSY[Optim]~
+  #                                         "="~.(round(out2_new[which.max(out2_new[,'tyield']),
+  #                                                              'tyield']))))) +
+  # annotate('text',
+  #          x = out2_new[which.max(out2_new$tyield),'FF_Area1']*0.85,
+  #          y = out2_new[which.max(out2_new$tyield),'FF_Area2']*0.9,
+  #          size = 3,
+  #          color ='purple',
+  #          label = as.expression(bquote(F[MSY_Optim]~"="~.
+  #                                       (round(out2_new[which.max(out2_new$tyield),'FMSY'],2))))) +
+  ## add the locations of FMSY from global method
+  geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
+             color = 'navy', size = 2, alpha = 0.3) +
+  geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
+                                  y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2'],
+                                  fill = tyield),
+             color = 'navy', size = 2, pch =15)+
+  annotate('text',
+           x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*1.1,
+           y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*1.15, 
+           size = 3,
+           color ='navy',
+           label = as.expression(bquote(MSY[Global]~
+                                          "="~.(round(out2_global[which.max(out2_global[,'tyield']),
+                                                               'tyield']))))) +
+  annotate('text',
+           x = out2_global[which.max(out2_global$tyield),'FF_Area1']*1.12,
+           y = out2_global[which.max(out2_global$tyield),'FF_Area2']*0.95,
+           size = 3,
+           color ='navy',
+           label = as.expression(bquote(F[MSY_Global]~"="~.
+                                        (round(out2_global[which.max(out2_global$tyield),'FMSY']))))) +
+  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
+
+
+
+
+ggsave(new    | global,
+       height = 10, width = 8, dpi = 520,
+       file = here('figs',paste0(Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png")))
+
 
 
 # 
@@ -202,7 +268,7 @@ ggsave(last_plot(),
 #   ggsidekick::theme_sleek() + 
 #   scale_x_continuous(expand = c(0,0)) + 
 #   scale_y_continuous(expand = c(0,0)) +
-#   scale_color_manual(values = c('grey44','blue'), labels = c('Area 1','Area 2')) +
+#   scale_color_manual(values = c('grey44','purple'), labels = c('Area 1','Area 2')) +
 #   labs(x = 'F', title = 'Yield Isoclines by Area',
 #        subtitle = 'Alternative Area F = 0.05; removed runs with any negative yield',
 #        y = 'Yield', color = '') 
