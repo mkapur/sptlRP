@@ -124,7 +124,7 @@ new <- out_use %>%
              fill = NA,    color = 'purple', size = 2, pch =15)+
   annotate('text',
            x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1']*0.8,
-           y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*1, 
+           y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*0.1, 
            size = 3,
            color = 'purple',
            label = as.expression(bquote(MSY[Optim]~
@@ -132,7 +132,7 @@ new <- out_use %>%
                                                                'tyield']))))) +
   annotate('text',
            x = out2_new[which.max(out2_new$tyield),'FF_Area1']*0.8,
-           y = out2_new[which.max(out2_new$tyield),'FF_Area2']*0.9,
+           y = out2_new[which.max(out2_new$tyield),'FF_Area2']*0.15,
            size = 3,
            color ='purple',
            label = as.expression(bquote(F[MSY_Optim]~"="~.
@@ -184,15 +184,15 @@ global <- out_use %>%
              fill = NA, color = 'navy', size = 2, pch =15)+
   annotate('text',
            x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*0.8,
-           y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*1.15, 
+           y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*0.1, 
            size = 3,
            color ='navy',
            label = as.expression(bquote(MSY[Global]~
                                           "="~.(round(out2_global[which.max(out2_global[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
-           x = out2_global[which.max(out2_global$tyield),'FF_Area1']*0.8,
-           y = out2_global[which.max(out2_global$tyield),'FF_Area2']*0.95,
+           x =0.8,
+           y = 0.15,
            size = 3,
            color ='navy',
            label = as.expression(bquote(F[MSY_Global]~"="~.
