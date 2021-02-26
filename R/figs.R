@@ -193,34 +193,13 @@ global <- out_use %>%
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
   scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'cividis') +
-  ## add the locations of FMSY from new method
-  # geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
-  #            color = 'purple', size = 2, alpha = 0.3) +
-  # geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
-  #                                 y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2'],
-  #                                 fill = tyield),
-  #            color = 'purple', size = 2, pch =15)+
-  # annotate('text',
-  #          x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1']*0.85,
-  #          y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*1, 
-  #          size = 3,
-  #          color = 'purple',
-  #          label = as.expression(bquote(MSY[Optim]~
-  #                                         "="~.(round(out2_new[which.max(out2_new[,'tyield']),
-  #                                                              'tyield']))))) +
-  # annotate('text',
-  #          x = out2_new[which.max(out2_new$tyield),'FF_Area1']*0.85,
-  #          y = out2_new[which.max(out2_new$tyield),'FF_Area2']*0.9,
-  #          size = 3,
-  #          color ='purple',
-  #          label = as.expression(bquote(F[MSY_Optim]~"="~.
-  #                                       (round(out2_new[which.max(out2_new$tyield),'FMSY'],2))))) +
+  
   ## add the locations of FMSY from global method
-  geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2), 
+  geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2),fill = NA, 
              color = 'navy', size = 2, alpha = 0.3) +
   geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
                                   y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
-             color = 'navy', size = 2, pch =15)+
+             fill = NA, color = 'navy', size = 2, pch =15)+
   annotate('text',
            x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*1.1,
            y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*1.15, 
