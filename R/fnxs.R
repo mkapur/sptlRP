@@ -135,7 +135,9 @@ makeDat <- function(nage = 20, narea =2,
       dat[age,"age",area] <- age-1
       
       dat[age,"proportion_stay",area] <- 1 ## recruits stay put
-      if(age <10 & age > 1) dat[age,"proportion_stay",area] <- min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
+      ## do descending pstay from 1 (full sedentary) to Xija (whatever the terminal sedentary prop is)
+      if(age <10 & age > 1) dat[age,"proportion_stay",area] <- 1-age*(pStay[area])/length(1:12)+0.25
+        # min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
       if(age >= 10) dat[age,"proportion_stay",area] <- pStay[area]
       if(all(pStay == 1)) dat[age,"proportion_stay",area] <- 1 ## no movement exception
       dat[age,"weight",area] <- wa[area] * age 
