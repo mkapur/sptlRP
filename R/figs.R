@@ -111,9 +111,9 @@ new <- out_use %>%
   ggsidekick::theme_sleek() +
   theme(legend.position = 'top') +
 
+  # scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) +
   scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) + 
-
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
   ## add the locations of FMSY from new method
