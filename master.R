@@ -25,14 +25,14 @@ dat <- makeDat(wa = c(5,5),
 FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
 
 ## apply new method
-out <- array(NA, dim = c(nrow(FFs),14,2), 
+out <- array(NA, dim = c(nrow(FFs),15,2), 
              dimnames = list(c(1:nrow(FFs)),c("FF_Area1","FF_Area2",
                                      "estRbar","estRprop",
                                      "Yield_A1","Yield_A2",
                                      "SB_A1","SB_A2",
                                      "SB0_A1","SB0_A2",
                                      "expR_A1","expR_A2",
-                                     "obsR_A1","obsR_A2"),
+                                     "obsR_A1","obsR_A2","tyield"),
                              c('new','old'))) ## each slice is old or new
 
 
@@ -81,7 +81,8 @@ for(i in 1:nrow(FFs)){
   
   obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRbar',2],1-out[i,'estRprop',2]))
   out[i,'obsR_A1',2] <- obsr[1];  out[i,'obsR_A2',2] <- obsr[2];
-
+  out[i,'tyield',1] <- out[i,'Yield_A1',1]+ out[i,'Yield_A2',1]
+  out[i,'tyield',2] <- out[i,'Yield_A1',2]+ out[i,'Yield_A2',2]
 }
 
 
@@ -114,7 +115,7 @@ propmsy <- data.frame('Fprop' = FpropVec,
 
 ## now take what's determined to be FMSY  and return ssb, yield etc
 ## this is telling us where the best yield actually occurs, as a function of both
-out2 <- array(NA, dim = c(nrow(propmsy),16,2), 
+out2 <- array(NA, dim = c(nrow(propmsy),17,2), 
              dimnames = list(c(rep(NA, nrow(propmsy))),c("Fprop", "FMSY",
                                                      "FF_Area1","FF_Area2",
                                                      "estRbar","estRprop",
@@ -122,7 +123,7 @@ out2 <- array(NA, dim = c(nrow(propmsy),16,2),
                                                      "SB_A1","SB_A2",
                                                      "SB0_A1","SB0_A2",
                                                      "expR_A1","expR_A2",
-                                                     "obsR_A1","obsR_A2"),
+                                                     "obsR_A1","obsR_A2", 'tyield'),
                              c('new','old'))) ## each slice is old or new
 for(i in 1:nrow(propmsy)){
   out2[i,'Fprop',1:2] <- propmsy[i,'Fprop']
@@ -173,17 +174,20 @@ for(i in 1:nrow(propmsy)){
   
   obsr <- as.numeric(out2[i,'estRbar',2]*c( out2[i,'estRbar',2],1-out2[i,'estRprop',2]))
   out2[i,'obsR_A1',2] <- obsr[1];  out2[i,'obsR_A2',2] <- obsr[2];
+  
+  out2[i,'tyield',1] <- out2[i,'Yield_A1',1]+ out2[i,'Yield_A2',1]
+  out2[i,'tyield',2] <- out2[i,'Yield_A1',2]+ out2[i,'Yield_A2',2]
   rm(tmp)
 }
-out[,'tyield',1] <- out[,'Yield_A1',1]+ out[,'Yield_A2',1]
-out[,'tyield',2] <- out[,'Yield_A1',2]+ out[,'Yield_A2',2]
+
+
+
 out$fprop <- out$FF_Area1/(out$FF_Area1+out$FF_Area2)
 out[which.max(out$tyield),]
-
-
 out2$tyield <- out2$Yield_A1+out2$Yield_A2
 out2[out2 < 0] <- NA
 out2[which.max(out2$tyield),]
 
 
-source(here('R','figs.R'))
+
+
