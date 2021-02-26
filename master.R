@@ -25,24 +25,23 @@ scen[,2:5] <- as.numeric(scen[,2:5])
 ## Scenario 1 ----
 
 ## build datasets to spec (will autosave figure)
-for(s in 1:nrow(scen)){
+for(s in c(2,4)){
   SCENARIO <- scen[s,'SCENARIO_NAME']
   slx_a50t <- as.numeric(c(scen[s,'SLX_A50_A1'],9))
   slx_a95t <- as.numeric(c(scen[s,'SLX_A95_A1'],13))
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
-  
-  dattemp <- makeDat(wa = c(5,5),
+  dat <- makeDat(wa = c(5,5),
                      fec_a50 = c(6,6),
                      fec_a95 = c(12,12),
                      slx_a50=slx_a50t,
                      slx_a95=slx_a95t,
                      pStay=pStayt)
   FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
-  out <- makeOut(dat=dattemp, FFs)
+  out <- makeOut(dat, FFs)
   propmsytemp<- getMSY()
-  out2 <- makeOut2(propsmy=propmsytemp)
+  out2 <- makeOut2(propmsy=propmsytemp)
   source(here('R','figs.R')) ## looks to global SCENARIO for filename
-  rm(out2);rm(out);rm(propmsytemp);rm(dattemp)
+  rm(out2);rm(out);rm(propmsytemp);rm(dat)
   
   
 }
