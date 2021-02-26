@@ -163,8 +163,9 @@ makeOut <- function(dat,FFs){
     out[i,'obsR_A1',2] <- obsr[1];  out[i,'obsR_A2',2] <- obsr[2];
     out[i,'tyield',1] <- out[i,'Yield_A1',1]+ out[i,'Yield_A2',1]
     out[i,'tyield',2] <- out[i,'Yield_A1',2]+ out[i,'Yield_A2',2]
-    return(out)
-  }
+ 
+  } ## end FFs loop
+  return(out)
 }
 
 ## takes F, performs optimization and returns derived quants at Rbar hat rprop hat
