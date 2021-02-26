@@ -182,49 +182,19 @@
                 "type" : 1
             },
             {
-                "editor_line_number" : 164,
+                "editor_line_number" : 333,
                 "editor_state" : 2,
                 "function_name" : "makeDat",
                 "function_steps" : "",
                 "id" : 110,
                 "is_package_breakpoint" : false,
                 "is_pending_debug_completion" : false,
-                "line_number" : 164,
+                "line_number" : 333,
                 "needs_updated_steps" : true,
                 "package_name" : "",
                 "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/R/fnxs.R",
                 "state" : 2,
                 "type" : 0
-            },
-            {
-                "editor_line_number" : 144,
-                "editor_state" : 1,
-                "function_name" : "toplevel",
-                "function_steps" : "",
-                "id" : 111,
-                "is_package_breakpoint" : false,
-                "is_pending_debug_completion" : false,
-                "line_number" : 144,
-                "needs_updated_steps" : true,
-                "package_name" : "",
-                "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/master.R",
-                "state" : 1,
-                "type" : 1
-            },
-            {
-                "editor_line_number" : 171,
-                "editor_state" : 1,
-                "function_name" : "toplevel",
-                "function_steps" : "",
-                "id" : 112,
-                "is_package_breakpoint" : false,
-                "is_pending_debug_completion" : false,
-                "line_number" : 171,
-                "needs_updated_steps" : true,
-                "package_name" : "",
-                "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/master.R",
-                "state" : 1,
-                "type" : 1
             }
         ]
     }

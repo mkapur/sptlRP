@@ -175,7 +175,7 @@ fr_new <- out_use %>%
 
 ggsave(fr_new  ,
        height = 10, width = 8, dpi = 520,
-       file = here('figs',paste0(Sys.Date(),,"-",SCENARIO,"-FvsR_Total.png")))
+       file = here('figs',paste0(Sys.Date(),"-",SCENARIO,"-FvsR_Total.png")))
 
 out_use <- data.frame(out[,,'old']) 
 global <- out_use %>%
