@@ -87,7 +87,7 @@ getMSY <- function(){
                 interval = c(0.02,5),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
-  
+  cat('performed 2d optimization (new method) \n')
   fbest_global  <-
     mapply(
       function(Fv_prop)
@@ -95,6 +95,7 @@ getMSY <- function(){
                 interval = c(0.02,5),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
+  cat('performed global optimization (old method) \n')
   
   propmsy <- data.frame('Fprop' = FpropVec,
                         'FMSY_new' = matrix(unlist(fbest_new)),
