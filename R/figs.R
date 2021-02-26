@@ -1,4 +1,4 @@
-# out_use[out_use < 0] <- NA
+
 # 
 # FSB <- out_use %>%
 #   select(FF_Area1,FF_Area2,SB_A1,SB_A2) %>%
@@ -93,10 +93,12 @@
 #        height = 10, width = 8, dpi = 520,
 #        file = here('figs',paste0(Sys.Date(),"-FvsSBandYield_Total.png")))
 out2_new <- data.frame(out2[,,'new'])
+out2_new[out2_new < 0] <- NA
 out2_global <- data.frame(out2[,,'old'])
-
+out2_global[out2_global < 0] <- NA
 
 out_use <- data.frame(out[,,'new']) 
+out_use[out_use < 0] <- NA
 new <- out_use %>%
   select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
@@ -107,11 +109,12 @@ new <- out_use %>%
   geom_tile() +
   coord_equal() +
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
-  scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
   ## add the locations of FMSY from new method
-  geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
+  geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2), fill = NA,
              color = 'purple', size = 2, alpha = 0.3) +
   geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
                                   y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2'],
@@ -176,6 +179,7 @@ fr_new <- out_use %>%
 ggsave(fr_new  ,
        height = 10, width = 8, dpi = 520,
        file = here('figs',paste0(Sys.Date(),"-",SCENARIO,"-FvsR_Total.png")))
+cat(paste0('saved ', Sys.Date(),"-",SCENARIO,"-FvsR_Total.png", '\n'))
 
 out_use <- data.frame(out[,,'old']) 
 global <- out_use %>%
@@ -189,7 +193,7 @@ global <- out_use %>%
   coord_equal() +
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
   scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
-  scale_fill_viridis_c(option = 'cividis')+
+  scale_fill_viridis_c(option = 'cividis') +
   ## add the locations of FMSY from new method
   # geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
   #            color = 'purple', size = 2, alpha = 0.3) +
@@ -213,11 +217,10 @@ global <- out_use %>%
   #          label = as.expression(bquote(F[MSY_Optim]~"="~.
   #                                       (round(out2_new[which.max(out2_new$tyield),'FMSY'],2))))) +
   ## add the locations of FMSY from global method
-  geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2, fill = tyield), 
+  geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2), 
              color = 'navy', size = 2, alpha = 0.3) +
   geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
-                                  y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2'],
-                                  fill = tyield),
+                                  y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
              color = 'navy', size = 2, pch =15)+
   annotate('text',
            x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*1.1,
@@ -236,13 +239,10 @@ global <- out_use %>%
                                         (round(out2_global[which.max(out2_global$tyield),'FMSY']))))) +
   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
 
-
-
-
 ggsave(new    | global,
        height = 10, width = 8, dpi = 520,
        file = here('figs',paste0(Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png")))
-
+cat(paste0('saved ',Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png", '\n'))
 
 
 # 
