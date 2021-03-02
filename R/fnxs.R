@@ -166,6 +166,13 @@ makeOut <- function(dat,FFs){
     out[i,'tyield',1] <- out[i,'Yield_A1',1]+ out[i,'Yield_A2',1]
     out[i,'tyield',2] <- out[i,'Yield_A1',2]+ out[i,'Yield_A2',2]
  
+    
+    out[i,'ralstonR_A1',1] <- out[i,'expR_A1',1] /out[i,'SB_A1',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
+    out[i,'ralstonR_A2',1] <- out[i,'expR_A2',1] /out[i,'SB_A2',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
+    
+    out[i,'ralstonR_A1',2] <- out[i,'expR_A1',2] /out[i,'SB_A1',2]*(out[i,'SB_A1',2]+out[i,'SB_A2',2])/2
+    out[i,'ralstonR_A2',2] <- out[i,'expR_A2',2] /out[i,'SB_A2',2]*(out[i,'SB_A1',2]+out[i,'SB_A2',2])/2
+
   } ## end FFs loop
   return(out)
 }
