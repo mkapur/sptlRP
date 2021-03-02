@@ -123,16 +123,16 @@ new <- out_use %>%
                                   y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']),
              fill = NA,    color = 'purple', size = 2, pch =15)+
   annotate('text',
-           x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1']*0.8,
-           y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']*0.1, 
+           x = 0.8,
+           y = 0.13, 
            size = 3,
            color = 'purple',
            label = as.expression(bquote(MSY[Optim]~
                                           "="~.(round(out2_new[which.max(out2_new[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
-           x = out2_new[which.max(out2_new$tyield),'FF_Area1']*0.8,
-           y = out2_new[which.max(out2_new$tyield),'FF_Area2']*0.15,
+           x = 0.8,
+           y = 0.15,
            size = 3,
            color ='purple',
            label = as.expression(bquote(F[MSY_Optim]~"="~.
@@ -154,7 +154,6 @@ fr_new <- out_use %>%
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
   scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'magma',na.value = 'white') 
-
 
 
 ggsave(fr_new  ,
@@ -183,8 +182,8 @@ global <- out_use %>%
                                   y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
              fill = NA, color = 'navy', size = 2, pch =15)+
   annotate('text',
-           x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1']*0.8,
-           y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']*0.1, 
+           x = 0.8,
+           y = 0.12, 
            size = 3,
            color ='navy',
            label = as.expression(bquote(MSY[Global]~
