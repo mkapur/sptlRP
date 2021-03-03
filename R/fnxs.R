@@ -246,14 +246,14 @@ bh <- function(h, prop, r0, b0, bcurr,narea = 2){
   rec = NULL
   for(i in 1:narea){
     num <- prop*4*h[i]*r0*bcurr$SB_A1/b0$SB_A1
+    cat(num, "\n")
     denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[i]-1)
+    cat(denom1,"\n")
     denom2 <- (1-h[i])
+    cat(denom2,"\n")
     rec[i] = num/(denom1+denom2)
+    cat(rec,"\n")
   }
-  # cat(num, "\n")
-  # cat(denom1,"\n")
-  # cat(denom2,"\n")
-  # cat(rec,"\n")
   return(rec)
 }
 getSB <- function(passR, passRprop, SBPR_F){
