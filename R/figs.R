@@ -93,7 +93,7 @@
 #        height = 10, width = 8, dpi = 520,
 #        file = here('figs',paste0(Sys.Date(),"-FvsSBandYield_Total.png")))
 out2_new <- data.frame(out2[,,'new'])
-# out2_new[out2_new < 0,] <- 0
+# out2_new[out2_new < 0] <- 0
 out2_global <- data.frame(out2[,,'old'])
 # out2_global[out2_global < 0] <- 0
 
@@ -117,11 +117,12 @@ new <- out_use %>%
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
   ## add the locations of FMSY from new method
-  geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2), fill = NA,
-             color = 'purple', size = 2, alpha = 0.3) +
+  geom_point(data = out2_new, aes(x = FF_Area1, y = FF_Area2), 
+             fill = NA,
+             size = 2, alpha = 0.3) +
   geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
-                                  y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']),
-             fill = NA,    color = 'purple', size = 2, pch =15)+
+                                  y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']), 
+             fill = NA, color = 'purple', size = 2, pch =15)+
   annotate('text',
            x = 0.8,
            y = 0.13, 
@@ -205,66 +206,3 @@ cat(paste0('saved ',Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png", '\n'))
 
 
 # 
-# ## isoclines (not as useful) ---
-# 
-# iso1 <- out_use %>%
-#   filter(FF_Area2== 0.5) %>%
-#   select(FF_Area1,Yield_A1) %>%
-#   reshape2::melt(id = c("FF_Area1")) %>%
-#   mutate(Area = substr(variable,7,8), yield = value) %>%
-#   select(-variable,-value) 
-#   
-# iso2 <- out_use %>%
-#           filter(FF_Area1== 0.5) %>%
-#           select(FF_Area2,Yield_A2) %>%
-#           reshape2::melt(id = c("FF_Area2")) %>%
-#           mutate(Area = substr(variable,7,8), yield = value) %>%
-#           select(-variable,-value)
-# 
-# ggplot(iso1, aes(x = FF_Area1, y = yield, color = Area)) +
-#   geom_line(lwd = 1.1) +
-#   geom_line(data = iso2, aes(x = FF_Area2), lwd = 1.1) +
-#   ggsidekick::theme_sleek() + 
-#   scale_x_continuous(expand = c(0,0)) + 
-#   scale_y_continuous(expand = c(0,0)) +
-#   scale_color_manual(values = c('grey44','purple'), labels = c('Area 1','Area 2')) +
-#   labs(x = 'F', title = 'Yield Isoclines by Area',
-#        subtitle = 'Alternative Area F = 0.05; removed runs with any negative yield',
-#        y = 'Yield', color = '') 
-# 
-# ggsave(last_plot(),
-#        height = 10, width = 8, dpi = 520,
-#        file = here('figs',paste0(Sys.Date(),"-Isocline_Total.png")))
-# 
-# 
-#   
-# ggplot(propmsy, aes(y = FMSY,x = Fprop)) +
-#   geom_line(lwd = 1.1) +
-#   scale_y_continuous(limits = c(0.5,1)) +
-#   theme_sleek() +
-#   labs(x = 'Proportion F applied to Area 1', y = 'FMSY')
-# ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY.png')))
-# 
-# 
-# out_use2 %>%
-#   ggplot(., aes(y = FMSY,x = Fprop, color =tyield )) +
-#   geom_point() +
-#   scale_y_continuous(limits = c(0.5,1)) +
-#   scale_color_viridis_c(na.value = 'white') +
-#   theme_sleek() +
-#   labs(x = 'Proportion F applied to Area 1', y = 'FMSY', color = 'Total Yield') +
-#   geom_vline(xintercept = out_use2[which.max(out_use2$tyield),'Fprop'], linetype = 'dashed' ) +
-#   annotate('text', 
-#            x = out_use2[which.max(out_use2$tyield),'Fprop']*1.1,
-#            y = out_use2[which.max(out_use2$tyield),'FMSY']*1.1, 
-#            size = 3,
-#            color ='seagreen',
-#            label = as.expression(bquote(MSY~"="~.(round(out_use2[which.max(out_use2$tyield),'tyield']))))) +
-#   annotate('text', 
-#            x = out_use2[which.max(out_use2$tyield),'Fprop']*1.1,
-#            y = out_use2[which.max(out_use2$tyield),'FMSY']*1.09, 
-#            size = 3,
-#            color ='seagreen',
-#            label = as.expression(bquote(F[MSY]~"="~.(round(out_use2[which.max(out_use2$tyield),'FMSY'],2))))) +
-#   
-#   ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY_tyield.png')))
