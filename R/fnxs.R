@@ -108,14 +108,15 @@ getMSY <- function(){
 makeOut <- function(dat,FFs){
   
   ## Generate a surface of expected yields, given new method
-  out <- array(NA, dim = c(nrow(FFs),15,2), 
+  out <- array(NA, dim = c(nrow(FFs),17,2), 
                dimnames = list(c(1:nrow(FFs)),c("FF_Area1","FF_Area2",
                                                 "estRbar","estRprop",
                                                 "Yield_A1","Yield_A2",
                                                 "SB_A1","SB_A2",
                                                 "SB0_A1","SB0_A2",
                                                 "expR_A1","expR_A2",
-                                                "obsR_A1","obsR_A2","tyield"),
+                                                "obsR_A1","obsR_A2","tyield",
+                                                "ralstonR_A1","ralstonR_A2"),
                                c('new','old'))) ## each slice is old or new
   
   for(i in 1:nrow(FFs)){
@@ -244,9 +245,9 @@ logistic <- function(a,a50,a95){
 bh <- function(h, prop, r0, b0, bcurr,narea = 2){
   rec = NULL
   for(i in 1:narea){
-    num <- prop*4*h*r0*bcurr$SB_A1/b0$SB_A1
-    denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h-1)
-    denom2 <- (1-h)
+    num <- prop*4*h[i]*r0*bcurr$SB_A1/b0$SB_A1
+    denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[i]-1)
+    denom2 <- (1-h[i])
     rec[i] = num/(denom1+denom2)
   }
   # cat(num, "\n")
