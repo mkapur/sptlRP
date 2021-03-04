@@ -1,6 +1,6 @@
 ## Code to replicate Kapur et al (202X)
 ## Spatial reference points for next-gen assessment models
-
+rm(list = ls())
 require(dplyr)
 require(here)
 require(ggplot2);require(ggsidekick);require(patchwork)
@@ -11,18 +11,24 @@ source(here("R","fnxs.R"))
 ## settings, unchanged 
 R0_global <- 4
 Rprop_input <- 0.65
-steep = 0.75
+steep = c(0.7,0.7)
 
 ## matrix of scnearios, including name
-scen <- matrix(NA, nrow = 5, ncol =5)
+## some notes on scenarios:
+## slx only are like AAF. 
+## if name is "move" it uses the A1_SINK setup.
+## A2 SINK is simply the reverse of A1 sink
+## move light has less lopsitded movement w A1 still as SINK
+SCENNAMES <- c('symmetric_move','A1_SINK','A2_SINK','light_move','lower_slx', 'move_slx_lo','move_slx_hi')
+
+scen <- matrix(NA, nrow = length(SCENNAMES), ncol =5)
 colnames(scen) <- c("SCENARIO_NAME",'SLX_A50_A1','SLX_A95_A1','PSTAY_A1','PSTAY_A2') ## scenarios are defined by differeniating
-scen[,'SCENARIO_NAME'] <- c('symmetric_move','just_move','lower_slx','move_slx_lo','move_slx_hi') ## scen 3 is AAF
-scen[,'SLX_A50_A1'] <- c(9,9,7,7,11) ## lower slx when different
-scen[,'SLX_A95_A1'] <- c(13,13,11,11,15) ## lower slx when different
-scen[,'PSTAY_A1'] <- c(0.5,0.9,0.5,0.9,0.9) 
-scen[,'PSTAY_A2'] <- c(0.5,0.6,0.5,0.6,0.6) 
+scen[,'SCENARIO_NAME'] <-SCENNAMES
+scen[,'SLX_A50_A1'] <- c(9,9,9,9,7,7,11) ## lower slx when different
+scen[,'SLX_A95_A1'] <- c(13,13,13,13,11,11,15) ## lower slx when different
+scen[,'PSTAY_A1'] <- c(0.5,0.9,0.4,0.6,0.5,0.9,0.9) 
+scen[,'PSTAY_A2'] <- c(0.5,0.6,0.6,0.4,0.5,0.6,0.6) 
 scen[,2:ncol(scen)] <- as.numeric(scen[,2:ncol(scen)])
-## Scenario 1 ----
 
 ## build datasets to spec (will autosave figure)
 for(s in 1:nrow(scen)){
@@ -38,22 +44,164 @@ for(s in 1:nrow(scen)){
                      pStay=pStayt)
   FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
   out <- makeOut(dat, FFs)
-  propmsytemp<- getMSY()
+  propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
-  # source(here('R','figs.R')) ## looks to global SCENARIO for filename
+  ## save stuff
+  source(here('R','figs.R')) ## looks to global SCENARIO for filename
+  filetemp <- here('figs',paste0(Sys.Date(),"-h=",paste0(steep[1],"_",steep[2]),"-",SCENARIO))
+  dir.create(filetemp)
+  save(out, file = paste0(filetemp,'/out.RDATA'))
+  save(out2, file =  paste0(filetemp, '/out2.RDATA'))
+  save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
+  
   rm(out2);rm(out);rm(propmsytemp);rm(dat)
 }
 
+out2[which.max(out2$tyield),]
+
 ## sanity checking Ralston O'Farrel 2008  CJFAS
+data.frame(out[,,1]) %>%
+  ggplot(., aes(x = ralstonR_A1, color = FF_Area1)) +
+  geom_point( aes(y =expR_A1 ) )+
+  geom_point( aes( y = obsR_A1)) +
+  geom_abline(xintercept = 0, slope = 1, col = 'red')
 
-head(out)
+data.frame(out[,,2]) %>%
+  ggplot(., aes(x = ralstonR_A1, color = FF_Area1)) +
+  geom_point( aes(y =expR_A1 ) )+
+  geom_point( aes( y = obsR_A1)) +
+  geom_abline(xintercept = 0, slope = 1, col = 'red')
 
-for(a in 1:2){
+
+data.frame(out[,,1]) %>%
+  ggplot(., aes(x = ralstonR_A2, color = FF_Area2)) +
+  geom_point( aes(y =expR_A2 ) )+
+  geom_point( aes( y = obsR_A2)) +
+  geom_abline(xintercept = 0, slope = 2, col = 'red')
+
+## sorting out why there's a turnaround ----
+out2_new <- data.frame(out2[,,'new'])
+
+out2_new[which(out2_new$FF_Area2 > 0.62 ),] %>%
+  ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
+  geom_tile() 
+
+merge(out2[,,'new'] %>% 
+  data.frame() %>% 
+  select(F_Sys= FMSY  , 
+         F_A1= FF_Area1  , 
+         F_A2=FF_Area2   ) %>%
+  melt() %>%
+  mutate(area = substr(variable,3,5)) ,
+  out2[,,'new'] %>% 
+  data.frame() %>% 
+  select(  Y_A1=Yield_A1   ,
+           Y_A2= Yield_A2 ,
+           Y_Sys= tyield   ) %>%
+melt() %>%
+  mutate(area = substr(variable,3,5)) ,
+by = 'area', all = FALSE) %>%
+  select(area, FF = value.x, Yield = value.y) %>%
+  ggplot(., aes(x = FF, y = Yield, group = area )) +
+  geom_line()
+
+
+
+iso1b <- out[,,'new'] %>% data.frame() %>% 
+  # filter(FF_Area2== 0.5) %>%
+  # select(Yield_A1 )%>%
+  mutate(tyield = SB_A1+SB_A2) %>%
+  select(FF_Area1,FF_Area2,tyield  ) %>%
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  mutate(yield = value) %>%
+  select(-variable,-value) 
+
+
+
+
+
+iso1[which.max(iso1$yield),'FF_Area2']
+
+iso2 <- out[,,'new'] %>% data.frame() %>%
+  # filter(FF_Area1== 0.5) %>%
+  # select(Yield_A2)%>%
+  select(FF_Area1,FF_Area2,tyield) %>%  
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  mutate(Area = substr(variable,7,8), yield = value) %>%
+  select(-variable,-value) #%>%
+  filter( FF_Area2 > 0.62) 
+
+## create a vector which indicates whether this isocline's pieak
+## is above or below the true FMSY for all combos
+## should show that 
+peak_max <- iso1 %>%
+  group_by(FF_Area2) %>%
+  summarise( )
+
+peak_max2 <- iso2 %>%
+  group_by(FF_Area1) %>%
+  summarise(my=max(yield) )
+iso2 <- merge(iso2, peak_max2, by = "FF_Area1", all.y = FALSE)
+
+ggplot(data = iso2, aes(y = yield)) +
+  geom_line(aes(x = FF_Area2, color = FF_Area1, group = FF_Area1), lwd = 1.1) +
+  # geom_line(data = iso2, aes(x = FF_Area2, color = FF_Area1, group = FF_Area1), lwd = 1.1) +
+  ggsidekick::theme_sleek() +
+  scale_x_continuous(expand = c(0,0), limits = c(0,1)) +
+  scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+  # scale_color_manual(values = c('grey44','purple'), labels = c('Area 1','Area 2')) +
+  labs(x = 'F in Area 2', title = 'Yield Isoclines by Area',
+       # subtitle = 'Alternative Area F = 0.05; removed runs with any negative yield',
+       y = 'Yield Total', color = 'F in Area 1 (isocline)') +
+  geom_vline( data= iso1, col = 'red',
+              aes(  xintercept  = out2_new[which.max(out2_new[,'tyield']),
+                                           'FF_Area2'])) +
+  geom_hline( data= peak_max2, col = 'purple',
+              aes(  yintercept  = my)) +
+  # geom_vline( data= iso1, col = 'blue',
+  #             aes(  xintercept  = 0.62)) +
+  # geom_text(data = iso2,aes(x= 0.8, y= 80, label = round(my,0)), 
+  #           check_overlap = TRUE) +
+  # geom_point(data = peak_max2,aes( x= FF_Area1, y= my), color = 'purple') +
+  facet_wrap(~FF_Area1)
   
-  out[,,a] <-data.frame(out[,,a]) %>% mutate(ralstonR_a1 =out[,'expR_A1',a] /out[,'SB_A1',a]*(out[,'SB_A1',a]+out[,'SB_A2',a])/2)
-  #                                          out[,'ralston_a1',a] <-  out[,'ralston_a2',a] <- NULL
-  # out[,'ralston_a1',a] <-    out[,'expR_A1',a] /out[,'SB_A1',a]*(out[,'SB_A1',a]+out[,'SB_A2',a])/2
-  # out[,'ralston_a2',a] <-out[,'expR_A2',a] /out[,'SB_A2',a]*(out[,'SB_A1',a]+out[,'SB_A2',a])/2
-}
+ggsave(last_plot(),
+       height = 10, width = 8, dpi = 520,
+       file = here('figs',paste0(Sys.Date(),"-Isocline_By_Area.png")))
+# 
+# 
+#   
+# ggplot(propmsy, aes(y = FMSY,x = Fprop)) +
+#   geom_line(lwd = 1.1) +
+#   scale_y_continuous(limits = c(0.5,1)) +
+#   theme_sleek() +
+#   labs(x = 'Proportion F applied to Area 1', y = 'FMSY')
+# ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY.png')))
+# 
+# 
+# out_use2 %>%
+#   ggplot(., aes(y = FMSY,x = Fprop, color =tyield )) +
+#   geom_point() +
+#   scale_y_continuous(limits = c(0.5,1)) +
+#   scale_color_viridis_c(na.value = 'white') +
+#   theme_sleek() +
+#   labs(x = 'Proportion F applied to Area 1', y = 'FMSY', color = 'Total Yield') +
+#   geom_vline(xintercept = out_use2[which.max(out_use2$tyield),'Fprop'], linetype = 'dashed' ) +
+#   annotate('text', 
+#            x = out_use2[which.max(out_use2$tyield),'Fprop']*1.1,
+#            y = out_use2[which.max(out_use2$tyield),'FMSY']*1.1, 
+#            size = 3,
+#            color ='seagreen',
+#            label = as.expression(bquote(MSY~"="~.(round(out_use2[which.max(out_use2$tyield),'tyield']))))) +
+#   annotate('text', 
+#            x = out_use2[which.max(out_use2$tyield),'Fprop']*1.1,
+#            y = out_use2[which.max(out_use2$tyield),'FMSY']*1.09, 
+#            size = 3,
+#            color ='seagreen',
+#            label = as.expression(bquote(F[MSY]~"="~.(round(out_use2[which.max(out_use2$tyield),'FMSY'],2))))) +
+#   
+#   ggsave(last_plot(), file = here('figs',paste0(Sys.Date(),'propFvsMSY_tyield.png')))
+
+
 
 

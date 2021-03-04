@@ -132,7 +132,7 @@ makeOut <- function(dat,FFs){
     yields <- as.numeric(getYield(passR = out[i,'estRbar',1], passRprop =   out[i,'estRprop',1], YPR_F = tmp$YPR))
     out[i,'Yield_A1',1] <- yields[1];  out[i,'Yield_A2',1] <- yields[2];
     
-    sbs <-getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp$SBPR)
+    sbs <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp$SBPR)
     out[i,'SB_A1',1] <- as.numeric(sbs[1]);  out[i,'SB_A2',1] <- as.numeric(sbs[2]);
     
     sb0 <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
@@ -244,16 +244,25 @@ logistic <- function(a,a50,a95){
 
 bh <- function(h, prop, r0, b0, bcurr,narea = 2){
   rec = NULL
+  # for(i in 1:narea){
+  #   num <- prop*4*h[i]*r0*bcurr$SB_A1/b0$SB_A1
+  #   # cat(num, "\n")
+  #   denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[i]-1)
+  #   # cat(denom1,"\n")
+  #   denom2 <- (1-h[i])
+  #   # cat(denom2,"\n")
+  #   rec[i] = num/(denom1+denom2)
+  # }
   for(i in 1:narea){
-    num <- prop*4*h[i]*r0*bcurr$SB_A1/b0$SB_A1
-    cat(num, "\n")
-    denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[i]-1)
-    cat(denom1,"\n")
-    denom2 <- (1-h[i])
-    cat(denom2,"\n")
+    num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
+    # cat(num, "\n")
+    denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
+    # cat(denom1,"\n")
+    denom2 <- (1-h[1])
+    # cat(denom2,"\n")
     rec[i] = num/(denom1+denom2)
-    cat(rec,"\n")
   }
+  # cat(rec,"\n")
   return(rec)
 }
 getSB <- function(passR, passRprop, SBPR_F){
