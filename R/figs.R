@@ -92,6 +92,9 @@
 # ggsave(last_plot(),
 #        height = 10, width = 8, dpi = 520,
 #        file = here('figs',paste0(Sys.Date(),"-FvsSBandYield_Total.png")))
+
+
+
 out2_new <- data.frame(out2[,,'new'])
 # out2_new[out2_new < 0] <- 0
 out2_global <- data.frame(out2[,,'old'])
@@ -99,6 +102,41 @@ out2_global <- data.frame(out2[,,'old'])
 
 out_use <- data.frame(out[,,'new']) 
 # out_use[out_use < 0] <- 0
+
+iso1 <- out_use %>%
+  select(FF_Area1,FF_Area2,tyield) %>%
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  mutate(Area = substr(variable,7,8), yield = value) %>%
+  select(-variable,-value)
+
+ggplot(data = iso1, aes(y = yield)) +
+  geom_line(aes(x = FF_Area1, color = FF_Area2, group = FF_Area2), lwd = 1.1) +
+  # geom_line(data = iso2, aes(x = FF_Area2, color = FF_Area1, group = FF_Area1), lwd = 1.1) +
+  ggsidekick::theme_sleek() +
+  # scale_x_continuous(expand = c(0,0), limits = c(0,2)) +
+  # scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
+  # scale_color_manual(values = c('grey44','purple'), labels = c('Area 1','Area 2')) +
+  labs(x = 'F in Area 1', title = 'Yield Isocline Conditional on FA1',
+       # subtitle = 'For low values of F1 there is some interchange among high F2;
+       # recall that the FMSY needs to be at the peak',
+       y = 'Yield Total', color = 'F in Area 2 (isocline)') +
+  geom_point(data = out2_new,
+             aes(x = FF_Area1, y = tyield,
+                 color = FF_Area2), size = 2) +
+  # geom_text(data = out2_new, aes(x = FF_Area1, y = tyield, label = round(FF_Area2,2)),
+  #           color = 'white',
+  #           size = 2) 
+
+ggsave(last_plot(),
+       height = 10, width = 8, dpi = 520,
+       file =  paste0(filetemp,"/",SCENARIO,"-Isocline_rollwave.png"))
+
+# https://stackoverflow.com/questions/24237399/how-to-select-the-rows-with-maximum-values-in-each-group-with-dplyr
+# may=iso1 %>%
+#   group_by(FF_Area1) %>%
+#   filter(yield == max(yield)) %>%
+#   arrange(FF_Area1, FF_Area2) %>% select(-Area)
+
 new <- out_use %>%
   select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
@@ -159,7 +197,7 @@ fr_new <- out_use %>%
 
 ggsave(fr_new  ,
        height = 10, width = 8, dpi = 520,
-       file = here('figs',paste0(Sys.Date(),"-",SCENARIO,"-FvsR_Total.png")))
+       file =  paste0(filetemp,"/",SCENARIO,"-FvsR_Total.png"))
 cat(paste0('saved ', Sys.Date(),"-",SCENARIO,"-FvsR_Total.png", '\n'))
 
 out_use <- data.frame(out[,,'old']) 
@@ -201,7 +239,7 @@ global <- out_use %>%
 
 ggsave(new    | global,
        height = 8, width = 10, dpi = 520,
-       file = here('figs',paste0(Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png")))
+       file =   paste0(filetemp,"/",SCENARIO,"-FvsYield_compare.png"))
 cat(paste0('saved ',Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png", '\n'))
 
 
