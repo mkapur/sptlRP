@@ -88,7 +88,7 @@ makeOut <- function(dat,FFs){
                                c('new','old'))) ## each slice is old or new
   
   for(i in 1:nrow(FFs)){
-    cat(i,"\n")
+    # cat(i,"\n")
     out[i,'FF_Area1',] <- FFs[i,1];   out[i,'FF_Area2',] <- FFs[i,2]
     
     ## this is the new method; old method uses global inputs
@@ -162,7 +162,7 @@ optim_loop <- function(FFs,i){
                     SBPR_F = tmp$SBPR,
                     SBPR_0 = tmp0$SBPR,
                     lower = c(1E-4,1E-4),
-                    upper = c(NA,1),
+                    upper = c(NA,0.9999),
                     method = "L-BFGS-B",
                     fn = optimFunc, hessian = FALSE,
                     control = list(
@@ -185,7 +185,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.02,0.97),
+                interval = c(0,1),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -193,7 +193,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval = c(0.02,0.97),
+                interval = c(0,5),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -221,6 +221,7 @@ dfx.dxSYS_global <- function(Fv_test, Fv_prop){
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  # cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -239,7 +240,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   # appx <- ifelse(appx < 0,0,appx) ## overwrite neg yields
-  cat(Fv_test,Fv_prop,appx,'\n')
+  # cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -296,6 +297,7 @@ getExpR <- function(passR, passRprop, SB_F, SB_0,){
 }
 
 optimFunc <- function(par,SBPR_0,SBPR_F){
+  # cat(par,"\n")
   passR <- par[1]; passRprop <- par[2]
   ## get sbprf and sbpr0 given pars
   ## the sbprF changes with F 
