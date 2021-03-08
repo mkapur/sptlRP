@@ -254,9 +254,11 @@ bh <- function(h, prop, r0, b0, bcurr,narea = 2){
   #   rec[i] = num/(denom1+denom2)
   # }
   for(i in 1:narea){
-    num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
+    # num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
+    num <- prop*4*h[1]*r0*bcurr[i]/b0[i]
     # cat(num, "\n")
-    denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
+    # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
+    denom1 <- bcurr[i]/b0[i]*(5*h[1]-1)
     # cat(denom1,"\n")
     denom2 <- (1-h[1])
     # cat(denom2,"\n")
