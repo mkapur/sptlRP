@@ -72,38 +72,6 @@ makeOut2 <- function(propmsy){
   return(out2)
 }
 
-## calls from global environment to optimize
-getMSY <- function(){
-  
-  # https://stackoverflow.com/questions/57173162/function-for-uniroot-that-has-two-parameters-that-need-to-be-run-across-a-vector
-  ## the example above actually has 3 pars and he optimizes over 2 known vectors
-  ## the mapply will return the best F value given proportion
-  ## inside dfx.dxSYS_new we run optim and use passed R, Rprop
-  ## need a second version of this which uses global R, rprop
-  FpropVec <- seq(0.01,1,0.01) ## all possible proportions of F in Area 1
-  fbest_new <-
-    mapply(
-      function(Fv_prop)
-        uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.02,5),
-                Fv_prop = Fv_prop)[1],
-      FpropVec)
-  cat('performed 2d optimization (new method) \n')
-  fbest_global  <-
-    mapply(
-      function(Fv_prop)
-        uniroot(f = dfx.dxSYS_global, 
-                interval = c(0.02,5),
-                Fv_prop = Fv_prop)[1],
-      FpropVec)
-  cat('performed global optimization (old method) \n')
-  
-  propmsy <- data.frame('Fprop' = FpropVec,
-                        'FMSY_new' = matrix(unlist(fbest_new)),
-                        'FMSY_global' = matrix(unlist(fbest_global)))  
-  return(propmsy)
-}
-
 ## run analysis across discrete surface given input LH and FF vetors
 makeOut <- function(dat,FFs){
   
@@ -203,6 +171,40 @@ optim_loop <- function(FFs,i){
   
   return(list("opt_temp"=opt_temp,"tmp0"=tmp0,"tmp"=tmp))
 }
+
+## calls from global environment to optimize
+getMSY <- function(){
+  
+  # https://stackoverflow.com/questions/57173162/function-for-uniroot-that-has-two-parameters-that-need-to-be-run-across-a-vector
+  ## the example above actually has 3 pars and he optimizes over 2 known vectors
+  ## the mapply will return the best F value given proportion
+  ## inside dfx.dxSYS_new we run optim and use passed R, Rprop
+  ## need a second version of this which uses global R, rprop
+  FpropVec <- seq(0.01,1,0.01) ## all possible proportions of F in Area 1
+  fbest_new <-
+    mapply(
+      function(Fv_prop)
+        uniroot(f = dfx.dxSYS_new, 
+                interval = c(0.02,0.97),
+                Fv_prop = Fv_prop)[1],
+      FpropVec)
+  cat('performed 2d optimization (new method) \n')
+  fbest_global  <-
+    mapply(
+      function(Fv_prop)
+        uniroot(f = dfx.dxSYS_global, 
+                interval = c(0.02,0.97),
+                Fv_prop = Fv_prop)[1],
+      FpropVec)
+  cat('performed global optimization (old method) \n')
+  
+  propmsy <- data.frame('Fprop' = FpropVec,
+                        'FMSY_new' = matrix(unlist(fbest_new)),
+                        'FMSY_global' = matrix(unlist(fbest_global)))  
+  return(propmsy)
+}
+
+
 # https://stackoverflow.com/questions/32600722/uniroot-in-r-when-there-are-two-unknowns
 ## we have two unknowns, similar to R setup, which are F input and Fprop
 ## First we take integration of our funciton wrt x (call this g(a))
@@ -234,7 +236,10 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
+  
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  # appx <- ifelse(appx < 0,0,appx) ## overwrite neg yields
+  cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
 }
 
