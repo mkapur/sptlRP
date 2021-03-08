@@ -27,7 +27,7 @@ scen[,'SCENARIO_NAME'] <-SCENNAMES
 scen[,'SLX_A50_A1'] <- c(9,9,9,9,7,7,11) ## lower slx when different
 scen[,'SLX_A95_A1'] <- c(13,13,13,13,11,11,15) ## lower slx when different
 scen[,'PSTAY_A1'] <- c(0.5,0.9,0.4,0.6,0.5,0.9,0.9) 
-scen[,'PSTAY_A2'] <- c(0.5,0.6,0.6,0.4,0.5,0.6,0.6) 
+scen[,'PSTAY_A2'] <- c(0.5,0.3,0.6,0.4,0.5,0.6,0.6) 
 scen[,2:ncol(scen)] <- as.numeric(scen[,2:ncol(scen)])
 
 ## build datasets to spec (will autosave figure)
