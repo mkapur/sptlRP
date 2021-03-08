@@ -42,14 +42,14 @@ for(s in 1:nrow(scen)){
                      slx_a50=slx_a50t,
                      slx_a95=slx_a95t,
                      pStay=pStayt)
-  FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
+  FFs <- expand.grid(seq(0,0.9999,0.05),seq(0,0.9999,0.05))
   out <- makeOut(dat, FFs)
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
-  ## save stuff
-  source(here('R','figs.R')) ## looks to global SCENARIO for filename
+  ## save stuff; looks to global SCENARIO for filename
   filetemp <- here('figs',paste0(Sys.Date(),"-h=",paste0(steep[1],"_",steep[2]),"-",SCENARIO))
   dir.create(filetemp)
+  source(here('R','figs.R')) 
   save(out, file = paste0(filetemp,'/out.RDATA'))
   save(out2, file =  paste0(filetemp, '/out2.RDATA'))
   save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
