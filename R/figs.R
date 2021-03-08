@@ -103,6 +103,27 @@ out2_global <- data.frame(out2[,,'old'])
 out_use <- data.frame(out[,,'new']) 
 # out_use[out_use < 0] <- 0
 
+out_use %>%
+  mutate(depl_A1 = ((SB_A1)/(SB0_A1)),
+         depl_A2 = ((SB_A2)/(SB0_A2))) %>%  
+  select(FF_Area1,FF_Area2,depl_A1,depl_A2) %>%
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  mutate(Area = substr(variable,6,7), depl = value) %>%
+  # mutate(depl = value) %>%
+  select(-variable,-value) %>% 
+  ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = depl)) +
+  geom_tile() +
+  coord_equal() +
+  ggsidekick::theme_sleek() +
+  theme(legend.position = 'top') +
+  # scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) +
+  scale_x_continuous(expand = c(0,0)) + 
+  scale_fill_viridis_c(option = 'magma',na.value = 'white') +
+  scale_color_viridis_c(option = 'magma',na.value = 'white') +
+  facet_wrap(~Area)
+
+
 iso1 <- out_use %>%
   select(FF_Area1,FF_Area2,tyield) %>%
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
