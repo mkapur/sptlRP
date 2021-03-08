@@ -142,11 +142,10 @@ ggplot(data = iso1, aes(y = yield)) +
   # scale_x_continuous(expand = c(0,0), limits = c(0,2)) +
   # scale_y_continuous(expand = c(0,0), limits = c(0,100)) +
   # scale_color_manual(values = c('grey44','purple'), labels = c('Area 1','Area 2')) +
-  labs(x = 'F in Area 1', title = 'Yield Isocline Conditional on FA1',
+  labs(x = 'F in Area 1', title = paste0(SCENARIO,' Yield Isocline Conditional on FA1'),
        # subtitle = 'For low values of F1 there is some interchange among high F2;
        # recall that the FMSY needs to be at the peak',
-       y = 'Yield Total', color = 'F in Area 2 (isocline)',
-       title = SCENARIO) +
+       y = 'Yield Total', color = 'F in Area 2 (isocline)') +
   geom_point(data = out2_new,
              aes(x = FF_Area1, y = tyield,
                  color = FF_Area2), size = 2) +
