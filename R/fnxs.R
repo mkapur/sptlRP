@@ -94,7 +94,11 @@ makeOut <- function(dat,FFs){
     ## this is the new method; old method uses global inputs
     opt0 <- optim_loop(FFs,i) 
     opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
+    ## new method, use optimized Rbar(F) and phi_i
+    ## these are the values which return recruitments most similar to what
+    ## we'd get using the BH given our spatial dynamic.
     out[i,'estRbar',1] <- opt_temp$par[1];  out[i,'estRprop',1] <- opt_temp$par[2];
+    ## old method, use straight inputs
     out[i,'estRbar',2] <- R0_global;  out[i,'estRprop',2] <- Rprop_input
     
     ## derived quants at optimized value
@@ -107,11 +111,15 @@ makeOut <- function(dat,FFs){
     sb0 <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     out[i,'SB0_A1',1] <- as.numeric(sb0[1]);  out[i,'SB0_A2',1] <-as.numeric(sb0[2]);
     
-    rexp <- as.numeric(getExpR(passR = out[i,'estRbar',1], 
+    ## return expected (BH) with optimized pars
+    ## basically this modifies the BH by the proportion identified
+    ## keep in mind we already "knew" these as opt was created, we are just printing them
+    rexp <- as.numeric(getExpR(passR = out[i,'estRbar',1], ## note this is global
                                passRprop = out[i,'estRprop',1],
                                SB_F =sbs, SB_0 =sb0))
     out[i,'expR_A1',1] <- rexp[1];  out[i,'expR_A2',1] <- rexp[2];
     
+    ## return the deterministic recruitment given the pars (simply multiply global by prop)
     obsr <- as.numeric(out[i,'estRbar',1]*c(out[i,'estRprop',1],1-out[i,'estRprop',1]))
     out[i,'obsR_A1',1] <- obsr[1];  out[i,'obsR_A2',1] <- obsr[2];
     rm(opt0)
@@ -127,11 +135,12 @@ makeOut <- function(dat,FFs){
     sb0 <- getSB(passR = out[i,'estRbar',2], passRprop = out[i,'estRprop',2], SBPR_F = tmp0$SBPR)
     out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <-as.numeric(sb0[2]);
     
+    ## bev holt using passed parameters
     rexp <- as.numeric(getExpR(passR = out[i,'estRbar',2], passRprop =   out[i,'estRprop',2],
                                SB_F = data.frame(sbs), SB_0 =data.frame(sb0)))
     out[i,'expR_A1',2] <- rexp[1];  out[i,'expR_A2',2] <- rexp[2];
     
-    obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRbar',2],1-out[i,'estRprop',2]))
+    obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRprop',2],1-out[i,'estRprop',2]))
     out[i,'obsR_A1',2] <- obsr[1];  out[i,'obsR_A2',2] <- obsr[2];
     out[i,'tyield',1] <- out[i,'Yield_A1',1]+ out[i,'Yield_A2',1]
     out[i,'tyield',2] <- out[i,'Yield_A1',2]+ out[i,'Yield_A2',2]
@@ -290,7 +299,7 @@ getYield <- function(passR, passRprop, YPR_F){
   Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
-getExpR <- function(passR, passRprop, SB_F, SB_0,){
+getExpR <- function(passR, passRprop, SB_F, SB_0){
   ## not sure if this should pass sum for global vs local
   Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F)
   return(Rexp)
@@ -303,8 +312,8 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   ## the sbprF changes with F 
   sb_0 <- getSB(passR ,passRprop, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
-  Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0)
-  obsR <- passR*c(passRprop,1-passRprop)
+  Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0) ## bh vals given pars
+  obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
   obj <- sum((obsR - Rexp)^2)
   # obj <- ifelse(abs(obj) == Inf,'')
   return(obj)
