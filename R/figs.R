@@ -103,7 +103,7 @@ out2_global <- data.frame(out2[,,'old'])
 out_use <- data.frame(out[,,'new']) 
 # out_use[out_use < 0] <- 0
 
-out_use %>%
+depl <- out_use %>%
   mutate(depl_A1 = ((SB_A1)/(SB0_A1)),
          depl_A2 = ((SB_A2)/(SB0_A2))) %>%  
   select(FF_Area1,FF_Area2,depl_A1,depl_A2) %>%
@@ -115,13 +115,18 @@ out_use %>%
   geom_tile() +
   coord_equal() +
   ggsidekick::theme_sleek() +
-  theme(legend.position = 'top') +
+  theme(legend.position = 'right') +
   # scale_x_continuous(expand = c(0,0)) + 
   scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) +
   scale_x_continuous(expand = c(0,0)) + 
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
-  facet_wrap(~Area)
+  facet_wrap(~Area) +
+  labs(x = 'F in Area 1', y = 'F in Area 2', fill = 'Depletion (SB/SB0)',
+       title = SCENARIO)
+ggsave(depl,
+       height = 10, width = 8, dpi = 520,
+       file =  paste0(filetemp,"/",SCENARIO,"-depletion.png"))
 
 
 iso1 <- out_use %>%
@@ -140,7 +145,8 @@ ggplot(data = iso1, aes(y = yield)) +
   labs(x = 'F in Area 1', title = 'Yield Isocline Conditional on FA1',
        # subtitle = 'For low values of F1 there is some interchange among high F2;
        # recall that the FMSY needs to be at the peak',
-       y = 'Yield Total', color = 'F in Area 2 (isocline)') +
+       y = 'Yield Total', color = 'F in Area 2 (isocline)',
+       title = SCENARIO) +
   geom_point(data = out2_new,
              aes(x = FF_Area1, y = tyield,
                  color = FF_Area2), size = 2) +
@@ -198,7 +204,7 @@ new <- out_use %>%
            label = as.expression(bquote(F[MSY_Optim]~"="~.
                                         (round(out2_new[which.max(out2_new$tyield),'FMSY'],2))))) +
  
-  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
+  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
 
 ##  F vs recruitment
 fr_new <- out_use %>%
@@ -213,7 +219,8 @@ fr_new <- out_use %>%
   coord_equal() +
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
   scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
-  scale_fill_viridis_c(option = 'magma',na.value = 'white') 
+  scale_fill_viridis_c(option = 'magma',na.value = 'white') +
+  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Recruitment',  title = SCENARIO) 
 
 
 ggsave(fr_new  ,
@@ -256,7 +263,7 @@ global <- out_use %>%
            color ='navy',
            label = as.expression(bquote(F[MSY_Global]~"="~.
                                         (round(out2_global[which.max(out2_global$tyield),'FMSY']))))) +
-  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
+  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
 
 ggsave(new    | global,
        height = 8, width = 10, dpi = 520,

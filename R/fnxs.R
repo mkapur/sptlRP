@@ -114,9 +114,9 @@ makeOut <- function(dat,FFs){
     ## return expected (BH) with optimized pars
     ## basically this modifies the BH by the proportion identified
     ## keep in mind we already "knew" these as opt was created, we are just printing them
-    rexp <- as.numeric(getExpR(passR = out[i,'estRbar',1], ## note this is global
+    rexp <- as.numeric(getExpR(passR = out[i,'estRbar',1], ## the only thing different here is the sbs, sb0, pass R not used
                                passRprop = out[i,'estRprop',1],
-                               SB_F =sbs, SB_0 =sb0))
+                               SB_F =sbs, SB_0 =sb0)) ## these inputs have been updated by optim but sb0 the same
     out[i,'expR_A1',1] <- rexp[1];  out[i,'expR_A2',1] <- rexp[2];
     
     ## return the deterministic recruitment given the pars (simply multiply global by prop)
