@@ -120,6 +120,7 @@ makeOut <- function(dat,FFs){
                                c('new','old'))) ## each slice is old or new
   
   for(i in 1:nrow(FFs)){
+    cat(i,"\n")
     out[i,'FF_Area1',] <- FFs[i,1];   out[i,'FF_Area2',] <- FFs[i,2]
     
     ## this is the new method; old method uses global inputs
@@ -283,12 +284,8 @@ getYield <- function(passR, passRprop, YPR_F){
   Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
-getExpR <- function(passR, passRprop, SB_F, SB_0){
-  ## calculate SB_0 given passed pars
-  # SB_0 <- getSB(passR, passRprop, SBPR_0)
-  ## calculate SB_F given passed pars and SBPR_F
-  # SB_F <- getSB(passR, passRprop, SBPR_F) 
-  ## now use these in the bev-holt, be sure to use the global inputs
+getExpR <- function(passR, passRprop, SB_F, SB_0,){
+  ## not sure if this should pass sum for global vs local
   Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F)
   return(Rexp)
 }
