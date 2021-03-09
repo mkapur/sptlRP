@@ -56,7 +56,7 @@ makeOut2 <- function(propmsy){
     sb0 <- getSB(passR = out2[i,'estRbar',2], passRprop = out2[i,'estRprop',2], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',2] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',2] <-  as.numeric(sb0[2]);
     
-    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 2)) ## one value, global rec
+    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), meth = 2)) ## one value, global rec
     out2[i,'expR_A1',2] <- rexp*out2[i,'estRprop',2];  out2[i,'expR_A2',2] <- rexp*(1-out2[i,'estRprop',2]);
     
     # rexp <- as.numeric(getExpR(passR = out2[i,'estRbar',2], passRprop =out2[i,'estRprop',2],
@@ -262,12 +262,12 @@ bh <- function(h, prop, r0, b0, bcurr, narea = 2, method){
   ## global method - use summed biomass
   ## for returning purposes just use global prop
   if(method == 2){
-    num <- 4*h*r0*sum(bcurr)/sum(b0)
+    num <- 4*mean(h)*r0*sum(bcurr)/sum(b0)
     # cat(num, "\n")
     # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
-    denom1 <- sum(bcurr)/sum(b0)*(5*h-1)
+    denom1 <- sum(bcurr)/sum(b0)*(5*mean(h)-1)
     # cat(denom1,"\n")
-    denom2 <- (1-h)
+    denom2 <- (1-mean(h))
     # cat(denom2,"\n")
     rec = num/(denom1+denom2)
   }else{
