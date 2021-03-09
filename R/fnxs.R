@@ -258,28 +258,33 @@ logistic <- function(a,a50,a95){
   return(val)
 }
 
-bh <- function(h, prop, r0, b0, bcurr,narea = 2){
+bh <- function(h, prop, r0, b0, bcurr,narea = 2, method = 1){
   rec = NULL
-  # for(i in 1:narea){
-  #   num <- prop*4*h[i]*r0*bcurr$SB_A1/b0$SB_A1
-  #   # cat(num, "\n")
-  #   denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[i]-1)
-  #   # cat(denom1,"\n")
-  #   denom2 <- (1-h[i])
-  #   # cat(denom2,"\n")
-  #   rec[i] = num/(denom1+denom2)
-  # }
-  for(i in 1:narea){
-    # num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
-    num <- prop*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
+  ## global method - use summed biomass
+  ## for returning purposes just use global prop
+  if(method == 2){
+    num <- prop*4*h*r0*sum(bcurr[[i]])/sum(b0[[i]])
     # cat(num, "\n")
     # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
-    denom1 <- bcurr[[i]]/b0[[i]]*(5*h[[i]]-1)
+    denom1 <- sum(bcurr[[i]])/sum(b0[[i]])*(5*h-1)
     # cat(denom1,"\n")
-    denom2 <- (1-h[[i]])
+    denom2 <- (1-h)
     # cat(denom2,"\n")
-    rec[i] = num/(denom1+denom2)
+    rec = num/(denom1+denom2)
   }
+  else{
+    for(i in 1:narea){
+      # num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
+      num <- prop*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
+      # cat(num, "\n")
+      # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
+      denom1 <- bcurr[[i]]/b0[[i]]*(5*h[[i]]-1)
+      # cat(denom1,"\n")
+      denom2 <- (1-h[[i]])
+      # cat(denom2,"\n")
+      rec[i] = num/(denom1+denom2)
+    } ## end area loop
+  } #end proposed method
   # cat(rec,"\n")
   return(rec)
 }
@@ -299,9 +304,9 @@ getYield <- function(passR, passRprop, YPR_F){
   Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
-getExpR <- function(passR, passRprop, SB_F, SB_0){
+getExpR <- function(passR, passRprop, SB_F, SB_0, method = 1){
   ## not sure if this should pass sum for global vs local
-  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F)
+  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F, method)
   return(Rexp)
 }
 
@@ -312,7 +317,7 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   ## the sbprF changes with F 
   sb_0 <- getSB(passR ,passRprop, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
-  Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0) ## bh vals given pars
+  Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0, method = 1) ## bh vals given pars
   obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
   obj <- sum((obsR - Rexp)^2)
   # obj <- ifelse(abs(obj) == Inf,'')
