@@ -114,9 +114,8 @@ makeOut <- function(dat,FFs){
     ## return expected (BH) with optimized pars
     ## basically this modifies the BH by the proportion identified
     ## keep in mind we already "knew" these as opt was created, we are just printing them
-    rexp <- as.numeric(getExpR(passR = out[i,'estRbar',1], ## the only thing different here is the sbs, sb0, pass R not used
-                               passRprop = out[i,'estRprop',1],
-                               SB_F =sbs, SB_0 =sb0)) ## these inputs have been updated by optim but sb0 the same
+    ## and ensuring that we are doing so on a per-area basis
+    rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, method = 2))
     out[i,'expR_A1',1] <- rexp[1];  out[i,'expR_A2',1] <- rexp[2];
     
     ## return the deterministic recruitment given the pars (simply multiply global by prop)
@@ -136,8 +135,7 @@ makeOut <- function(dat,FFs){
     out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <-as.numeric(sb0[2]);
     
     ## bev holt using passed parameters
-    rexp <- as.numeric(getExpR(passR = out[i,'estRbar',2], passRprop =   out[i,'estRprop',2],
-                               SB_F = data.frame(sbs), SB_0 =data.frame(sb0)))
+    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 1))
     out[i,'expR_A1',2] <- rexp[1];  out[i,'expR_A2',2] <- rexp[2];
     
     obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRprop',2],1-out[i,'estRprop',2]))
