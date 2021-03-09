@@ -116,7 +116,7 @@ makeOut <- function(dat,FFs){
     ## basically this modifies the BH by the proportion identified
     ## keep in mind we already "knew" these as opt was created, we are just printing them
     ## and ensuring that we are doing so on a per-area basis
-    rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, method = 1))
+    rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, meth= 1))
     out[i,'expR_A1',1] <- rexp[1];  out[i,'expR_A2',1] <- rexp[2];
     
     ## return the deterministic recruitment given the pars (simply multiply global by prop)
@@ -136,7 +136,7 @@ makeOut <- function(dat,FFs){
     out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <-as.numeric(sb0[2]);
     
     ## bev holt using passed parameters
-    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 2)) ## one value, global rec
+    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 = data.frame(sb0), meth = 2)) ## one value, global rec
     out[i,'expR_A1',2] <- rexp*out[i,'estRprop',2];  out[i,'expR_A2',2] <- rexp*(1-out[i,'estRprop',2]);
     
     obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRprop',2],1-out[i,'estRprop',2]))
@@ -257,21 +257,20 @@ logistic <- function(a,a50,a95){
   return(val)
 }
 
-bh <- function(h, prop, r0, b0, bcurr,narea = 2, method = 1){
+bh <- function(h, prop, r0, b0, bcurr, narea = 2, method){
   rec = NULL
   ## global method - use summed biomass
   ## for returning purposes just use global prop
   if(method == 2){
-    num <- prop*4*h*r0*sum(bcurr[[i]])/sum(b0[[i]])
+    num <- 4*h*r0*sum(bcurr)/sum(b0)
     # cat(num, "\n")
     # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
-    denom1 <- sum(bcurr[[i]])/sum(b0[[i]])*(5*h-1)
+    denom1 <- sum(bcurr)/sum(b0)*(5*h-1)
     # cat(denom1,"\n")
     denom2 <- (1-h)
     # cat(denom2,"\n")
     rec = num/(denom1+denom2)
-  }
-  else{
+  }else{
     for(i in 1:narea){
       # num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
       num <- prop*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
@@ -303,9 +302,9 @@ getYield <- function(passR, passRprop, YPR_F){
   Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
-getExpR <- function(passR, passRprop, SB_F, SB_0, method = 1){
+getExpR <- function(passR, passRprop, SB_F, SB_0, meth ){
   ## not sure if this should pass sum for global vs local
-  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F, method)
+  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F, method = meth)
   return(Rexp)
 }
 
