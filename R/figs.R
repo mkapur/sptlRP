@@ -103,14 +103,25 @@ out2_global <- data.frame(out2[,,'old'])
 out_use <- data.frame(out[,,'new']) 
 # out_use[out_use < 0] <- 0
 
-depl <- out_use %>%
+
+depl <- data.frame(out[,,'old'])  %>%
   mutate(depl_A1 = ((SB_A1)/(SB0_A1)),
          depl_A2 = ((SB_A2)/(SB0_A2))) %>%  
   select(FF_Area1,FF_Area2,depl_A1,depl_A2) %>%
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
   mutate(Area = substr(variable,6,7), depl = value) %>%
-  # mutate(depl = value) %>%
+  mutate(SRC = 'GLOBAL') %>%
   select(-variable,-value) %>% 
+  rbind(.,
+        out_use %>%
+          mutate(depl_A1 = ((SB_A1)/(SB0_A1)),
+                 depl_A2 = ((SB_A2)/(SB0_A2))) %>%  
+          select(FF_Area1,FF_Area2,depl_A1,depl_A2) %>%
+          reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+          mutate(Area = substr(variable,6,7), depl = value) %>%
+          mutate(SRC = 'PROPOSED') %>%
+          select(-variable,-value)) %>%
+  
   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = depl)) +
   geom_tile() +
   coord_equal() +
@@ -121,12 +132,14 @@ depl <- out_use %>%
   scale_x_continuous(expand = c(0,0)) + 
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
-  facet_wrap(~Area) +
+  facet_wrap(~Area+SRC) +
   labs(x = 'F in Area 1', y = 'F in Area 2', fill = 'Depletion (SB/SB0)',
        title = SCENARIO)
 ggsave(depl,
        height = 10, width = 8, dpi = 520,
-       file =  paste0(filetemp,"/",SCENARIO,"-depletion.png"))
+       file =  paste0(filetemp,"/",SCENARIO,"depletion.png"))
+
+
 
 
 iso1 <- out_use %>%
