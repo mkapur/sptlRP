@@ -302,7 +302,7 @@ getYield <- function(passR, passRprop, YPR_F){
   Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
-getExpR <- function(passR, passRprop, SB_F, SB_0, meth ){
+getExpR <- function(SB_F, SB_0, meth ){
   ## not sure if this should pass sum for global vs local
   Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F, method = meth)
   return(Rexp)
@@ -315,7 +315,7 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   ## the sbprF changes with F 
   sb_0 <- getSB(passR ,passRprop, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
-  Rexp <- getExpR(passR, passRprop, SB_F=sb_F, SB_0=sb_0, method = 1) ## bh vals given pars
+  Rexp <- getExpR(SB_F=sb_F, SB_0=sb_0, meth = 1) ## bh vals given pars
   obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
   obj <- sum((obsR - Rexp)^2)
   # obj <- ifelse(abs(obj) == Inf,'')
