@@ -136,7 +136,8 @@ makeOut <- function(dat,FFs){
     
     ## bev holt using passed parameters
     rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 1))
-    out[i,'expR_A1',2] <- rexp[1];  out[i,'expR_A2',2] <- rexp[2];
+    
+    out[i,'expR_A1',2] <- rexp[1]*out[i,'estRprop',2];  out[i,'expR_A2',2] <- rexp[2]*(1-out[i,'estRprop',2]);
     
     obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRprop',2],1-out[i,'estRprop',2]))
     out[i,'obsR_A1',2] <- obsr[1];  out[i,'obsR_A2',2] <- obsr[2];
