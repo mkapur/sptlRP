@@ -40,7 +40,7 @@ makeOut2 <- function(propmsy){
     sb0 <- getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',1] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',1] <-  as.numeric(sb0[2]);
     
-    rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, method = 1))
+    rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, meth = 1))
     out2[i,'expR_A1',1] <- rexp[1];  out2[i,'expR_A2',1] <- rexp[2];
     
     obsr <- as.numeric(out2[i,'estRbar',1]*c(out2[i,'estRprop',1],1-out2[i,'estRprop',1]))
@@ -63,7 +63,7 @@ makeOut2 <- function(propmsy){
     #                            SB_F = data.frame(sbs), SB_0 =data.frame(sb0)))
     # out2[i,'expR_A1',2] <- rexp[1];  out2[i,'expR_A2',2] <- rexp[2];
     
-    obsr <- as.numeric(out2[i,'estRbar',2]*c( out2[i,'estRbar',2],1-out2[i,'estRprop',2]))
+    obsr <- as.numeric(out2[i,'estRbar',2]*c( out2[i,'estRprop',2],1-out2[i,'estRprop',2]))
     out2[i,'obsR_A1',2] <- obsr[1];  out2[i,'obsR_A2',2] <- obsr[2];
     
     out2[i,'tyield',1] <- out2[i,'Yield_A1',1]+ out2[i,'Yield_A2',1]
@@ -315,7 +315,7 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   ## the sbprF changes with F 
   sb_0 <- getSB(passR ,passRprop, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
-  Rexp <- getExpR(SB_F=sb_F, SB_0=sb_0, meth = 1) ## bh vals given pars
+  Rexp <- getExpR(SB_F=sb_F, SB_0=sb_0, meth = 1) ## bh vals given pars, als use proposed method
   obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
   obj <- sum((obsR - Rexp)^2)
   # obj <- ifelse(abs(obj) == Inf,'')
