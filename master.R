@@ -19,15 +19,19 @@ steep = c(0.7,0.7)
 ## if name is "move" it uses the A1_SINK setup.
 ## A2 SINK is simply the reverse of A1 sink
 ## move light has less lopsitded movement w A1 still as SINK
-SCENNAMES <- c('symmetric_move','A1_SINK','A2_SINK','light_move','lower_slx', 'move_slx_lo','move_slx_hi')
+SCENNAMES <- c('Symmetrical Movement','A1 Sink','A2 Sink',
+               'A1 Low Selex', 'A1 Low Selex + Move','A1 Hi Selex + Move')
 
-scen <- matrix(NA, nrow = length(SCENNAMES), ncol =5)
-colnames(scen) <- c("SCENARIO_NAME",'SLX_A50_A1','SLX_A95_A1','PSTAY_A1','PSTAY_A2') ## scenarios are defined by differeniating
+scen <- matrix(NA, nrow = length(SCENNAMES), ncol =17)
+colnames(scen) <- c("SCENARIO_NAME",'SLX_A50_A1','SLX_A95_A1','PSTAY_A1','PSTAY_A2',
+                    "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
+                    "MSY_NEW","MSY_GLOBAL", "SB_MSY_NEW","SB_MSY_GLOBAL",
+                    "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL") ## scenarios are defined by differeniating
 scen[,'SCENARIO_NAME'] <-SCENNAMES
-scen[,'SLX_A50_A1'] <- c(9,9,9,9,7,7,11) ## lower slx when different
-scen[,'SLX_A95_A1'] <- c(13,13,13,13,11,11,15) ## lower slx when different
-scen[,'PSTAY_A1'] <- c(0.5,0.9,0.4,0.6,0.5,0.9,0.9) 
-scen[,'PSTAY_A2'] <- c(0.5,0.3,0.6,0.4,0.5,0.6,0.6) 
+scen[,'SLX_A50_A1'] <- c(9,9,9,7,7,11) ## lower slx when different
+scen[,'SLX_A95_A1'] <- c(13,13,13,11,11,15) ## lower slx when different
+scen[,'PSTAY_A1'] <- c(0.5,0.9,0.6,0.5,0.9,0.9) 
+scen[,'PSTAY_A2'] <- c(0.5,0.6,0.9,0.5,0.6,0.6) 
 scen[,2:ncol(scen)] <- as.numeric(scen[,2:ncol(scen)])
 
 ## build datasets to spec (will autosave figure)
@@ -46,6 +50,28 @@ for(s in 1:nrow(scen)){
   out <- makeOut(dat, FFs)
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
+  
+  ## save the max to master table
+  scen[s,'FMSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'FMSY','new']
+  scen[s,'FPROP_NEW'] <- out2[which.max(out2[,'tyield','new']),'Fprop','new']
+  scen[s,'MSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'tyield','new']
+  scen[s,'SB_MSY_NEW'] <- sum(out2[which.max(out2[,'tyield','new']),"SB_A1",'new'],
+                              out2[which.max(out2[,'tyield','new']),"SB_A2",'new'])
+  scen[s,'A1DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A1",'new']/
+                              out2[which.max(out2[,'tyield','new']),"SB0_A1",'new']
+  scen[s,'A2DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A2",'new']/
+    out2[which.max(out2[,'tyield','new']),"SB0_A2",'new']
+  
+  
+  scen[s,'FMSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'FMSY','old']
+  scen[s,'FPROP_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'Fprop','old']
+  scen[s,'MSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'tyield','old']
+  scen[s,'SB_MSY_GLOBAL'] <- sum(out2[which.max(out2[,'tyield','old']),"SB_A1",'old'],
+                              out2[which.max(out2[,'tyield','old']),"SB_A2",'old'])
+  scen[s,'A1DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A1",'old']/
+    out2[which.max(out2[,'tyield','old']),"SB0_A1",'old']
+  scen[s,'A2DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A2",'old']/
+    out2[which.max(out2[,'tyield','old']),"SB0_A2",'old']
   ## save stuff; looks to global SCENARIO for filename
   filetemp <- here('figs',paste0(Sys.Date(),"-h=",paste0(steep[1],"_",steep[2]),"-",SCENARIO))
   dir.create(filetemp)
@@ -56,6 +82,37 @@ for(s in 1:nrow(scen)){
   
   rm(out2);rm(out);rm(propmsytemp);rm(dat)
 }
+
+## master method comparison
+scen[,-c(2:5)] %>%
+  data.frame() %>%
+  melt(id = c("SCENARIO_NAME")) %>%
+  mutate(value = as.numeric(value),
+         SRC =
+           ifelse(is.na(stringr::word(variable,3,sep = "_")),
+                  stringr::word(variable,2,sep = "_"),
+                  stringr::word(variable,3,sep = "_")),
+         variable = stringr::word(variable,1,sep = "_")) %>%
+  group_by(SCENARIO_NAME, variable) %>%
+  summarise(normVal = value/sum(value), SRC) %>%
+  mutate(SCENf = factor(SCENARIO_NAME, levels = SCENNAMES),
+         SRC = recode(SRC,GLOBAL = 'SS (global)',NEW = 'Proposed')) %>%
+  ggplot(., aes(x = variable, y = normVal, fill = SRC)) +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  ggsidekick::theme_sleek() +
+  scale_fill_manual(values = c('goldenrod','seagreen4'))+
+  labs(x ="", y = "normalized value", fill = '')+
+  facet_wrap(~SCENf)
+  
+ggsave(last_plot(), width = 10, height = 8, dpi= 520,
+       file= here("figs", paste0(Sys.Date,"-MasterCompare.png")))
+
+
+## it's conditional on prop
+out2_new %>% filter(Fprop == 0.5)
+out2_global %>% filter(Fprop == 0.5)
+out2_new %>% filter(FMSY > 0.88 & FMSY < 0.883)
+out2_global  %>% filter(FMSY > 0.88 & FMSY < 0.883)
 
 out2[which.max(out2$tyield),]
 
