@@ -40,9 +40,7 @@ makeOut2 <- function(propmsy){
     sb0 <- getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',1] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',1] <-  as.numeric(sb0[2]);
     
-    rexp <- as.numeric(getExpR(passR = out2[i,'estRbar',1], 
-                               passRprop = out2[i,'estRprop',1],
-                               SB_F = sbs, SB_0 =sb0))
+    rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, method = 2))
     out2[i,'expR_A1',1] <- rexp[1];  out2[i,'expR_A2',1] <- rexp[2];
     
     obsr <- as.numeric(out2[i,'estRbar',1]*c(out2[i,'estRprop',1],1-out2[i,'estRprop',1]))
@@ -58,9 +56,12 @@ makeOut2 <- function(propmsy){
     sb0 <- getSB(passR = out2[i,'estRbar',2], passRprop = out2[i,'estRprop',2], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',2] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',2] <-  as.numeric(sb0[2]);
     
-    rexp <- as.numeric(getExpR(passR = out2[i,'estRbar',2], passRprop =out2[i,'estRprop',2],
-                               SB_F = data.frame(sbs), SB_0 =data.frame(sb0)))
-    out2[i,'expR_A1',2] <- rexp[1];  out2[i,'expR_A2',2] <- rexp[2];
+    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 1)) ## one value, global rec
+    out2[i,'expR_A1',2] <- rexp*out2[i,'estRprop',2];  out2[i,'expR_A2',2] <- rexp*(1-out2[i,'estRprop',2]);
+    
+    # rexp <- as.numeric(getExpR(passR = out2[i,'estRbar',2], passRprop =out2[i,'estRprop',2],
+    #                            SB_F = data.frame(sbs), SB_0 =data.frame(sb0)))
+    # out2[i,'expR_A1',2] <- rexp[1];  out2[i,'expR_A2',2] <- rexp[2];
     
     obsr <- as.numeric(out2[i,'estRbar',2]*c( out2[i,'estRbar',2],1-out2[i,'estRprop',2]))
     out2[i,'obsR_A1',2] <- obsr[1];  out2[i,'obsR_A2',2] <- obsr[2];
@@ -135,9 +136,8 @@ makeOut <- function(dat,FFs){
     out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <-as.numeric(sb0[2]);
     
     ## bev holt using passed parameters
-    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 1))
-    
-    out[i,'expR_A1',2] <- rexp[1]*out[i,'estRprop',2];  out[i,'expR_A2',2] <- rexp[2]*(1-out[i,'estRprop',2]);
+    rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), method = 1)) ## one value, global rec
+    out[i,'expR_A1',2] <- rexp*out[i,'estRprop',2];  out[i,'expR_A2',2] <- rexp*(1-out[i,'estRprop',2]);
     
     obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRprop',2],1-out[i,'estRprop',2]))
     out[i,'obsR_A1',2] <- obsr[1];  out[i,'obsR_A2',2] <- obsr[2];
