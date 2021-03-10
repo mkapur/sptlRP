@@ -95,12 +95,11 @@ makeOut <- function(dat,FFs){
     ## this is the new method; old method uses global inputs
     opt0 <- optim_loop(FFs,i) 
     opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
-    ## new method, use optimized Rbar(F) and phi_i
+    ## new method, use optimized Rbar(F) and phi_i----
     ## these are the values which return recruitments most similar to what
     ## we'd get using the BH given our spatial dynamic.
     out[i,'estRbar',1] <- opt_temp$par[1];  out[i,'estRprop',1] <- opt_temp$par[2];
-    ## old method, use straight inputs
-    out[i,'estRbar',2] <- R0_global;  out[i,'estRprop',2] <- Rprop_input
+
     
     ## derived quants at optimized value
     yields <- as.numeric(getYield(passR = out[i,'estRbar',1], passRprop =   out[i,'estRprop',1], YPR_F = tmp$YPR))
@@ -114,37 +113,57 @@ makeOut <- function(dat,FFs){
     
     ## return expected (BH) with optimized pars
     ## basically this modifies the BH by the proportion identified
-    ## keep in mind we already "knew" these as opt was created, we are just printing them
-    ## and ensuring that we are doing so on a per-area basis
+
+    ## and ensuring that we are doing so on a per-area basis (already uses prop_input)
     rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, meth= 1))
     out[i,'expR_A1',1] <- rexp[1];  out[i,'expR_A2',1] <- rexp[2];
     
+    ## keep in mind we already "knew" these as opt was created, we are just printing them
     ## return the deterministic recruitment given the pars (simply multiply global by prop)
     obsr <- as.numeric(out[i,'estRbar',1]*c(out[i,'estRprop',1],1-out[i,'estRprop',1]))
     out[i,'obsR_A1',1] <- obsr[1];  out[i,'obsR_A2',1] <- obsr[2];
     rm(opt0)
     
-    ## derived quants at global value ("current method")
+    ## derived quants at global value ("current method")----
+    ## old method, use straight inputs
+    out[i,'estRprop',2] <- Rprop_input
+    
     yields <- as.numeric(getYield(passR = out[i,'estRbar',2], passRprop =   out[i,'estRprop',2], YPR_F = tmp$YPR))
     out[i,'Yield_A1',2] <- yields[1];  out[i,'Yield_A2',2] <- yields[2];
     
+    alpha = sum(tmp0$SBPR)*(1-mean(h))/(4*mean(h))
+    beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
+    req <- (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))
+    out[i,'estRbar',2] <- req*c( out[i,'estRprop',2],1-out[i,'estRprop',2]); 
+      # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(h))/(5*mean(h)-1)/(4*mean(h)*R0_global)))
+    # cat("Req w R0global", req,"\n")
+    # cat("Req x SBPReq x prop,1-prop ", req*sum(tmp$SBPR)*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
+  
+    
     
     sbs <-getSB(passR = out[i,'estRbar',2], passRprop = out[i,'estRprop',2], SBPR_F = tmp$SBPR)
+    # cat(unlist(sbs),"\n")
+
     out[i,'SB_A1',2] <- as.numeric(sbs[1]);  out[i,'SB_A2',2] <- as.numeric(sbs[2]);
     
     sb0 <- getSB(passR = out[i,'estRbar',2], passRprop = out[i,'estRprop',2], SBPR_F = tmp0$SBPR)
     out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <-as.numeric(sb0[2]);
+    # cat(unlist(sb0),"\n")
     
-    ## bev holt using passed parameters
+  
+    ## Run bev-hold using global R0 and input proportion (these don't affect sbpr)
     rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 = data.frame(sb0), meth = 2)) ## one value, global rec
     out[i,'expR_A1',2] <- rexp*out[i,'estRprop',2];  out[i,'expR_A2',2] <- rexp*(1-out[i,'estRprop',2]);
+    # cat("rexp x prop", rexp*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
+    # cat("Req x prop", req*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
     
     obsr <- as.numeric(out[i,'estRbar',2]*c( out[i,'estRprop',2],1-out[i,'estRprop',2]))
     out[i,'obsR_A1',2] <- obsr[1];  out[i,'obsR_A2',2] <- obsr[2];
+    # cat("obsr", obsr,"\n")
+    
     out[i,'tyield',1] <- out[i,'Yield_A1',1]+ out[i,'Yield_A2',1]
     out[i,'tyield',2] <- out[i,'Yield_A1',2]+ out[i,'Yield_A2',2]
- 
-    
+
     out[i,'ralstonR_A1',1] <- out[i,'expR_A1',1] /out[i,'SB_A1',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
     out[i,'ralstonR_A2',1] <- out[i,'expR_A2',1] /out[i,'SB_A2',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
     
