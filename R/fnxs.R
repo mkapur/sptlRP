@@ -133,7 +133,7 @@ makeOut <- function(dat,FFs){
     beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
     req <- (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))
     out[i,'estRbar',2] <- req
-      # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(h))/(5*mean(h)-1)/(4*mean(h)*R0_global)))
+    # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(h))/(5*mean(h)-1)/(4*mean(h)*R0_global)))
     # cat("Req w R0global", req,"\n")
     # cat("Req x SBPReq x prop,1-prop ", req*sum(tmp$SBPR)*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
 
