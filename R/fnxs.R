@@ -129,11 +129,11 @@ makeOut <- function(dat,FFs){
     out[i,'estRprop',2] <- Rprop_input
     
 
-    alpha = sum(tmp0$SBPR)*(1-mean(h))/(4*mean(h))
-    beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
+    alpha = sum(tmp0$SBPR)*(1-mean(steep))/(4*mean(steep))
+    beta = (5*mean(steep)-1)/(4*mean(steep)*R0_global)
     req <- (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))
     out[i,'estRbar',2] <- req
-    # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(h))/(5*mean(h)-1)/(4*mean(h)*R0_global)))
+    # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(steep))/(5*mean(steep)-1)/(4*mean(steep)*R0_global)))
     # cat("Req w R0global", req,"\n")
     # cat("Req x SBPReq x prop,1-prop ", req*sum(tmp$SBPR)*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
 
@@ -281,12 +281,12 @@ bh <- function(h, prop, r0, b0, bcurr, narea = 2, method){
   ## global method - use summed biomass
   ## for returning purposes just use global prop
   if(method == 2){
-    num <- 4*mean(h)*r0*sum(bcurr)/sum(b0)
+    num <- 4*mean(steep)*r0*sum(bcurr)/sum(b0)
     # cat(num, "\n")
     # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
-    denom1 <- sum(bcurr)/sum(b0)*(5*mean(h)-1)
+    denom1 <- sum(bcurr)/sum(b0)*(5*mean(steep)-1)
     # cat(denom1,"\n")
-    denom2 <- (1-mean(h))
+    denom2 <- (1-mean(steep))
     # cat(denom2,"\n")
     rec = num/(denom1+denom2)
   }else{
