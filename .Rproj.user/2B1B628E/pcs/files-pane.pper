@@ -1,13 +1,13 @@
 {
-    "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP",
+    "path" : "C:/Users/mkapur/Dropbox/UW/sptlRP/figs/2021-03-09-h=0.7_0.7-A1 Sink",
     "sortOrder" : [
         {
             "ascending" : false,
-            "columnIndex" : 2
+            "columnIndex" : 4
         },
         {
             "ascending" : false,
-            "columnIndex" : 4
+            "columnIndex" : 2
         }
     ]
 }
