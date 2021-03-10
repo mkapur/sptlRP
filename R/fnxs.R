@@ -128,17 +128,17 @@ makeOut <- function(dat,FFs){
     ## old method, use straight inputs
     out[i,'estRprop',2] <- Rprop_input
     
-    yields <- as.numeric(getYield(passR = out[i,'estRbar',2], passRprop =   out[i,'estRprop',2], YPR_F = tmp$YPR))
-    out[i,'Yield_A1',2] <- yields[1];  out[i,'Yield_A2',2] <- yields[2];
-    
+
     alpha = sum(tmp0$SBPR)*(1-mean(h))/(4*mean(h))
     beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
     req <- (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))
-    out[i,'estRbar',2] <- req*c( out[i,'estRprop',2],1-out[i,'estRprop',2]); 
+    out[i,'estRbar',2] <- req
       # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(h))/(5*mean(h)-1)/(4*mean(h)*R0_global)))
     # cat("Req w R0global", req,"\n")
     # cat("Req x SBPReq x prop,1-prop ", req*sum(tmp$SBPR)*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
-  
+
+    yields <- as.numeric(getYield(passR = out[i,'estRbar',2], passRprop =   out[i,'estRprop',2], YPR_F = tmp$YPR))
+    out[i,'Yield_A1',2] <- yields[1];  out[i,'Yield_A2',2] <- yields[2];
     
     
     sbs <-getSB(passR = out[i,'estRbar',2], passRprop = out[i,'estRprop',2], SBPR_F = tmp$SBPR)
