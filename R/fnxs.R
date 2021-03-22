@@ -184,7 +184,7 @@ optim_loop <- function(FFs,i){
   }
   # cat(is.na(tmp),"\n")
   tmp0 <-  doPR(dat,FF = c(0,0) )
-  ## optimize this
+  ## optimize this (find rbar and prop)
   opt_temp <- optim(par = c(4,0.6),
                     SBPR_F = tmp$SBPR,
                     SBPR_0 = tmp0$SBPR,
@@ -201,7 +201,7 @@ optim_loop <- function(FFs,i){
 
 ## calls from global environment to optimize
 getMSY <- function(){
-  
+  with(subset(out_use, FF_Area2 == 0.1), plot(FF_Area1 +FF_Area2, tyield))
   # https://stackoverflow.com/questions/57173162/function-for-uniroot-that-has-two-parameters-that-need-to-be-run-across-a-vector
   ## the example above actually has 3 pars and he optimizes over 2 known vectors
   ## the mapply will return the best F value given proportion
@@ -212,7 +212,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.2,0.7),
+                interval = c(0,0.2),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -262,7 +262,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
   # yields[which(yields <0) ] <- 0
   # if(any(yields < 0)) next()
-  y2 <- yields$Yield_A1+yields$Yield_A2
+  y1 <- yields$Yield_A1+yields$Yield_A2
   # cat(y1,'\n')
   opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
@@ -273,7 +273,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   # appx <- ifelse(appx < 0,0,appx) ## overwrite neg yields
-  cat(Fv_test,Fv_prop,appx,'\n')
+  cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -491,8 +491,9 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
           SBPR[area,age,slice,y] <-  BPR[area,age,slice,y]*dat[age,"maturity",area]
           ## Calc Yield for each area-age - use baranov catch equation!
           ## bpr IS Wa x Nax
+          Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
           YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice,y]*
-            (1-dat[age,'mortality',slice]*exp(-FF[area])))/(-log(dat[age,'mortality',slice])+FF[area])
+            (1-exp(-Ztemp))/(Ztemp))
         } ## end ages 0:nage
       } ## end areas
     } ## end slices (array)
@@ -500,4 +501,4 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   return(list("NPR"=NPR[,,,100],"BPR"=BPR[,,,100],"SBPR"=SBPR[,,,100],"YPR"=YPR[,,,100]))
 } ## end func
 
-# plot(NPR[,2:20,,100])
+# plot(tmp$YPR[,2:20,])
