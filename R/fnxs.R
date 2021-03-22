@@ -323,8 +323,8 @@ getYield <- function(passR, passRprop, YPR_F){
   ## yield in Area 1 is in first row of each array slice
   YPR_F_A1 <- sum(YPR_F[1,,1],YPR_F[1,,2])
   YPR_F_A2 <- sum(YPR_F[2,,1],YPR_F[2,,2])
-  Yield_A1 <- YPR_F_A1*passR*passRprop# ifelse(YPR_F_A1*passR*passRprop>0,YPR_F_A1*passR*passRprop,0)
-  Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)#ifelse(YPR_F_A2*passR*(1-passRprop)>0,YPR_F_A2*passR*(1-passRprop),0)
+  Yield_A1 <- YPR_F_A1*passR*passRprop
+  Yield_A2 <-  YPR_F_A2*passR*(1-passRprop)
   return(list('Yield_A1'=Yield_A1,"Yield_A2"=Yield_A2))
 }
 getExpR <- function(SB_F, SB_0, meth ){
@@ -483,10 +483,12 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
               # cat(NCome,"\n")
             } # end i != j
           } # end subareas j
-          ## divide by y so we are still in per-recruit land (1 recruit per year)
-          if(age >1) NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)/y
+         
+          # if(age >1) NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)/y
+          NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)
         } ## end ages 2:nage
         for(age in 0:nage){
+          NPR[area,age,slice,y] <-     NPR[area,age,slice,y]/y  ## divide by y so we are still in per-recruit land (1 recruit per year)
           BPR[area,age,slice,y] <-  NPR[area,age,slice,y]*dat[age,"weight",area]
           SBPR[area,age,slice,y] <-  BPR[area,age,slice,y]*dat[age,"maturity",area]
           ## Calc Yield for each area-age - use baranov catch equation!
@@ -494,14 +496,17 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
           ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
           Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
     
-          YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice,y]*
+          YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*
+                                      FF[area]*
+                                      NPR[area,age,slice,y]*
+                                      dat[age,"weight",area]*
             (1-exp(-Ztemp)))/(Ztemp)
         
         } ## end ages 0:nage
       } ## end areas
     } ## end slices (array)
   } ## end 100 years
-  cat(FF,Ztemp,sum(YPR) ,"\n")
+  cat(FF,Ztemp,sum(YPR[,,,100]), sum(NPR[,,,100]), "\n")
   return(list("NPR"=NPR[,,,100],"BPR"=BPR[,,,100],"SBPR"=SBPR[,,,100],"YPR"=YPR[,,,100]))
 } ## end func
 
