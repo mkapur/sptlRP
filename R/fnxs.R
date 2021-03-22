@@ -212,7 +212,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0,1),
+                interval = c(0,5),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -477,6 +477,7 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
               # cat(NCome,"\n")
             } # end i != j
           } # end subareas j
+          ## divide by y so we are still in per-recruit land (1 recruit per year)
           if(age >1) NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)/y
         } ## end ages 2:nage
         for(age in 0:nage){
@@ -493,4 +494,4 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   return(list("NPR"=NPR[,,,100],"BPR"=BPR[,,,100],"SBPR"=SBPR[,,,100],"YPR"=YPR[,,,100]))
 } ## end func
 
-plot(NPR[,2:20,,100])
+# plot(NPR[,2:20,,100])
