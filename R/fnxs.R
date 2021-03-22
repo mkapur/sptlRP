@@ -96,7 +96,7 @@ makeOut <- function(dat,FFs){
     opt0 <- optim_loop(FFs,i) 
     opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
     ## new method, use optimized Rbar(F) and phi_i----
-    ## these are the values which return recruitments most similar to what
+    ## these are the values which return recruitment most similar to what
     ## we'd get using the BH given our spatial dynamic.
     out[i,'estRbar',1] <- opt_temp$par[1];  out[i,'estRprop',1] <- opt_temp$par[2];
 
@@ -257,12 +257,13 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
-  y1 <- yields$Yield_A1+yields$Yield_A2
+  y1 <- ifelse(yields$Yield_A1+yields$Yield_A2 <0,0,yields$Yield_A1+yields$Yield_A2)
+  
   # cat(y1,'\n')
   opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
-  y2 <- yields$Yield_A1+yields$Yield_A2
+  y2 <- ifelse(yields$Yield_A1+yields$Yield_A2 <0,0,yields$Yield_A1+yields$Yield_A2)
   # cat(y2,'\n')
   
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
