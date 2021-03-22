@@ -212,7 +212,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0,5),
+                interval = c(0.2,0.7),
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -253,22 +253,27 @@ dfx.dxSYS_global <- function(Fv_test, Fv_prop){
 }
 
 dfx.dxSYS_new <- function(Fv_test, Fv_prop){
+  # cat("FVTEST ",Fv_test,"\n")
+  # cat("Fv_prop ",Fv_prop,"\n")
+  
   ## Fv_prop indicates proportion of Fv_test applied in A1
   opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
-  y1 <- ifelse(yields$Yield_A1+yields$Yield_A2 <0,0,yields$Yield_A1+yields$Yield_A2)
-  
+  # yields[which(yields <0) ] <- 0
+  # if(any(yields < 0)) next()
+  y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y1,'\n')
   opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
   yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
-  y2 <- ifelse(yields$Yield_A1+yields$Yield_A2 <0,0,yields$Yield_A1+yields$Yield_A2)
+  # yields[which(yields <0 )] <- 0
+  y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
   
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   # appx <- ifelse(appx < 0,0,appx) ## overwrite neg yields
-  # cat(Fv_test,Fv_prop,appx,'\n')
+  cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -487,7 +492,7 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
           ## Calc Yield for each area-age - use baranov catch equation!
           ## bpr IS Wa x Nax
           YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice,y]*
-            (1-dat[age,'mortality',slice]*exp(-FF[area])))/(log(dat[age,'mortality',slice])+FF[area])
+            (1-dat[age,'mortality',slice]*exp(-FF[area])))/(-log(dat[age,'mortality',slice])+FF[area])
         } ## end ages 0:nage
       } ## end areas
     } ## end slices (array)
