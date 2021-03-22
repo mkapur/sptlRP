@@ -491,14 +491,18 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
           SBPR[area,age,slice,y] <-  BPR[area,age,slice,y]*dat[age,"maturity",area]
           ## Calc Yield for each area-age - use baranov catch equation!
           ## bpr IS Wa x Nax
+          ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
           Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
+    
           YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice,y]*
-            (1-exp(-Ztemp))/(Ztemp))
+            (1-exp(-Ztemp)))/(Ztemp)
+        
         } ## end ages 0:nage
       } ## end areas
     } ## end slices (array)
   } ## end 100 years
+  cat(FF,Ztemp,sum(YPR) ,"\n")
   return(list("NPR"=NPR[,,,100],"BPR"=BPR[,,,100],"SBPR"=SBPR[,,,100],"YPR"=YPR[,,,100]))
 } ## end func
 
-# plot(tmp$YPR[,2:20,])
+# plot(tmp$NPR[,2:20,])
