@@ -207,12 +207,12 @@ getMSY <- function(){
   ## the mapply will return the best F value given proportion
   ## inside dfx.dxSYS_new we run optim and use passed R, Rprop
   ## need a second version of this which uses global R, rprop
-  FpropVec <- seq(0.01,1,0.01) ## all possible proportions of F in Area 1
+  FpropVec <- seq(0.01,1,0.02) ## all possible proportions of F in Area 1
   fbest_new <-
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.001,0.6), ## 0.25 if continuous, 1 otherwise
+                interval = c(0.001,0.3), ## 0.25 if continuous, 1 otherwise
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval = c(0,1), 
+                interval =c(0.001,0.1), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -248,7 +248,7 @@ dfx.dxSYS_global <- function(Fv_test, Fv_prop){
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
-  # cat(Fv_test,Fv_prop,appx,'\n')
+  cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -257,16 +257,17 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   ## Fv_prop indicates proportion of Fv_test applied in A1
   opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
-  yields <- getYield(passR = round(opt_temp$par[1],2), passRprop =   round(opt_temp$par[2],2), YPR_F = tmp$YPR)
+  yields <- getYield(passR = opt_temp$par[1], passRprop =  opt_temp$par[2], YPR_F = tmp$YPR)
   y1 <- yields$Yield_A1+yields$Yield_A2
   # cat(y1,'\n')
   opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
-  yields <- getYield(passR = round(opt_temp$par[1],2), passRprop =   round(opt_temp$par[2],2), YPR_F = tmp$YPR)
+  yields <- getYield(passR =opt_temp$par[1], passRprop =   opt_temp$par[2], YPR_F = tmp$YPR)
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
+  appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
   
-  appx <- round(y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  # appx <- round(y2-y1/0.002) #0.002 is total X delta; we are using system yield
   cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
