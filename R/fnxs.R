@@ -266,7 +266,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
   
-  appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
+  appx <- round(y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
