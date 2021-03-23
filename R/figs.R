@@ -101,6 +101,7 @@ out2_global <- data.frame(out2[,,'old'])
 # out2_global[out2_global < 0] <- 0
 
 out_use <- data.frame(out[,,'new']) 
+outold <- data.frame(out[,,'old']) 
 # out_use[out_use < 0] <- 0
 
 
@@ -189,7 +190,7 @@ new <- out_use %>%
   theme(legend.position = 'top') +
 
   # scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) +
+  scale_y_continuous(expand = expansion(add = c(0, 0))) +
   scale_x_continuous(expand = c(0,0)) + 
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
@@ -241,6 +242,7 @@ ggsave(fr_new  ,
 cat(paste0('saved ', Sys.Date(),"-",SCENARIO,"-FvsR_Total.png", '\n'))
 
 out_use <- data.frame(out[,,'old']) 
+out_use[out_use < 0] <- 0
 global <- out_use %>%
   select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
@@ -251,7 +253,8 @@ global <- out_use %>%
   geom_tile() +
   coord_equal() +
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
-  scale_x_continuous(expand = c(0,0)) + scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'cividis') +
   
   ## add the locations of FMSY from global method
