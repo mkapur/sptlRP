@@ -207,12 +207,12 @@ getMSY <- function(){
   ## the mapply will return the best F value given proportion
   ## inside dfx.dxSYS_new we run optim and use passed R, Rprop
   ## need a second version of this which uses global R, rprop
-  FpropVec <- seq(0.01,1,0.02) ## all possible proportions of F in Area 1
+  FpropVec <- seq(0.1,0.9,0.02) ##proportions of F in Area 1
   fbest_new <-
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.01,10), ## higher if continuous, 1 instF
+                interval = c(0.01,1), ## higher if continuous, 1 instF
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval =c(0.01,2), 
+                interval =c(0.01,1), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -444,7 +444,7 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
 } ## end func
 
 ## INST F DOPR----
-doPR<- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
+doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
