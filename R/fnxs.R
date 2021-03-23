@@ -442,7 +442,7 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
 ## because plus group in this setup is confusing, do the same thing but
 ## run the population for 100 years and take terminal distribution.
 
-doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
+doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 1000){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
@@ -480,7 +480,7 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
           } # end subareas j
           NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)
         } ## end ages 2:nage
-        for(age in 0:nage){
+        for(age in 1:nage){
           NPR[area,age,slice,y] <- NPR[area,age,slice,y]/y  ## divide by y so we are still in per-recruit land (1 recruit per year)
           BPR[area,age,slice,y] <- NPR[area,age,slice,y]*dat[age,"weight",area]
           SBPR[area,age,slice,y] <- BPR[area,age,slice,y]*dat[age,"maturity",area]
@@ -494,20 +494,25 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
                                       NPR[area,age,slice,y]*
                                       dat[age,"weight",area]*
             (1-exp(-Ztemp)))/(Ztemp)
-        
+        # cat( YPR[area,age,slice,y],"\n")
         } ## end ages 0:nage
       } ## end areas
     } ## end slices (array)
   } ## end n years
   # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
-  return(list("NPR"=round(NPR[,,,ny],3)*ny,
-              "BPR"=round(BPR[,,,ny],3)*ny,
-              "SBPR"=round(SBPR[,,,ny],3)*ny,
-              "YPR"=round(YPR[,,,ny],3)*ny))
+  return(list("NPR"=NPR[,,,ny]*ny,
+              "BPR"=BPR[,,,ny]*ny,
+              "SBPR"=SBPR[,,,ny]*ny,
+              "YPR"=YPR[,,,ny]*ny))
 } ## end func
-# plot(NPR[,2:20,,1])
-# plot(NPR[,2:20,,4])
-# plot(NPR[,2:20,,10])
-# plot(NPR[,2:20,,50]*50)
-# plot(NPR[,,,100]*100)
+# plot(YPR[,2:20,,1])
+# plot(YPR[,2:20,,4])
+# plot(YPR[,2:20,,10])
+plot(YPR[,,,5]*5)
+plot(YPR[,,,500]*500)
+plot(YPR[,,,1000]*1000)
+plot(NPR[,,,100]*100)
+plot(NPR[,,,250]*250)
+plot(NPR[,,,500]*500)
+plot(NPR[,,,1000]*1000)
 
