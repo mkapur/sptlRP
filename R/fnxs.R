@@ -212,7 +212,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.01,1), ## higher if continuous, 1 instF
+                interval = c(0.01,5), ## higher if continuous, 1 instF
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval =c(0.01,1), 
+                interval =c(0.01,5), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -444,7 +444,7 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
 } ## end func
 
 ## INST F DOPR----
-doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
+doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
@@ -504,7 +504,7 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
 ## because plus group in this setup is confusing, do the same thing but
 ## run the population for 100 years and take terminal distribution.
 ## CONTINUOUS F DPOR ---- 
-doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
+doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
