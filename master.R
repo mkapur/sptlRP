@@ -52,8 +52,15 @@ for(s in 1:nrow(scen)){
                      slx_a50=slx_a50t,
                      slx_a95=slx_a95t,
                      pStay=pStayt)
-  FFs <- expand.grid(seq(0,0.9999,0.05),seq(0,0.9999,0.05))
+  FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
+  # FFs <- expand.grid(seq(0,2,0.1),seq(0,0.2,0.1))
   out <- makeOut(dat, FFs)
+  
+  # out_use <- data.frame(out[,,'new']) ; View(out_use)
+  # outold <- data.frame(out[,,'old'])  ; View(outold)
+  # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
+  # with(subset(out_use, FF_Area2 == 0.1), plot(FF_Area1 +FF_Area2, tyield))
+  with(subset(outold, FF_Area2 > 0.70), plot(FF_Area1 +FF_Area2, tyield))
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
   
