@@ -212,7 +212,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.001,0.3), ## 0.25 if continuous, 1 otherwise
+                interval = c(0.01,10), ## higher if continuous, 1 instF
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval =c(0.001,1), 
+                interval =c(0.01,2), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -269,7 +269,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   # cat(y2,'\n')
   # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
   
-  appx <- round(y2-y1/0.002) #0.002 is total X delta; we are using system yield
+  appx <- (y2-y1)/0.002 #0.002 is total X delta; we are using system yield
   cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
@@ -402,6 +402,7 @@ makeDat <- function(nage = 100, narea =2,
 ## generate arrays with NAA, BPR, SBPR and YPR with natal record
 ## a given array slice (third dim) lets us track the fate of individuals spawned in that area.
 ## thus we must add rows across slices if we want totals in-area.
+## ORIGINAL DOPR (INSTF, NO YRS) ----
 doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea))
   NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
@@ -442,8 +443,8 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   return(list("NPR"=NPR,"BPR"=BPR,"SBPR"=SBPR,"YPR"=YPR))
 } ## end func
 
-
-doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 10){
+## INST F DOPR----
+doPR<- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
@@ -478,6 +479,7 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 10){
           if(age >1) NPR[area,age,slice,y] <- (1-pLeave)*NPR_SURV[area,age,slice,y]*(1-FF[area]) + NCome
         } ## end ages 2:nage
         for(age in 1:nage){
+          NPR[area,age,slice,y] <- NPR[area,age,slice,y]
           BPR[area,age,slice,y] <-  NPR[area,age,slice,y]*dat[age,"weight",area] ## weight in 3 and 4 col
           SBPR[area,age,slice,y] <-  BPR[area,age,slice,y]*dat[age,"maturity",area]
           ## Calc Yield for each area-age   
@@ -486,23 +488,23 @@ doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 10){
       } ## end areas
     } ## end slices (array)
   } ## end ny
-  return(list("NPR"=NPR[,,,ny],
-              "BPR"=BPR[,,,ny],
-              "SBPR"=SBPR[,,,ny],
-              "YPR"=YPR[,,,ny]))
+  return(list("NPR"=NPR[,,,ny]*ny,
+              "BPR"=BPR[,,,ny]*ny,
+              "SBPR"=SBPR[,,,ny]*ny,
+              "YPR"=YPR[,,,ny]*ny))
   } ## end func
 # plot(YPR[,,,1])
 # plot(YPR[,,,50])
-# plot(YPR[,,,100])
-plot(NPR[,,,1])
-plot(NPR[,,,5])
-plot(NPR[,,,10])
+# # plot(YPR[,,,100])
+# plot(NPR[,,,1])
+# plot(NPR[,,,5])
+# plot(NPR[,,,10])
 # plot(NPR[,,,100])
 
 ## because plus group in this setup is confusing, do the same thing but
 ## run the population for 100 years and take terminal distribution.
-
-doPR2 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
+## CONTINUOUS F DPOR ---- 
+doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
@@ -568,11 +570,11 @@ doPR2 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
 # plot(YPR[,2:20,,1])
 # plot(YPR[,2:20,,4])
 # plot(YPR[,2:20,,10])
-plot(YPR[,,,5]*5)
-plot(YPR[,,,500]*500)
-plot(YPR[,,,1000]*1000)
-plot(NPR[,,,100]*100)
-plot(NPR[,,,250]*250)
-plot(NPR[,,,500]*500)
-plot(NPR[,,,1000]*1000)
+# plot(YPR[,,,5]*5)
+# plot(YPR[,,,500]*500)
+# plot(YPR[,,,1000]*1000)
+# plot(NPR[,,,100]*100)
+# plot(NPR[,,,250]*250)
+# plot(NPR[,,,500]*500)
+# plot(NPR[,,,1000]*1000)
 
