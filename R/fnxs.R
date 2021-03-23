@@ -131,7 +131,7 @@ makeOut <- function(dat,FFs){
 
     alpha = sum(tmp0$SBPR)*(1-mean(steep))/(4*mean(steep))
     beta = (5*mean(steep)-1)/(4*mean(steep)*R0_global)
-    req <- (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))
+    req <- max(0.001, (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))) ## a la SS
     out[i,'estRbar',2] <- req
     # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(steep))/(5*mean(steep)-1)/(4*mean(steep)*R0_global)))
     # cat("Req w R0global", req,"\n")
@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval =c(0.001,0.1), 
+                interval =c(0.001,1), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -247,6 +247,8 @@ dfx.dxSYS_global <- function(Fv_test, Fv_prop){
   yields <- getYield(passR = R0_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
+  # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
+  
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
@@ -265,9 +267,9 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   yields <- getYield(passR =opt_temp$par[1], passRprop =   opt_temp$par[2], YPR_F = tmp$YPR)
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
-  appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
+  # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
   
-  # appx <- round(y2-y1/0.002) #0.002 is total X delta; we are using system yield
+  appx <- round(y2-y1/0.002) #0.002 is total X delta; we are using system yield
   cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
@@ -440,10 +442,67 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   return(list("NPR"=NPR,"BPR"=BPR,"SBPR"=SBPR,"YPR"=YPR))
 } ## end func
 
+
+doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 10){
+  for(y in 1:ny){
+    if(y == 1){ ## establish array first time
+      NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
+    }        
+    NPR_SURV[,1,1,y] <- NPR[,1,1,y] <- c(1,0);  NPR_SURV[,1,2,y] <-  NPR[,1,2,y] <- c(0,1) ## single recruit to each area
+    
+    for(slice in 1:narea){
+      ## Calc Survivors for each area-age within slice
+      for(age in 2:nage){
+        for(area in 1:narea){
+          ## First calc survivors within area
+            if(y > 1){
+              ## NAA is those which age in from last year plus contribution of recruit
+              NPR_SURV[area,age,slice,y] <-  NPR[area,age-1,slice,y-1]*dat[age,'mortality',slice]
+              # cat(  NPR_SURV[area,age,slice,y], "\n")
+            } else{
+              NPR_SURV[area,age,slice,y] <- NPR_SURV[area,age-1,slice,y]*dat[age,'mortality',slice]
+            } ## end first year setup
+        } ## end survivors-in-area
+      } ## end ages 2:nage
+      for(area in 1:narea){ 
+        for(age in 2:nage){
+          pLeave = NCome = 0
+          for(jarea in 1:narea){
+            if(area != jarea){
+              pLeave = pLeave + (1-dat[age,"proportion_stay",area])
+              NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice,y]*(1-FF[jarea])
+              # cat(NCome,"\n")
+            } # end i != j
+          } # end subareas j
+          ## note, they are fished "before" moving; so NCome includes fishery deaths experienced in area-from
+          if(age >1) NPR[area,age,slice,y] <- (1-pLeave)*NPR_SURV[area,age,slice,y]*(1-FF[area]) + NCome
+        } ## end ages 2:nage
+        for(age in 1:nage){
+          BPR[area,age,slice,y] <-  NPR[area,age,slice,y]*dat[age,"weight",area] ## weight in 3 and 4 col
+          SBPR[area,age,slice,y] <-  BPR[area,age,slice,y]*dat[age,"maturity",area]
+          ## Calc Yield for each area-age   
+          YPR[area,age,slice,y] <- dat[age,"fishery_selectivity",area]*FF[area]*BPR[area,age,slice,y] ## disregard selex
+        } ## end ages 0:nage
+      } ## end areas
+    } ## end slices (array)
+  } ## end ny
+  return(list("NPR"=NPR[,,,ny],
+              "BPR"=BPR[,,,ny],
+              "SBPR"=SBPR[,,,ny],
+              "YPR"=YPR[,,,ny]))
+  } ## end func
+# plot(YPR[,,,1])
+# plot(YPR[,,,50])
+# plot(YPR[,,,100])
+plot(NPR[,,,1])
+plot(NPR[,,,5])
+plot(NPR[,,,10])
+# plot(NPR[,,,100])
+
 ## because plus group in this setup is confusing, do the same thing but
 ## run the population for 100 years and take terminal distribution.
 
-doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 1000){
+doPR2 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
