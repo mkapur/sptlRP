@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval =c(0.01,5), 
+                interval =c(0.01,2), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
