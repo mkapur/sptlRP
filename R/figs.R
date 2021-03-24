@@ -176,6 +176,7 @@ ggsave(last_plot(),
 #   group_by(FF_Area1) %>%
 #   filter(yield == max(yield)) %>%
 #   arrange(FF_Area1, FF_Area2) %>% select(-Area)
+out_use <- data.frame(out[,,'new']) 
 
 new <- out_use %>%
   select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
@@ -190,8 +191,8 @@ new <- out_use %>%
   theme(legend.position = 'top') +
 
   # scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = expansion(add = c(0, 0))) +
-  scale_x_continuous(expand = c(0,0)) + 
+  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) +
+  scale_x_continuous(expand = c(0,0), limits = c(0,1)) + 
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
   ## add the locations of FMSY from new method
@@ -203,7 +204,7 @@ new <- out_use %>%
              fill = NA, color = 'purple', size = 2, pch =15)+
   annotate('text',
            x = 0.8,
-           y = 0.13, 
+           y = 0.85, 
            size = 3,
            color = 'purple',
            label = as.expression(bquote(MSY[Optim]~
@@ -211,7 +212,7 @@ new <- out_use %>%
                                                                'tyield']))))) +
   annotate('text',
            x = 0.8,
-           y = 0.15,
+           y = 0.8,
            size = 3,
            color ='purple',
            label = as.expression(bquote(F[MSY_Optim]~"="~.
@@ -253,8 +254,8 @@ global <- out_use %>%
   geom_tile() +
   coord_equal() +
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
-  scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0), limits = c(0,1)) + 
+  scale_y_continuous(expand = c(0,0), limits = c(0,1)) +
   scale_fill_viridis_c(option = 'cividis') +
   
   ## add the locations of FMSY from global method
@@ -262,22 +263,22 @@ global <- out_use %>%
              color = 'navy', size = 2, alpha = 0.3) +
   geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
                                   y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
-             fill = NA, color = 'navy', size = 2, pch =15)+
+             fill = NA, color = 'gold', size = 2, pch =15)+
   annotate('text',
            x = 0.8,
-           y = 0.12, 
+           y = 0.85, 
            size = 3,
-           color ='navy',
+           color ='gold',
            label = as.expression(bquote(MSY[Global]~
                                           "="~.(round(out2_global[which.max(out2_global[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
            x =0.8,
-           y = 0.15,
+           y = 0.8,
            size = 3,
-           color ='navy',
+           color ='gold',
            label = as.expression(bquote(F[MSY_Global]~"="~.
-                                        (round(out2_global[which.max(out2_global$tyield),'FMSY']))))) +
+                                        (round(out2_global[which.max(out2_global$tyield),'FMSY'],2))))) +
   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
 
 ggsave(new    | global,
