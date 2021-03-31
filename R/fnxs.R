@@ -520,20 +520,17 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
       } ## end survivors-in-area
     } ## end ages 2:nage
     for(area in 1:narea){ 
-      for(age in 2:nage){
-        pLeave = NCome = 0
+      for(age in 1:nage){
+        NLeave = NCome = 0
         for(jarea in 1:narea){
           if(area != jarea){
-            pLeave = pLeave + (1-dat[age,"proportion_stay",area])
-            NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice]*exp(-FF[jarea])
+            NLeave = NLeave + (1-dat[age,"proportion_stay",area])*NPR_SURV[area,age,slice]*exp(-FF[area]) ##  leaving for elsewhere
+            NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice]*exp(-FF[jarea]) ##  leaving other area post F there
             # cat(NCome,"\n")
           } # end i != j
         } # end subareas j
-        NPR[area,age,slice] <- ((1-pLeave)*NPR_SURV[area,age,slice]*exp(-FF[area]) + NCome)
-      } ## end ages 2:nage
-      for(age in 1:nage){
-        BPR[area,age,slice] <- NPR[area,age,slice]*dat[age,"weight",area]
-        SBPR[area,age,slice] <- BPR[area,age,slice]*dat[age,"maturity",area]
+        NPR[area,age,slice] <- ((1-pLeave) + NCome)
+      # } ## end ages 2:nage
         ## Calc Yield for each area-age - use baranov catch equation!
         ## bpr IS Wa x Nax
         ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
@@ -544,8 +541,12 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
                                   NPR[area,age,slice]*
                                   dat[age,"weight",area]*
                                   (1-exp(-Ztemp)))/(Ztemp)
+      # for(age in 1:nage){
+        BPR[area,age,slice] <- NPR[area,age,slice]*dat[age,"weight",area]
+        SBPR[area,age,slice] <- BPR[area,age,slice]*dat[age,"maturity",area]
+     
         # cat( YPR[area,age,slice],"\n")
-      } ## end ages 0:nage
+      } ## end ages 1:nage
     } ## end areas
   } ## end slices (array)
   # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
