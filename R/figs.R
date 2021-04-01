@@ -190,9 +190,9 @@ new <- out_use %>%
   ggsidekick::theme_sleek() +
   theme(legend.position = 'top') +
 
-  # scale_x_continuous(expand = c(0,0)) + 
-  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,1)) +
-  scale_x_continuous(expand = c(0,0), limits = c(0,1)) + 
+  scale_x_continuous(expand = c(0,0), limits = c(0,5)) +
+  scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,5)) +
+  # scale_x_continuous(expand = c(0,0), limits = c(0,1)) +
   scale_fill_viridis_c(option = 'magma',na.value = 'white') +
   scale_color_viridis_c(option = 'magma',na.value = 'white') +
   ## add the locations of FMSY from new method
@@ -203,16 +203,16 @@ new <- out_use %>%
                                   y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']), 
              fill = NA, color = 'purple', size = 2, pch =15)+
   annotate('text',
-           x = 0.8,
-           y = 0.85, 
+           x =0.8*max(out_use$FF_Area1),
+           y = 0.85*max(out_use$FF_Area2),
            size = 3,
            color = 'purple',
            label = as.expression(bquote(MSY[Optim]~
                                           "="~.(round(out2_new[which.max(out2_new[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
-           x = 0.8,
-           y = 0.8,
+           x =0.8*max(out_use$FF_Area1),
+           y = 0.8*max(out_use$FF_Area2),
            size = 3,
            color ='purple',
            label = as.expression(bquote(F[MSY_Optim]~"="~.
@@ -254,8 +254,10 @@ global <- out_use %>%
   geom_tile() +
   coord_equal() +
   ggsidekick::theme_sleek() + theme(legend.position = 'top') +
-  scale_x_continuous(expand = c(0,0), limits = c(0,1)) + 
-  scale_y_continuous(expand = c(0,0), limits = c(0,1)) +
+  scale_x_continuous(expand = c(0,0), limits = c(0,5)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,5)) +
+  # scale_x_continuous(expand = c(0,0)) + 
+  # scale_y_continuous(expand = c(0,0)) +
   scale_fill_viridis_c(option = 'cividis') +
   
   ## add the locations of FMSY from global method
@@ -265,16 +267,16 @@ global <- out_use %>%
                                   y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
              fill = NA, color = 'gold', size = 2, pch =15)+
   annotate('text',
-           x = 0.8,
-           y = 0.85, 
+           x =0.8*max(out_use$FF_Area1),
+           y = 0.85*max(out_use$FF_Area2),
            size = 3,
            color ='gold',
            label = as.expression(bquote(MSY[Global]~
                                           "="~.(round(out2_global[which.max(out2_global[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
-           x =0.8,
-           y = 0.8,
+           x =0.8*max(out_use$FF_Area1),
+           y = 0.8*max(out_use$FF_Area2),
            size = 3,
            color ='gold',
            label = as.expression(bquote(F[MSY_Global]~"="~.
