@@ -220,7 +220,7 @@ getMSY <- function(){
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_global, 
-                interval =c(0.01,2), 
+                interval =c(0.01,100), 
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed global optimization (old method) \n')
@@ -250,7 +250,7 @@ dfx.dxSYS_global <- function(Fv_test, Fv_prop){
   # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
   
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
-  cat(Fv_test,Fv_prop,appx,'\n')
+  # cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -270,7 +270,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
   
   appx <- (y2-y1)/0.002 #0.002 is total X delta; we are using system yield
-  cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
+  # cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -512,7 +512,12 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
     ## Age one year +  move (placeholder)
     for(age in 2:nage){
       for(area in 1:narea){
+        
+        
         for(jarea in 1:narea){
+          Ztemp <- c(0,0)
+          Ztemp[area] <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
+          Ztemp[jarea] <-  -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",jarea]*FF[jarea]
           if(area != jarea){
             NPR_SURV[area,age,slice] <- NPR_SURV[area,age-1,slice]*dat[age,"proportion_stay",area]+
               NPR_SURV[jarea,age-1,slice]*(1-dat[age,"proportion_stay",jarea])
@@ -520,8 +525,7 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
         }  # end subareas j
         # NPR[,1,] <-  NPR_SURV[,1,] 
         # cat(sum(NPR),"\n")
-        Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
-        NPR[area,age,slice] <-  NPR[area,age-1,slice]*exp(-Ztemp) ## do this for 2:nage
+        NPR[area,age,slice] <-  NPR[area,age-1,slice]*NPR_SURV[area,age-1,slice]*exp(-Ztemp) ## do this for 2:nage
       } ## end move areas 
     } 
     
