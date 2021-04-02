@@ -207,12 +207,12 @@ getMSY <- function(){
   ## the mapply will return the best F value given proportion
   ## inside dfx.dxSYS_new we run optim and use passed R, Rprop
   ## need a second version of this which uses global R, rprop
-  FpropVec <- seq(0,0.99,0.02) ##proportions of F in Area 1
+  FpropVec <- seq(0.01,1,0.02) ##proportions of F in Area 1
   fbest_new <-
     mapply(
       function(Fv_prop)
         uniroot(f = dfx.dxSYS_new, 
-                interval = c(0.01,100), ## higher if continuous, 1 instF
+                interval = c(0,1e3), ## higher if continuous, 1 instF
                 Fv_prop = Fv_prop)[1],
       FpropVec)
   cat('performed 2d optimization (new method) \n')
@@ -270,7 +270,7 @@ dfx.dxSYS_new <- function(Fv_test, Fv_prop){
   # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
   
   appx <- (y2-y1)/0.002 #0.002 is total X delta; we are using system yield
-  # cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
+  cat("Fv_test",Fv_test,"Fv_prop",Fv_prop,appx,'\n')
   return(appx)
 }
 
@@ -357,22 +357,22 @@ makeDat <- function(nage = 100, narea =2,
   dat <- array(NA, dim = c(nage+1,length(vals),narea),dimnames = list(c(0:nage), c(vals), c(1:narea)))
   
   for(area in 1:narea){
-    for(age in 0:(nage+1)){
+    for(age in 1:(nage+1)){
       
       dat[age,"age",area] <- age-1
-      
-      dat[age,"proportion_stay",area] <- 1 ## recruits stay put
+      dat[1,"proportion_stay",area] <- 1 ## recruits stay put
       ## do descending pstay from 1 (full sedentary) to Xija (whatever the terminal sedentary prop is)
-      if(age <10 & age > 1) dat[age,"proportion_stay",area] <- 1+age*(1-pStay[area])/-9
+      if(age <10 & age > 0) dat[age,"proportion_stay",area] <- 1+age*(1-pStay[area])/-9
       # if(age <10 & age > 1) dat[age,"proportion_stay",area] <- min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
       if(age >= 10) dat[age,"proportion_stay",area] <- pStay[area]
       if(all(pStay == 1)) dat[age,"proportion_stay",area] <- 1 ## no movement exception
+      
       dat[age,"weight",area] <- wa[area] * age 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
       
       dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
-      dat[1,,] <- 0 ## don't fish recruits
+      dat[1,"fishery_selectivity ",] <- 0 ## don't fish recruits
       dat[age,'mortality',area] <- mort
       
     } ## end age
@@ -398,6 +398,141 @@ makeDat <- function(nage = 100, narea =2,
   return(dat)
 }
 
+
+doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
+  NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea)) ## now 100 years of record
+  NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
+
+  for(slice in 1:narea){
+    ## Calc Survivors for each area-age within slice
+    for(age in 2:nage){
+      for(area in 1:narea){
+          NPR_SURV[area,age,slice] <- NPR_SURV[area,age-1,slice]*dat[age,'mortality',slice] ## Ntilde
+      } ## end survivors-in-area
+    } ## end ages 2:nage
+
+    for(area in 1:narea){
+      for(age in 1:nage){
+        pLeave = NCome = 0
+        for(jarea in 1:narea){
+          ## now calculate movement with F
+          if(area != jarea){
+            pLeave = pLeave + (1-dat[age,"proportion_stay",area]) ##  leaving for elsewhere
+            NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice]*exp(-FF[jarea]) ##  leaving other area post F there
+          } # end i != j
+        }
+        # end subareas j
+        NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*exp(-FF[area]) + NCome
+        Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
+
+
+      # } ## end ages 2:nage
+        ## Calc Yield for each area-age - use baranov catch equation!
+        ## bpr IS Wa x Nax
+        ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
+
+        YPR[area,age,slice] <- (dat[age,"fishery_selectivity",area]*
+                                  FF[area]*
+                                  NPR[area,age,slice]* ## use total numbers available in area
+                                  # NPR_SURV[area,age,slice]*
+                                  dat[age,"weight",area]*
+                                  (1-exp(-Ztemp)))/(Ztemp)
+      # for(age in 1:nage){
+        BPR[area,age,slice] <- NPR[area,age,slice]*dat[age,"weight",area]
+        SBPR[area,age,slice] <- BPR[area,age,slice]*dat[age,"maturity",area]
+
+        # cat( YPR[area,age,slice],"\n")
+      } ## end ages 1:nage
+    } ## end areas
+  } ## end slices (array)
+  # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
+  return(list("NPR"=NPR[,1:25,],
+              "BPR"=BPR[,1:25,],
+              "SBPR"=SBPR[,1:25,],
+              "YPR"=YPR[,1:25,]))
+} ## end func
+
+# 
+plot(NPR)
+sum(YPR[,,])
+
+
+## because plus group in this setup is confusing, do the same thing but
+## run the population for 100 years and take terminal distribution.
+## dep CONTINUOUS F doPR ---- 
+depdoPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 50){
+  for(y in 1:ny){
+    if(y == 1){ ## establish array first time
+      NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
+    }        
+    NPR_SURV[,1,1,y] <- NPR[,1,1,y] <- c(1,0);  NPR_SURV[,1,2,y] <-  NPR[,1,2,y] <- c(0,1) ## single recruit to each area
+ 
+    for(slice in 1:narea){
+      ## Calc Survivors for each area-age within slice
+      for(age in 2:nage){
+        for(area in 1:narea){
+          ## First calc survivors within area
+          # if(age > 1  & age < max(nage)) {
+          if(age > 1){
+            if(y > 1){
+              ## NAA is those which age in from last year plus contribution of recruit
+              NPR_SURV[area,age,slice,y] <-  (NPR[area,age-1,slice,y-1]+NPR_SURV[area,age-1,slice,y])*
+                dat[age,'mortality',slice]*exp(-FF[area])
+              # cat(  NPR_SURV[area,age,slice,y], "\n")
+              } else{
+              NPR_SURV[area,age,slice,y] <- NPR_SURV[area,age-1,slice,y]* 
+                dat[age,'mortality',slice]*exp(-FF[area])
+            } ## end first year setup
+          } ## end age > recruit
+        } ## end survivors-in-area
+      } ## end ages 2:nage
+      for(area in 1:narea){ 
+        for(age in 2:nage){
+          pLeave = NCome = 0
+          for(jarea in 1:narea){
+            if(area != jarea){
+              pLeave = pLeave + (1-dat[age,"proportion_stay",area])
+              NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice,y]
+              # cat(NCome,"\n")
+            } # end i != j
+          } # end subareas j
+          NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)
+        } ## end ages 2:nage
+        for(age in 1:nage){
+          NPR[area,age,slice,y] <- NPR[area,age,slice,y]/y  ## divide by y so we are still in per-recruit land (1 recruit per year)
+          BPR[area,age,slice,y] <- NPR[area,age,slice,y]*dat[age,"weight",area]
+          SBPR[area,age,slice,y] <- BPR[area,age,slice,y]*dat[age,"maturity",area]
+          ## Calc Yield for each area-age - use baranov catch equation!
+          ## bpr IS Wa x Nax
+          ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
+          Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
+    
+          YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*
+                                      FF[area]*
+                                      NPR[area,age,slice,y]*
+                                      dat[age,"weight",area]*
+            (1-exp(-Ztemp)))/(Ztemp)
+        # cat( YPR[area,age,slice,y],"\n")
+        } ## end ages 0:nage
+      } ## end areas
+    } ## end slices (array)
+  } ## end n years
+  # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
+  return(list("NPR"=NPR[,,,ny]*ny,
+              "BPR"=BPR[,,,ny]*ny,
+              "SBPR"=SBPR[,,,ny]*ny,
+              "YPR"=YPR[,,,ny]*ny))
+} ## end func
+# plot(YPR[,2:20,,1])
+# plot(YPR[,2:20,,4])
+# plot(YPR[,2:20,,10])
+# plot(YPR[,,,5]*5)
+# plot(YPR[,,,500]*500)
+# plot(YPR[,,,1000]*1000)
+#
+# plot(NPR[,,,250]*250)
+# plot(NPR[,,,500]*500)
+# plot(NPR[,,,1000]*1000)
 
 
 ## generate arrays with NAA, BPR, SBPR and YPR with natal record
@@ -457,13 +592,13 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
       for(age in 2:nage){
         for(area in 1:narea){
           ## First calc survivors within area
-            if(y > 1){
-              ## NAA is those which age in from last year plus contribution of recruit
-              NPR_SURV[area,age,slice,y] <-  NPR[area,age-1,slice,y-1]*dat[age,'mortality',slice]
-              # cat(  NPR_SURV[area,age,slice,y], "\n")
-            } else{
-              NPR_SURV[area,age,slice,y] <- NPR_SURV[area,age-1,slice,y]*dat[age,'mortality',slice]
-            } ## end first year setup
+          if(y > 1){
+            ## NAA is those which age in from last year plus contribution of recruit
+            NPR_SURV[area,age,slice,y] <-  NPR[area,age-1,slice,y-1]*dat[age,'mortality',slice]
+            # cat(  NPR_SURV[area,age,slice,y], "\n")
+          } else{
+            NPR_SURV[area,age,slice,y] <- NPR_SURV[area,age-1,slice,y]*dat[age,'mortality',slice]
+          } ## end first year setup
         } ## end survivors-in-area
       } ## end ages 2:nage
       for(area in 1:narea){ 
@@ -569,142 +704,3 @@ doPR0 <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 100){
 # 
 # sum(YPR[1,1:25,2])#;sum(tmp$YPR[1,,2]) ## sum of those which started in 2 and ended up in 1
 # sum(YPR[2,1:25,1])#;sum(tmp$YPR[2,,1]) ## yield of those which started in 1 and ended up in 2
-
-
-doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
-  NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea)) ## now 100 years of record
-  NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
-
-  for(slice in 1:narea){
-    ## Calc Survivors for each area-age within slice
-    for(age in 2:nage){
-      for(area in 1:narea){
-          NPR_SURV[area,age,slice] <- NPR_SURV[area,age-1,slice]*dat[age,'mortality',slice] ## Ntilde
-      } ## end survivors-in-area
-    } ## end ages 2:nage
-
-    for(area in 1:narea){
-      for(age in 1:nage){
-        pLeave = NCome = 0
-        for(jarea in 1:narea){
-          ## now calculate movement with F
-          if(area != jarea){
-            pLeave = pLeave + (1-dat[age,"proportion_stay",area]) ##  leaving for elsewhere
-            NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice]*exp(-FF[jarea]) ##  leaving other area post F there
-          } # end i != j
-        }
-        # end subareas j
-        NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*exp(-FF[area]) + NCome
-
-
-        Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
-
-
-      # } ## end ages 2:nage
-        ## Calc Yield for each area-age - use baranov catch equation!
-        ## bpr IS Wa x Nax
-        ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
-
-        YPR[area,age,slice] <- (dat[age,"fishery_selectivity",area]*
-                                  FF[area]*
-                                  NPR[area,age,slice]* ## use total numbers available in area
-                                  # NPR_SURV[area,age,slice]*
-                                  dat[age,"weight",area]*
-                                  (1-exp(-Ztemp)))/(Ztemp)
-      # for(age in 1:nage){
-        BPR[area,age,slice] <- NPR[area,age,slice]*dat[age,"weight",area]
-        SBPR[area,age,slice] <- BPR[area,age,slice]*dat[age,"maturity",area]
-
-        # cat( YPR[area,age,slice],"\n")
-      } ## end ages 1:nage
-    } ## end areas
-  } ## end slices (array)
-  # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
-  return(list("NPR"=NPR[,1:25,],
-              "BPR"=BPR[,1:25,],
-              "SBPR"=SBPR[,1:25,],
-              "YPR"=YPR[,1:25,]))
-} ## end func
-
-# 
-
-sum(YPR[,,])
-
-
-## because plus group in this setup is confusing, do the same thing but
-## run the population for 100 years and take terminal distribution.
-## dep CONTINUOUS F doPR ---- 
-depdoPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 50){
-  for(y in 1:ny){
-    if(y == 1){ ## establish array first time
-      NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
-    }        
-    NPR_SURV[,1,1,y] <- NPR[,1,1,y] <- c(1,0);  NPR_SURV[,1,2,y] <-  NPR[,1,2,y] <- c(0,1) ## single recruit to each area
- 
-    for(slice in 1:narea){
-      ## Calc Survivors for each area-age within slice
-      for(age in 2:nage){
-        for(area in 1:narea){
-          ## First calc survivors within area
-          # if(age > 1  & age < max(nage)) {
-          if(age > 1){
-            if(y > 1){
-              ## NAA is those which age in from last year plus contribution of recruit
-              NPR_SURV[area,age,slice,y] <-  (NPR[area,age-1,slice,y-1]+NPR_SURV[area,age-1,slice,y])*
-                dat[age,'mortality',slice]*exp(-FF[area])
-              # cat(  NPR_SURV[area,age,slice,y], "\n")
-              } else{
-              NPR_SURV[area,age,slice,y] <- NPR_SURV[area,age-1,slice,y]* 
-                dat[age,'mortality',slice]*exp(-FF[area])
-            } ## end first year setup
-          } ## end age > recruit
-        } ## end survivors-in-area
-      } ## end ages 2:nage
-      for(area in 1:narea){ 
-        for(age in 2:nage){
-          pLeave = NCome = 0
-          for(jarea in 1:narea){
-            if(area != jarea){
-              pLeave = pLeave + (1-dat[age,"proportion_stay",area])
-              NCome = NCome +(1-dat[age,"proportion_stay",jarea])*NPR_SURV[jarea,age,slice,y]
-              # cat(NCome,"\n")
-            } # end i != j
-          } # end subareas j
-          NPR[area,age,slice,y] <- ((1-pLeave)*NPR_SURV[area,age,slice,y] + NCome)
-        } ## end ages 2:nage
-        for(age in 1:nage){
-          NPR[area,age,slice,y] <- NPR[area,age,slice,y]/y  ## divide by y so we are still in per-recruit land (1 recruit per year)
-          BPR[area,age,slice,y] <- NPR[area,age,slice,y]*dat[age,"weight",area]
-          SBPR[area,age,slice,y] <- BPR[area,age,slice,y]*dat[age,"maturity",area]
-          ## Calc Yield for each area-age - use baranov catch equation!
-          ## bpr IS Wa x Nax
-          ## make sure ztemp is not in exp space (so log mortality, which is exp(-M), really should be survivorship)
-          Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
-    
-          YPR[area,age,slice,y] <- (dat[age,"fishery_selectivity",area]*
-                                      FF[area]*
-                                      NPR[area,age,slice,y]*
-                                      dat[age,"weight",area]*
-            (1-exp(-Ztemp)))/(Ztemp)
-        # cat( YPR[area,age,slice,y],"\n")
-        } ## end ages 0:nage
-      } ## end areas
-    } ## end slices (array)
-  } ## end n years
-  # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
-  return(list("NPR"=NPR[,,,ny]*ny,
-              "BPR"=BPR[,,,ny]*ny,
-              "SBPR"=SBPR[,,,ny]*ny,
-              "YPR"=YPR[,,,ny]*ny))
-} ## end func
-# plot(YPR[,2:20,,1])
-# plot(YPR[,2:20,,4])
-# plot(YPR[,2:20,,10])
-# plot(YPR[,,,5]*5)
-# plot(YPR[,,,500]*500)
-# plot(YPR[,,,1000]*1000)
-#
-# plot(NPR[,,,250]*250)
-# plot(NPR[,,,500]*500)
-# plot(NPR[,,,1000]*1000)
-
