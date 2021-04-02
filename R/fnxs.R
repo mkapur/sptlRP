@@ -361,6 +361,7 @@ makeDat <- function(nage = 100, narea =2,
       
       dat[age,"age",area] <- age-1
       dat[1,"proportion_stay",area] <- 1 ## recruits stay put
+   
       ## do descending pstay from 1 (full sedentary) to Xija (whatever the terminal sedentary prop is)
       if(age <10 & age > 0) dat[age,"proportion_stay",area] <- 1+age*(1-pStay[area])/-9
       # if(age <10 & age > 1) dat[age,"proportion_stay",area] <- min(c(pStay[area], age*(pStay[area])/length(1:12)+0.25))
@@ -372,7 +373,7 @@ makeDat <- function(nage = 100, narea =2,
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
       
       dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
-      dat[1,"fishery_selectivity ",] <- 0 ## don't fish recruits
+      dat[1,"fishery_selectivity",area] <- 0 ## don't fish recruits
       dat[age,'mortality',area] <- mort
       
     } ## end age
