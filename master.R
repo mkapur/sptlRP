@@ -52,15 +52,16 @@ for(s in 1:nrow(scen)){
                      slx_a50=slx_a50t,
                      slx_a95=slx_a95t,
                      pStay=pStayt)
-  FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05))
-  # FFs <- expand.grid(seq(0,2,0.1),seq(0,0.2,0.1))
+  # FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05)) ## instF 
+  FFs <- expand.grid(seq(0,5,0.1),seq(0,5,0.1)) ## continuous F, will dictate range of yield plot
   out <- makeOut(dat, FFs)
-  
-  # out_use <- data.frame(out[,,'new']) ; View(out_use)
-  # outold <- data.frame(out[,,'old'])  ; View(outold)
+  # out_use <- data.frame(out[,,'new']) ;
+  # out_use[which.max(out_use$tyield),]
+  # out_use %>% filter(FF_Area2 < 20) %>% select(FF_Area1, FF_Area2, tyield) %>% View()# View(out_use)
+  # outold <- data.frame(out[,,'old'])  ;outold %>% select(FF_Area1, FF_Area2, tyield) %>% View()#
   # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
-  # with(subset(out_use, FF_Area2 == 0.1), plot(FF_Area1 +FF_Area2, tyield))
-  with(subset(outold, FF_Area2 > 0.70), plot(FF_Area1 +FF_Area2, tyield))
+  # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
+  # with(subset(outold), plot(FF_Area1 +FF_Area2, tyield))
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
   
