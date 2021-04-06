@@ -207,7 +207,7 @@ getMSY <- function(){
   ## the mapply will return the best F value given proportion
   ## inside dfx.dxSYS_new we run optim and use passed R, Rprop
   ## need a second version of this which uses global R, rprop
-  FpropVec <- seq(0.01,1,0.02) ##proportions of F in Area 1
+  FpropVec <- seq(0.05,0.99,0.01) ##proportions of F in Area 1
   fbest_new <-
     mapply(
       function(Fv_prop)
@@ -368,7 +368,12 @@ makeDat <- function(nage = 100, narea =2,
       if(age >= 10) dat[age,"proportion_stay",area] <- pStay[area]
       if(all(pStay == 1)) dat[age,"proportion_stay",area] <- 1 ## no movement exception
       
-      dat[age,"weight",area] <- wa[area] * age 
+      ## make weight lenght age correct
+      len = NULL
+      len[age] <- 50*(1-exp(-0.2*(age-0.1)))
+      dat[age,"weight",area] <- 0.004*len[age]^3
+      
+      # dat[age,"weight",area] <- wa[area] * age 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
       
