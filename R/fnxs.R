@@ -129,11 +129,11 @@ makeOut <- function(dat,FFs){
     out[i,'estRprop',2] <- Rprop_input
     
 
-    alpha = sum(tmp0$SBPR)*(1-mean(steep))/(4*mean(steep))
-    beta = (5*mean(steep)-1)/(4*mean(steep)*R0_global)
+    alpha = sum(tmp0$SBPR)*(1-mean(h))/(4*mean(h))
+    beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
     req <- max(0.001, (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))) ## a la SS
     out[i,'estRbar',2] <- req
-    # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-steep))/(sum(tmp$SBPR)*(4*mean(steep))/(5*mean(steep)-1)/(4*mean(steep)*R0_global)))
+    # (sum(tmp$SBPR)-(sum(tmp0$SBPR)*(1-h))/(sum(tmp$SBPR)*(4*mean(h))/(5*mean(h)-1)/(4*mean(h)*R0_global)))
     # cat("Req w R0global", req,"\n")
     # cat("Req x SBPReq x prop,1-prop ", req*sum(tmp$SBPR)*c( out[i,'estRprop',2],1-out[i,'estRprop',2]),"\n")
 
@@ -284,12 +284,12 @@ bh <- function(h, prop, r0, b0, bcurr, narea = 2, method){
   ## global method - use summed biomass
   ## for returning purposes just use global prop
   if(method == 2){
-    num <- 4*mean(steep)*r0*sum(bcurr)/sum(b0)
+    num <- 4*mean(h)*r0*sum(bcurr)/sum(b0)
     # cat(num, "\n")
     # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
-    denom1 <- sum(bcurr)/sum(b0)*(5*mean(steep)-1)
+    denom1 <- sum(bcurr)/sum(b0)*(5*mean(h)-1)
     # cat(denom1,"\n")
-    denom2 <- (1-mean(steep))
+    denom2 <- (1-mean(h))
     # cat(denom2,"\n")
     rec = num/(denom1+denom2)
   }else{
@@ -326,7 +326,7 @@ getYield <- function(passR, passRprop, YPR_F){
 }
 getExpR <- function(SB_F, SB_0, meth ){
   ## not sure if this should pass sum for global vs local
-  Rexp <- bh(h = steep, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F, method = meth)
+  Rexp <- bh(h, prop = Rprop_input, r0 = R0_global, b0 = SB_0, bcurr = SB_F, method = meth)
   return(Rexp)
 }
 
@@ -349,14 +349,18 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
 vals <- c('age','proportion_stay','weight','maturity',
           'fishery_selectivity','mortality') ## things to enter into data frame
 
-makeDat <- function(nage = 100, narea =2, 
-                    wa, mort = exp(-0.2),
+makeDat <- function(nage = 100, 
+                    narea =2, 
+                    wa, 
+                    h = c(0.7,0.7),
+                    mort = exp(-0.2),
                     fec_a50, fec_a95,
                     slx_a50,slx_a95,
                     pStay = c(0.9,0.6)){
   dat <- array(NA, dim = c(nage+1,length(vals),narea),dimnames = list(c(0:nage), c(vals), c(1:narea)))
   
   for(area in 1:narea){
+    len = NULL
     for(age in 1:(nage+1)){
       
       dat[age,"age",area] <- age-1
@@ -369,9 +373,9 @@ makeDat <- function(nage = 100, narea =2,
       if(all(pStay == 1)) dat[age,"proportion_stay",area] <- 1 ## no movement exception
       
       ## make weight lenght age correct
-      len = NULL
-      len[age] <- 50*(1-exp(-0.2*(age-0.1)))
-      dat[age,"weight",area] <- 0.004*len[age]^3
+      # 
+      len[age] <- 50*(1-exp(-0.2*(age-1)))
+      dat[age,"weight",area] <- 0.63*len[age]^1.81
       
       # dat[age,"weight",area] <- wa[area] * age 
       
@@ -386,13 +390,14 @@ makeDat <- function(nage = 100, narea =2,
   # 
   # png(here('figs',paste0(Sys.Date(),"-",SCENARIO,'-inputDat.png')),
   #     width = 8, height = 8, units = 'in', res = 400)
-  # par(mfrow = c(2,2))
+  # par(mfrow = c(2,2), mar = c(4,4,1,1))
   # for(v in 2:5){
-  #   age <- 0:20
+  #   age <- 0:100
   #   plot(dat[,v,1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v],
   #        col = alpha('black',0.5),
-  #        ylim = c(0,ifelse(vals[v]!='weight',1,100)))
-  #   text(x = 19, y = ifelse(vals[v]!='weight',0.95,95), label = LETTERS[v-1], cex = 1.5)
+  #        ylim = c(0,ifelse(vals[v]!='weight',1.1,1100)))
+  # 
+  #   text(x = 10, y = ifelse(vals[v]!='weight',1.05,1050), label = LETTERS[v-1], cex = 1.5)
   #   if(v == 2){
   #     legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
   #            pch = 19, col = alpha(c('black','blue'),0.5))
@@ -459,8 +464,8 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
 } ## end func
 
 # 
-plot(NPR)
-sum(YPR[,,])
+# plot(NPR)
+# sum(YPR[,,])
 
 
 ## because plus group in this setup is confusing, do the same thing but

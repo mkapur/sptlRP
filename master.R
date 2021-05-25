@@ -11,7 +11,7 @@ source(here("R","fnxs.R"))
 ## settings, unchanged 
 R0_global <- 4
 Rprop_input <- 0.65
-steep = c(0.7,0.7)
+# steep = c(0.7,0.7)
 
 ## matrix of scnearios, including name
 ## some notes on scenarios:
@@ -25,36 +25,49 @@ SCENNAMES <- c('No Movement',
                'A2 Sink',
                'A1 Low Selex + Symmetrical Movement', 
                'A1 Low Selex + A1 Sink',
-               'A1 Hi Selex + A1 Sink')
+               'A1 Hi Selex + A1 Sink',
+               'lowerM',
+               'lowerH')
 
-scen <- matrix(NA, nrow = length(SCENNAMES), ncol =17)
-colnames(scen) <- c("SCENARIO_NAME",'SLX_A50_A1','SLX_A95_A1','PSTAY_A1','PSTAY_A2',
-                    "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
-                    "MSY_NEW","MSY_GLOBAL", "SBMSY_NEW","SBMSY_GLOBAL",
-                    "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL") ## scenarios are defined by differeniating
+coln <- c("SCENARIO_NAME",'SLX_A50_A1','SLX_A95_A1','PSTAY_A1','PSTAY_A2',
+          "H","NATM",
+          "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
+          "MSY_NEW","MSY_GLOBAL", "SBMSY_NEW","SBMSY_GLOBAL",
+          "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL") ## scenarios are defined by differeniating
+scen <- matrix(NA, nrow = length(SCENNAMES), ncol =length(coln));colnames(scen)<- coln
+
 scen[,'SCENARIO_NAME'] <-SCENNAMES
 scen[,'SLX_A50_A1'] <- c(9,9,9,9,7,7,11) ## lower slx when different
 scen[,'SLX_A95_A1'] <- c(13,13,13,13,11,11,15) ## lower slx when different
 scen[,'PSTAY_A1'] <- c(1,0.5,0.9,0.6,0.5,0.9,0.9) 
 scen[,'PSTAY_A2'] <- c(1,0.5,0.6,0.9,0.5,0.6,0.6) 
+scen[,'H1'] <- c(rep(0.7,9),0.5) 
+scen[,'H2'] <- scen[,'H1'] 
+scen[,'NATM'] <-c(rep(exp(-0.2),9),exp(-0.07)) 
 scen[,2:ncol(scen)] <- as.numeric(scen[,2:ncol(scen)])
 
 scen <- scen[- which(scen[,"SCENARIO_NAME"] == 'A2 Sink'),]
+datlist <- list()
 ## build datasets to spec (will autosave figure)
 for(s in 1:nrow(scen)){
   SCENARIO <- scen[s,'SCENARIO_NAME']
   slx_a50t <- as.numeric(c(scen[s,'SLX_A50_A1'],9))
   slx_a95t <- as.numeric(c(scen[s,'SLX_A95_A1'],13))
+  natM <- as.numeric(scen[s,'NATM'])
+  h <<- as.numeric(c(scen[s,'H1'],scen[s,'H2'])
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
   dat <- makeDat(wa = c(5,5),
+                 mort = natM,
+                 steep = h,
                      fec_a50 = c(6,6),
                      fec_a95 = c(12,12),
                      slx_a50=slx_a50t,
                      slx_a95=slx_a95t,
                      pStay=pStayt)
+  datlist[[s]] <- dat
   # FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05)) ## instF 
   FFs <- expand.grid(seq(0,5,0.1),seq(0,5,0.1)) ## continuous F, will dictate range of yield plot
-  out <- makeOut(dat, FFs)
+  # out <- makeOut(dat, FFs)
   # out_use <- data.frame(out[,,'new']) ;
   # out_use[which.max(out_use$tyield),]
   # out_use %>% filter(FF_Area2 < 20) %>% select(FF_Area1, FF_Area2, tyield) %>% View()# View(out_use)
@@ -62,40 +75,129 @@ for(s in 1:nrow(scen)){
   # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
   # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
   # with(subset(outold), plot(FF_Area1 +FF_Area2, tyield))
-  propmsytemp <- getMSY()
-  out2 <- makeOut2(propmsy=propmsytemp)
+  # propmsytemp <- getMSY()
+  # out2 <- makeOut2(propmsy=propmsytemp)
   
   ## save the max to master table
-  scen[s,'FMSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'FMSY','new']
-  scen[s,'FPROP_NEW'] <- out2[which.max(out2[,'tyield','new']),'Fprop','new']
-  scen[s,'MSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'tyield','new']
-  scen[s,'SBMSY_NEW'] <- sum(out2[which.max(out2[,'tyield','new']),"SB_A1",'new'],
-                              out2[which.max(out2[,'tyield','new']),"SB_A2",'new'])
-  scen[s,'A1DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A1",'new']/
-                              out2[which.max(out2[,'tyield','new']),"SB0_A1",'new']
-  scen[s,'A2DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A2",'new']/
-    out2[which.max(out2[,'tyield','new']),"SB0_A2",'new']
+  # scen[s,'FMSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'FMSY','new']
+  # scen[s,'FPROP_NEW'] <- out2[which.max(out2[,'tyield','new']),'Fprop','new']
+  # scen[s,'MSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'tyield','new']
+  # scen[s,'SBMSY_NEW'] <- sum(out2[which.max(out2[,'tyield','new']),"SB_A1",'new'],
+  #                             out2[which.max(out2[,'tyield','new']),"SB_A2",'new'])
+  # scen[s,'A1DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A1",'new']/
+  #                             out2[which.max(out2[,'tyield','new']),"SB0_A1",'new']
+  # scen[s,'A2DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A2",'new']/
+  #   out2[which.max(out2[,'tyield','new']),"SB0_A2",'new']
+  # 
+  # 
+  # scen[s,'FMSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'FMSY','old']
+  # scen[s,'FPROP_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'Fprop','old']
+  # scen[s,'MSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'tyield','old']
+  # scen[s,'SBMSY_GLOBAL'] <- sum(out2[which.max(out2[,'tyield','old']),"SB_A1",'old'],
+  #                             out2[which.max(out2[,'tyield','old']),"SB_A2",'old'])
+  # scen[s,'A1DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A1",'old']/
+  #   out2[which.max(out2[,'tyield','old']),"SB0_A1",'old']
+  # scen[s,'A2DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A2",'old']/
+  #   out2[which.max(out2[,'tyield','old']),"SB0_A2",'old']
+  # ## save stuff; looks to global SCENARIO for filename
+  # filetemp <- here('figs',paste0(Sys.Date(),"-h=",paste0(steep[1],"_",steep[2]),"-",SCENARIO))
+  # dir.create(filetemp)
+  # source(here('R','figs.R')) 
+  # save(out, file = paste0(filetemp,'/out.RDATA'))
+  # save(out2, file =  paste0(filetemp, '/out2.RDATA'))
+  # save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
   
-  
-  scen[s,'FMSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'FMSY','old']
-  scen[s,'FPROP_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'Fprop','old']
-  scen[s,'MSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'tyield','old']
-  scen[s,'SBMSY_GLOBAL'] <- sum(out2[which.max(out2[,'tyield','old']),"SB_A1",'old'],
-                              out2[which.max(out2[,'tyield','old']),"SB_A2",'old'])
-  scen[s,'A1DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A1",'old']/
-    out2[which.max(out2[,'tyield','old']),"SB0_A1",'old']
-  scen[s,'A2DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A2",'old']/
-    out2[which.max(out2[,'tyield','old']),"SB0_A2",'old']
-  ## save stuff; looks to global SCENARIO for filename
-  filetemp <- here('figs',paste0(Sys.Date(),"-h=",paste0(steep[1],"_",steep[2]),"-",SCENARIO))
-  dir.create(filetemp)
-  source(here('R','figs.R')) 
-  save(out, file = paste0(filetemp,'/out.RDATA'))
-  save(out2, file =  paste0(filetemp, '/out2.RDATA'))
-  save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
-  
-  rm(out2);rm(out);rm(propmsytemp);rm(dat)
+  # rm(out2);rm(out);rm(propmsytemp);rm(dat)
 }
+require(png);require(grid);require(gridExtra)
+par(mfrow = c(2,4), mar = c(4,4,1,1))
+
+plot(datlist[[1]][,'2',1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v],
+     col = alpha('black',0.5), 
+     # main = scennames2[1],
+     ylim = c(0,ifelse(vals[v]!='weight',1.1,1100)))
+  legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
+         pch = 19, col = alpha(c('black','blue'),0.5))
+points(datlist[[s]][,v,2] ~ age, type = 'p', pch = 19,col = alpha('blue',0.5),)
+text(x = 10, y = 1.05, label = LETTERS[1], cex = 1.5)
+
+age <- 0:100
+vals <- c('age','proportion_stay','weight','maturity',
+          'fishery_selectivity','mortality') ## things to enter into data frame
+scennames2 <- SCENNAMES[c(1:3,5:7)]
+
+plotme = matrix(c(4,0,1,2,1,2), nrow = 6)
+idx = 1
+
+
+
+for(s in 1:length(scennames2)){
+  if(plotme[s] == 0) next()
+  if(s == 1){
+    for(v in 2:5){
+     
+    }
+  } else{
+    plot(datlist[[s]][,plotme[s],1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v],
+         col = alpha('black',0.5),
+         ylim = c(0,ifelse(vals[v]!='weight',1.1,1100)))
+    if(s == 6){
+      legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
+             pch = 19, col = alpha(c('black','blue'),0.5))
+    }
+    points(datlist[[s]][,plotme[s],2] ~ age, type = 'p', pch = 19,col = alpha('blue',0.5),)
+  }
+
+  idx = idx+1
+}
+
+
+ 
+dev.off()
+
+
+
+pngs <- here('figs',paste0("2021-05-24-",scennames2,"-inputDat.png"))
+
+
+
+
+
+png(here('figs','scenPanel1.png'), 
+    height = 8, width = 6, units = 'in', res = 520)
+grid.arrange(rasterGrob(readPNG(pngs[1])),
+             rasterGrob(readPNG(pngs[2])),
+             rasterGrob(readPNG(pngs[3])),
+             ncol=3)
+graphics.off()
+png(here('figs','scenPanel2.png'), 
+    height = 8, width = 6, units = 'in', res = 520)
+grid.arrange(rasterGrob(readPNG(pngs[4])),
+             rasterGrob(readPNG(pngs[5])),
+             rasterGrob(readPNG(pngs[6])),
+             ncol=3)
+graphics.off()
+
+
+png(here('figs',paste0(Sys.Date(),"-",SCENARIO,'-inputDat.png')),
+    width = 8, height = 8, units = 'in', res = 400)
+par(mfrow = c(2,2), mar = c(4,4,1,1))
+for(v in 2:5){
+  age <- 0:100
+  plot(dat[,v,1] ~ age, type = 'p', pch = 19, xlab='age', ylab = vals[v],
+       col = alpha('black',0.5),
+       ylim = c(0,ifelse(vals[v]!='weight',1.1,1100)))
+  
+  text(x = 10, y = ifelse(vals[v]!='weight',1.05,1050), label = LETTERS[v-1], cex = 1.5)
+  if(v == 2){
+    legend('bottomright', legend = c('Area 1','Area 2'), cex = 1.2,
+           pch = 19, col = alpha(c('black','blue'),0.5))
+  }
+  points(dat[,v,2] ~ age, type = 'p', pch = 19,col = alpha('blue',0.5),)
+}
+dev.off()
+
+
 ## master plot with compare
 library(grid)
 library(png)
