@@ -351,8 +351,7 @@ vals <- c('age','proportion_stay','weight','maturity',
 
 makeDat <- function(nage = 100, 
                     narea =2, 
-                    wa, 
-                    h = c(0.7,0.7),
+                    wa,  
                     mort = exp(-0.2),
                     fec_a50, fec_a95,
                     slx_a50,slx_a95,
@@ -376,6 +375,7 @@ makeDat <- function(nage = 100,
       # 
       len[age] <- 50*(1-exp(-0.2*(age-1)))
       dat[age,"weight",area] <- 0.63*len[age]^1.81
+  
       
       # dat[age,"weight",area] <- wa[area] * age 
       

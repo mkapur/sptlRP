@@ -53,13 +53,15 @@
 #        y = 'F in Area 2', 
 #        fill = 'Total SB') 
 # 
+
+
 # FYIELD <-
 # out_use %>%
 #   mutate(Yield_Total = Yield_A1+Yield_A2) %>%
-#   select(FF_Area1,FF_Area2, Yield_Total) %>%  
+#   select(FF_Area1,FF_Area2, Yield_Total) %>%
 #   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
 #   mutate(Area = substr(variable,7,8), yield = value) %>%
-#   select(-variable,-value) %>% 
+#   select(-variable,-value) %>%
 #   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = yield)) +
 #   geom_tile() +
 #   coord_equal() +
@@ -70,21 +72,21 @@
 #   ## add the locations of FMSY
 #   geom_point(data = out_use2, aes(x = FF_Area1, y = FF_Area2), color = 'grey66', size = 2)+
 #   geom_point(data = out_use2, aes(x = out_use2[which.max(tyield),'FF_Area1'],
-#                               y = out_use2[which.max(tyield),'FF_Area2']), 
+#                               y = out_use2[which.max(tyield),'FF_Area2']),
 #              color = 'purple', size = 2, pch =15)+
 #   annotate('text',
 #            x = out_use2[which.max(out_use2$tyield),'FF_Area1']*1.15,
-#            y = out_use2[which.max(out_use2$tyield),'FF_Area2']*1.15, 
+#            y = out_use2[which.max(out_use2$tyield),'FF_Area2']*1.15,
 #            size = 3,
 #            color ='purple',
 #            label = as.expression(bquote(MSY[Total]~"="~.(round(out_use2[which.max(out_use2$tyield),'tyield']))))) +
-#   annotate('text', 
+#   annotate('text',
 #            x = out_use2[which.max(out_use2$tyield),'FF_Area1']*1.17,
-#            y = out_use2[which.max(out_use2$tyield),'FF_Area2']*1.07, 
+#            y = out_use2[which.max(out_use2$tyield),'FF_Area2']*1.07,
 #            size = 3,
 #            color ='purple',
 #            label = as.expression(bquote(F[MSY_Total]~"="~.(round(out_use2[which.max(out_use2$tyield),'FMSY'],2))))) +
-#   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield') 
+#   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield')
 # 
 # 
 # 
@@ -188,7 +190,7 @@ new <- out_use %>%
   geom_tile() +
   coord_equal() +
   ggsidekick::theme_sleek() +
-  theme(legend.position = 'top') +
+  theme(legend.position = 'top',plot.margin=grid::unit(c(0,0,0,0), "mm")) +
 
   scale_x_continuous(expand = c(0,0), limits = c(0,max(out_use$FF_Area1))) +
   scale_y_continuous(expand = expansion(add = c(0, 0)), limits = c(0,max(out_use$FF_Area2))) +
@@ -203,20 +205,20 @@ new <- out_use %>%
                                   y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']), 
              fill = NA, color = 'purple', size = 2, pch =15)+
   annotate('text',
-           x =0.8*max(out_use$FF_Area1),
+           x =0.6*max(out_use$FF_Area1),
            y = 0.85*max(out_use$FF_Area2),
-           size = 3,
+           size = 5,
            color = 'gold',
            label = as.expression(bquote(MSY[Local]~
                                           "="~.(round(out2_new[which.max(out2_new[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
-           x =0.8*max(out_use$FF_Area1),
+           x =0.6*max(out_use$FF_Area1),
            y = 0.8*max(out_use$FF_Area2),
-           size = 3,
+           size = 5,
            color ='gold',
-           label = as.expression(bquote(F[MSY_Local]~"="~.
-                                        (round(out2_new[which.max(out2_new$tyield),'FMSY'],2))))) +
+           label = as.expression(bquote(F[MSY_Local]~"="~.(round(out2_new[which.max(out2_new$tyield),'FF_Area1'],2))~"Area 1, "~.
+                                        (round(out2_new[which.max(out2_new$tyield),'FF_Area2'],2))~"Area 2"))) +
  
   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
 
@@ -253,7 +255,7 @@ global <- out_use %>%
   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = yield)) +
   geom_tile() +
   coord_equal() +
-  ggsidekick::theme_sleek() + theme(legend.position = 'top') +
+  ggsidekick::theme_sleek() + theme(legend.position = 'top',plot.margin=grid::unit(c(0,0,0,0), "mm")) +
   scale_x_continuous(expand = c(0,0), limits = c(0,max(out_use$FF_Area1))) +
   scale_y_continuous(expand = c(0,0), limits = c(0,max(out_use$FF_Area2))) +
   # scale_x_continuous(expand = c(0,0)) + 
@@ -267,20 +269,20 @@ global <- out_use %>%
                                   y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
              fill = NA, color = 'navy', size = 2, pch =15)+
   annotate('text',
-           x =0.8*max(out_use$FF_Area1),
+           x =0.6*max(out_use$FF_Area1),
            y = 0.85*max(out_use$FF_Area2),
-           size = 3,
+           size = 5,
            color ='gold',
            label = as.expression(bquote(MSY[Global]~
                                           "="~.(round(out2_global[which.max(out2_global[,'tyield']),
                                                                'tyield']))))) +
   annotate('text',
-           x =0.8*max(out_use$FF_Area1),
+           x =0.6*max(out_use$FF_Area1),
            y = 0.8*max(out_use$FF_Area2),
-           size = 3,
+           size = 5,
            color ='gold',
-           label = as.expression(bquote(F[MSY_Global]~"="~.
-                                        (round(out2_global[which.max(out2_global$tyield),'FMSY'],2))))) +
+           label = as.expression(bquote(F[MSY_Global]~"="~.(round(out2_global[which.max(out2_global$tyield),'FF_Area1'],2))~"Area 1, "~.
+                                        (round(out2_global[which.max(out2_global$tyield),'FF_Area2'],2))~"Area 2"))) +
   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
 
 ggsave(new    | global,
@@ -289,4 +291,5 @@ ggsave(new    | global,
 cat(paste0('saved ',Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png", '\n'))
 
 
-# 
+with(data.frame(out[,,'old']), plot(rowSums()~ rowSums()))
+
