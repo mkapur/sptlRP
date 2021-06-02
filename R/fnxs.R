@@ -408,7 +408,12 @@ bh <- function(h, prop, r0, b0, bcurr, narea = 2, method){
   }else{
     for(i in 1:narea){
       # num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
-      num <- prop*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
+      if(i == 1){
+        num <- prop*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
+      } else{
+        num <- (1-prop)*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
+      }
+  
       # cat(num, "\n")
       # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
       denom1 <- bcurr[[i]]/b0[[i]]*(5*h[[i]]-1)
@@ -427,7 +432,6 @@ getSB <- function(passR, passRprop, SBPR_F){
   SB_A1 <- SBPR_F_A1*passR*passRprop
   SB_A2 <- SBPR_F_A2*passR*(1-passRprop)
   return(list('SB_A1'=SB_A1,"SB_A2"=SB_A2))
-  
 }
 getYield <- function(passR, passRprop, YPR_F){
   ## yield in Area 1 is in first row of each array slice
