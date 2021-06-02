@@ -6,7 +6,6 @@ require(here)
 require(ggplot2);require(ggsidekick);require(patchwork)
 require(reshape2)
 require(png);require(grid);require(gridExtra)
-
 source(here("R","fnxs.R"))
 
 ## settings
@@ -18,7 +17,7 @@ coln <- c( "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
            "A1SB0_new",'A2SB0_new',
            "A1SB0_old",'A2SB0_old',
            "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL", 'NEW_R0_A1','NEW_R0_A2') ## scenarios are defined by differeniating
-cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
+scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 SCENNAMES <- scen$SCENARIO_NAME
 
 ## build datasets to spec (will autosave figure)
@@ -28,6 +27,7 @@ for(s in 1:nrow(scen)){
   slx_a95t <- as.numeric(c(scen[s,'SLX_A95_A1'],13))
   natM <- as.numeric(scen[s,'NATM'])
   
+  ## global overwrite based on input
   Rprop_input <<- as.numeric(scen[s,'PROPR'])
   h <<- as.numeric(c(scen[s,'H1'],scen[s,'H2']))
   
@@ -40,9 +40,9 @@ for(s in 1:nrow(scen)){
                      slx_a95=slx_a95t,
                      pStay=pStayt)
   
-  filetemp <- here('figs',paste0("2021-05-25-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
+  # filetemp <- here('figs',paste0("2021-05-25-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
   # load(paste0(filetemp,'/dat.rdata'))
-  save(dat, file = paste0(filetemp,'/dat.rdata'))
+
   datlist[[s]] <- dat
   FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05)) ## instF
   FFs <- expand.grid(seq(0,5,0.1),seq(0,5,0.1)) ## continuous F, will dictate range of yield plot
@@ -91,6 +91,7 @@ for(s in 1:nrow(scen)){
   save(out, file = paste0(filetemp,'/out.RDATA'))
   save(out2, file =  paste0(filetemp, '/out2.RDATA'))
   save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
+  save(dat, file = paste0(filetemp,'/dat.rdata'))
   rm(out2);rm(out);rm(propmsytemp);rm(dat)
 }
 
