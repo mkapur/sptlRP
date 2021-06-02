@@ -291,5 +291,5 @@ ggsave(new    | global,
 cat(paste0('saved ',Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png", '\n'))
 
 
-with(data.frame(out[,,'old']), plot(rowSums()~ rowSums()))
+# with(data.frame(out[,,'old']), plot(rowSums()~ rowSums()))
 
