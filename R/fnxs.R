@@ -173,7 +173,9 @@ makeOut <- function(dat,FFs){
     sbs <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp$SBPR)
     out[i,'SB_A1',1] <- as.numeric(sbs[1]);  out[i,'SB_A2',1] <- as.numeric(sbs[2]);
     
-    sb0 <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
+    # sb0 <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
+    sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
+    
     out[i,'SB0_A1',1] <- as.numeric(sb0[1]);  out[i,'SB0_A2',1] <-as.numeric(sb0[2]);
     
     ## return expected (BH) with optimized pars
@@ -192,8 +194,6 @@ makeOut <- function(dat,FFs){
     ## derived quants at global value ("current method")----
     ## old method, use straight inputs
     out[i,'estRprop',2] <- Rprop_input
-    
-    
     alpha = sum(tmp0$SBPR)*(1-mean(h))/(4*mean(h))
     beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
     req <- max(0.001, (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))) ## a la SS
@@ -211,8 +211,9 @@ makeOut <- function(dat,FFs){
     
     out[i,'SB_A1',2] <- as.numeric(sbs[1]);  out[i,'SB_A2',2] <- as.numeric(sbs[2]);
     
-    sb0 <- getSB(passR = out[i,'estRbar',2], passRprop = out[i,'estRprop',2], SBPR_F = tmp0$SBPR)
-    out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <-as.numeric(sb0[2]);
+    sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
+    # sb0 <- getSB(passR = R0_global, passRprop = out[i,'estRprop',2], SBPR_F = tmp0$SBPR)
+    out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <- as.numeric(sb0[2]);
     # cat(unlist(sb0),"\n")
     
     
