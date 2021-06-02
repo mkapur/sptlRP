@@ -399,28 +399,18 @@ bh <- function(h, prop, r0, b0, bcurr, narea = 2, method){
   ## for returning purposes just use global prop
   if(method == 2){
     num <- 4*mean(h)*r0*sum(bcurr)/sum(b0)
-    # cat(num, "\n")
-    # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
     denom1 <- sum(bcurr)/sum(b0)*(5*mean(h)-1)
-    # cat(denom1,"\n")
     denom2 <- (1-mean(h))
-    # cat(denom2,"\n")
     rec = num/(denom1+denom2)
   }else{
     for(i in 1:narea){
-      # num <- prop*4*h[1]*r0*bcurr$SB_A1/b0$SB_A1
       if(i == 1){
         num <- prop*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
       } else{
         num <- (1-prop)*4*h[[i]]*r0*bcurr[[i]]/b0[[i]]
       }
-  
-      # cat(num, "\n")
-      # denom1 <- bcurr$SB_A1/b0$SB_A1*(5*h[1]-1)
       denom1 <- bcurr[[i]]/b0[[i]]*(5*h[[i]]-1)
-      # cat(denom1,"\n")
       denom2 <- (1-h[[i]])
-      # cat(denom2,"\n")
       rec[i] = num/(denom1+denom2)
     } ## end area loop
   } #end proposed method
@@ -453,7 +443,8 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   passR <- par[1]; passRprop <- par[2]
   ## get sbprf and sbpr0 given pars
   ## the sbprF changes with F 
-  sb_0 <- getSB(passR ,passRprop, SBPR_0)
+  # sb_0 <- getSB(passR ,passRprop, SBPR_0)
+  sb_0 <- getSB(R0_global ,Rprop_input, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
   Rexp <- getExpR(SB_F=sb_F, SB_0=sb_0, meth = 1) ## bh vals given pars, als use proposed method
   obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
