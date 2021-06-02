@@ -1,14 +1,12 @@
 
 
 ## sanity checking functions ----
-png(here('figs','nominal_srr.png'))
-plot(cbind(1,bh(h=steep, prop = Rprop_input, r0 = R0_global, b0 = 15, bcurr = 1)),
-     ylim = c(0,3),xlim = c(0,100), xlab = 'SBcurrent', ylab = 'BH Rec')
-for(i in 1:100)points(cbind(i,bh(h=steep, prop = Rprop_input, r0 = R0_global, b0 = 15, bcurr = i)))
-dev.off()
 
-png(here('figs','testdoPR-movement.png'), width = 6, height = 4, units = 'in', res = 520)
-par(mfrow = c(1,2), mar = c(4,4,1,1))
+## The rate of movement for the base-case scenario is such that the numbers of animals that originally 
+## settled in area 2 is about equal between areas 1 and 2 after 25 years [compare with and without F ]. 
+
+## from AEP: Check the numbers-at-age when summed over source area are the same for localized and global recruit and mention that
+
 dat <- makeDat(wa = c(5,5),
                fec_a50 = c(6,6),
                fec_a95 = c(12,12),
@@ -16,26 +14,68 @@ dat <- makeDat(wa = c(5,5),
                slx_a95 = c(13,13),
                pStay = c(0.9,0.6))
 tmp <- doPR(dat, FF = c(0,0)) ## defaults, no fishing
-all(round(colSums(tmp$NPR[,,1])) == round(colSums(tmp$NPR[,,2]))) ## net exchange should be conserved
-plot(tmp$NPR[1,,1], main = 'Spawned in A1', xlab = 'Age', ylab = 'Numbers per 1 Recruit' );points(tmp$NPR[2,,1],col = 'blue') ## should look reasonable
-legend('topright', pch =1, legend = c('observed in a1', 'observed in a2'), col = c('black','blue'))
-plot(tmp$NPR[1,,2], main = 'Spawned in A2', ylim = c(0,1), xlab = 'Age', 
-     ylab = '' );points(tmp$NPR[2,,2],col = 'blue') ## should look reasonable
-legend('topright', pch =1, legend = c('observed in a2', 'observed in a1'), col = rev(c('black','blue')))
-## test run with no movement
-# dat <- makeDat(wa = c(5,5),
-#                fec_a50 = c(6,6),
-#                fec_a95 = c(12,12),
-#                slx_a50 = c(9,9),
-#                slx_a95 = c(13,13),
-#                pStay = c(1,1))
+
+plot(tmp$NPR)
+
+png(here('figs','nominal_srr.png'))
+plot(cbind(1,bh(h=steep, prop = Rprop_input, r0 = R0_global, b0 = 15, bcurr = 1)),
+     ylim = c(0,3),xlim = c(0,100), xlab = 'SBcurrent', ylab = 'BH Rec')
+for(i in 1:100)lines(cbind(i,bh(h=steep, prop = Rprop_input, r0 = R0_global, b0 = 15, bcurr = i)))
+dev.off()
+
+png(here('figs','testdoPR-movement-PANEL.png'), width = 8, height = 8, units = 'in', res = 520)
+load("C:/Users/mkapur/Dropbox/UW/sptlRP/figs/2021-05-25-h=0.7_0.7-A1 Sink/dat.rdata")
+
+
+layout.matrix <- matrix(c(1:4), ncol = 2, byrow = T)
+
+layout(mat = layout.matrix,
+       widths = c(2, 1.75), 
+       heights = c(1.75, 2)) 
+
+par(mar = c(0,4,1,1))
+
+
+#* top row at f=0
 tmp <- doPR(dat, FF = c(0,0)) ## defaults, no fishing
 all(round(colSums(tmp$NPR[,,1])) == round(colSums(tmp$NPR[,,2]))) ## net exchange should be conserved
-plot(tmp$NPR[1,,1], main = 'A1 SRC - no movement', ylim = c(0,1));points(tmp$NPR[2,,1],col = 'blue') 
-legend('topright', pch =1, 
-       legend = c('stay in a1', 'end up in a2'), col = c('black','blue'))
-plot(tmp$NPR[1,,2], main = 'A2 SRC - no movement', ylim = c(0,1));points(tmp$NPR[2,,2],col = 'blue')
-legend('topright', pch =1, legend = c('stay in a2', 'end up in a1'), col = rev(c('black','blue')))
+plot(tmp$NPR[1,,1], xaxt = 'n', yaxt = 'n', lwd = 2,
+     ylim = c(0,1),   xlab = '',type = 'l',
+     main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~0)),
+     ylab = 'Numbers-per-recruit' );
+lines(tmp$NPR[2,,1], lwd = 2, col = 'blue') ## should look reasonable
+axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
+# legend('topright',lwd = 2, legend = c('Present in a1', 'Present in a2'), col = c('black','blue'))
+par(mar = c(0,0,1,1))
+plot(tmp$NPR[1,,2],type = 'l',
+     main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~0)),
+     ylim = c(0,1),
+     yaxt = 'n',
+     xaxt = 'n',
+     lwd = 2,  )
+lines(tmp$NPR[2,,2],lwd = 2, col = 'blue') ## should look reasonable
+legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
+#* bottom row at f=fmsy
+par( mar = c(4,4,1,1))
+tmp <- doPR(dat, FF = c(0.98,0.34))
+all(round(colSums(tmp$NPR[,,1])) == round(colSums(tmp$NPR[,,2]))) ## net exchange should be conserved
+plot(tmp$NPR[1,,1],  yaxt = 'n', lwd = 2,
+     ylim = c(0,1),   xlab = 'Age',type = 'l',
+     main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
+     ylab = 'Numbers-per-recruit' );
+lines(tmp$NPR[2,,1], lwd = 2, col = 'blue') ## should look reasonable
+axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
+# legend('topright',lwd = 2, legend = c('Present in a1', 'Present in a2'), col = c('black','blue'))
+par(mar = c(4,0,1,1))
+plot(tmp$NPR[1,,2],type = 'l',
+     main =as.expression(bquote(Spawned~"in"~"a2,"~F~"="~F[MSY])),
+     ylim = c(0,1),
+     yaxt = 'n',
+     xlab = 'Age',
+     lwd = 2,  )
+lines(tmp$NPR[2,,2],lwd = 2, col = 'blue') ## should look reasonable
+# legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
+
 dev.off()
 
 ## test with movement & some Fs
@@ -49,10 +89,10 @@ dat <- makeDat(wa = c(5,5),
                pStay = c(0.9,0.6))
 tmp <- doPR(dat, FF = c(0.2,0.2)) ## defaults, equally low fishing
 all(round(colSums(tmp$NPR[,,1])) == round(colSums(tmp$NPR[,,2]))) ## net exchange should be conserved
-plot(tmp$NPR[1,,1],ylim = c(0,1), main = 'A1 SRC - F=c(0.2,0.2)');points(tmp$NPR[2,,1],col = 'blue') ## A2 ()
-legend('topright', pch =1, legend = c('stay in a1', 'end up in a2'), col = c('black','blue'))
-plot(tmp$NPR[1,,2],ylim = c(0,1), main = 'A2 SRC - F=c(0.2,0.2)');points(tmp$NPR[2,,2],col = 'blue') 
-legend('topright', pch =1, legend = c('stay in a2', 'end up in a1'), col = rev(c('black','blue')))
+plot(tmp$NPR[1,,1],ylim = c(0,1), main = 'A1 SRC - F=c(0.2,0.2)');lines(tmp$NPR[2,,1],col = 'blue') ## A2 ()
+legend('topright',lwd = 2, legend = c('stay in a1', 'end up in a2'), col = c('black','blue'))
+plot(tmp$NPR[1,,2],ylim = c(0,1), main = 'A2 SRC - F=c(0.2,0.2)');lines(tmp$NPR[2,,2],col = 'blue') 
+legend('topright',lwd = 2, legend = c('stay in a2', 'end up in a1'), col = rev(c('black','blue')))
 dat <- makeDat(wa = c(5,5),
                fec_a50 = c(6,6),
                fec_a95 = c(12,12),
@@ -61,9 +101,9 @@ dat <- makeDat(wa = c(5,5),
                pStay = c(0.9,0.6))
 tmp <- doPR(dat, FF = c(0.8,0.8)) ## defaults, no fishing
 all(round(colSums(tmp$NPR[,,1])) == round(colSums(tmp$NPR[,,2]))) ## net exchange should be conserved
-plot(tmp$NPR[1,,1],ylim = c(0,1), main = 'A1 SRC - F=c(0.8,0.8)');points(tmp$NPR[2,,1],col = 'blue') 
-legend('topright', pch =1, legend = c('stay in a1', 'end up in a2'), col = c('black','blue'))
-plot(tmp$NPR[1,,2], ylim = c(0,1),main = 'A2 SRC - F=c(0.8,0.8)');points(tmp$NPR[2,,2],col = 'blue') 
-legend('topright', pch =1, legend = c('stay in a2', 'end up in a1'), col = rev(c('black','blue')))
+plot(tmp$NPR[1,,1],ylim = c(0,1), main = 'A1 SRC - F=c(0.8,0.8)');lines(tmp$NPR[2,,1],col = 'blue') 
+legend('topright',lwd = 2, legend = c('stay in a1', 'end up in a2'), col = c('black','blue'))
+plot(tmp$NPR[1,,2], ylim = c(0,1),main = 'A2 SRC - F=c(0.8,0.8)');lines(tmp$NPR[2,,2],col = 'blue') 
+legend('topright',lwd = 2, legend = c('stay in a2', 'end up in a1'), col = rev(c('black','blue')))
 dev.off()
 
