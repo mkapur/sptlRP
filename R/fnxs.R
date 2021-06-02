@@ -411,7 +411,7 @@ makeDat <- function(nage = 100,
 
 
 doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
-  NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea)) ## now 100 years of record
+  NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea)) ## now 100 ages of record
   NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
 
   for(slice in 1:narea){
@@ -471,7 +471,7 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
 ## because plus group in this setup is confusing, do the same thing but
 ## run the population for 100 years and take terminal distribution.
 ## dep CONTINUOUS F doPR ---- 
-depdoPR <- function(dat, narea = 2, nage = 20, FF = c(0,0), ny = 50){
+depdoPR <- function(dat, narea = 2, nage = 25, FF = c(0,0), ny = 50){
   for(y in 1:ny){
     if(y == 1){ ## establish array first time
       NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea,ny)) ## now 100 years of record
