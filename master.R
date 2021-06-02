@@ -9,56 +9,28 @@ require(png);require(grid);require(gridExtra)
 
 source(here("R","fnxs.R"))
 
-## settings, unchanged 
-R0_global <- 4
-Rprop_input <- 0.65
-# steep = c(0.7,0.7)
+## settings
+R0_global <- 4 ## used in SRR
+scen <- read.csv(here("inputscen.csv")) ## setup
+## things to track
+coln <- c( "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
+           "MSY_NEW","MSY_GLOBAL", "SBMSY_NEW","SBMSY_GLOBAL", 
+           "A1SB0_new",'A2SB0_new',
+           "A1SB0_old",'A2SB0_old',
+           "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL", 'NEW_R0_A1','NEW_R0_A2') ## scenarios are defined by differeniating
+cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
+SCENNAMES <- scen$SCENARIO_NAME
 
-## matrix of scnearios, including name
-## some notes on scenarios:
-## slx only are like AAF. 
-## if name is "move" it uses the A1_SINK setup.
-## A2 SINK is simply the reverse of A1 sink
-## move light has less lopsitded movement w A1 still as SINK
-SCENNAMES <- c('No Movement',
-               'Symmetrical Movement',
-               'A1 Sink',
-               'A2 Sink',
-               'A1 Low Selex + Symmetrical Movement', 
-               'A1 Low Selex + A1 Sink',
-               'A1 Hi Selex + A1 Sink',
-               'lowerM',
-               'lowerH',
-               'lowerH_noMove')
-
-coln <- c("SCENARIO_NAME",'SLX_A50_A1','SLX_A95_A1','PSTAY_A1','PSTAY_A2',
-          "H1","H2","NATM",
-          "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
-          "MSY_NEW","MSY_GLOBAL", "SBMSY_NEW","SBMSY_GLOBAL",
-          "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL", 'NEW_R0_A1','NEW_R0_A2') ## scenarios are defined by differeniating
-scen <- matrix(NA, nrow = length(SCENNAMES), ncol =length(coln));colnames(scen)<- coln
-
-scen[,'SCENARIO_NAME'] <-SCENNAMES
-scen[,'SLX_A50_A1'] <- c(9,9,9,9,7,7,11,9,9,9) ## lower slx when different
-scen[,'SLX_A95_A1'] <- c(13,13,13,13,11,11,15,13,13,13) ## lower slx when different
-scen[,'PSTAY_A1'] <- c(1,0.5,0.9,0.6,0.5,0.9,0.9,0.9,0.9,1) 
-scen[,'PSTAY_A2'] <- c(1,0.5,0.6,0.9,0.5,0.6,0.6,0.6,0.6,1) 
-scen[,'H1'] <- c(rep(0.7,8),0.5,0.25) 
-scen[,'H2'] <- scen[,'H1'] 
-scen[,'NATM'] <-c(rep(exp(-0.2),7),exp(-0.07),exp(-0.2),exp(-0.2))
-
-
-scen[,2:ncol(scen)] <- as.numeric(scen[,2:ncol(scen)])
-
-scen <- scen[- which(scen[,"SCENARIO_NAME"] == 'A2 Sink'),]
-datlist <- list()
 ## build datasets to spec (will autosave figure)
 for(s in 1:nrow(scen)){
   SCENARIO <- scen[s,'SCENARIO_NAME']
   slx_a50t <- as.numeric(c(scen[s,'SLX_A50_A1'],9))
   slx_a95t <- as.numeric(c(scen[s,'SLX_A95_A1'],13))
   natM <- as.numeric(scen[s,'NATM'])
+  
+  Rprop_input <<- as.numeric(scen[s,'PROPR'])
   h <<- as.numeric(c(scen[s,'H1'],scen[s,'H2']))
+  
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
   dat <- makeDat(wa = c(5,5),
                  mort = natM,
@@ -69,22 +41,22 @@ for(s in 1:nrow(scen)){
                      pStay=pStayt)
   
   filetemp <- here('figs',paste0("2021-05-25-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
+  # load(paste0(filetemp,'/dat.rdata'))
   save(dat, file = paste0(filetemp,'/dat.rdata'))
   datlist[[s]] <- dat
-  # FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05)) ## instF 
+  FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05)) ## instF
   FFs <- expand.grid(seq(0,5,0.1),seq(0,5,0.1)) ## continuous F, will dictate range of yield plot
   out <- makeOut(dat, FFs)
-  # out_use <- data.frame(out[,,'new']) ;
-  # out_use[which.max(out_use$tyield),]
-  # out_use %>% filter(FF_Area2 < 20) %>% select(FF_Area1, FF_Area2, tyield) %>% View()# View(out_use)
-  # outold <- data.frame(out[,,'old'])  ;outold %>% select(FF_Area1, FF_Area2, tyield) %>% View()#
-  # # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
-  # # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
-  # with(subset(outold), plot(FF_Area1 +FF_Area2, tyield))
+  out_use <- data.frame(out[,,'new']) ;
+  out_use[which.max(out_use$tyield),]
+  out_use %>% filter(FF_Area2 < 20) %>% select(FF_Area1, FF_Area2, tyield) %>% View()# View(out_use)
+  outold <- data.frame(out[,,'old'])  ;outold %>% select(FF_Area1, FF_Area2, tyield) %>% View()#
+  # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
+  # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
+  with(subset(outold), plot(FF_Area1 +FF_Area2, tyield))
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
-
-  ## save the max to master table
+  # ## save the max to master table
   scen[s,'FMSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'FMSY','new']
   scen[s,'FPROP_NEW'] <- out2[which.max(out2[,'tyield','new']),'Fprop','new']
   scen[s,'MSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'tyield','new']
@@ -94,8 +66,10 @@ for(s in 1:nrow(scen)){
                               out2[which.max(out2[,'tyield','new']),"SB0_A1",'new']
   scen[s,'A2DEPL_NEW'] <- out2[which.max(out2[,'tyield','new']),"SB_A2",'new']/
     out2[which.max(out2[,'tyield','new']),"SB0_A2",'new']
-
-
+  scen[s,'A1SB0_new'] <-  out2[which.max(out2[,'tyield','new']),"SB0_A1",'new']
+  scen[s,'A2SB0_new'] <-  out2[which.max(out2[,'tyield','new']),"SB0_A2",'new']
+  scen[s,'A1SB0_old'] <-  out2[which.max(out2[,'tyield','new']),"SB0_A1",'old']
+  scen[s,'A2SB0_old'] <-  out2[which.max(out2[,'tyield','new']),"SB0_A2",'old']
   scen[s,'FMSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'FMSY','old']
   scen[s,'FPROP_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'Fprop','old']
   scen[s,'MSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'tyield','old']
@@ -107,7 +81,7 @@ for(s in 1:nrow(scen)){
     out2[which.max(out2[,'tyield','old']),"SB0_A2",'old']
   scen[s,'NEW_R0_A1'] <- out[1,'estRbar','new']*out[1,'estRprop','new']
   scen[s,'NEW_R0_A2'] <- out[1,'estRbar','new']*(1-out[1,'estRprop','new'])
-  
+
   # ## save stuff; looks to global SCENARIO for filename
   filetemp <- here('figs',paste0(Sys.Date(),"-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
   dir.create(filetemp)
@@ -117,7 +91,7 @@ for(s in 1:nrow(scen)){
   save(out, file = paste0(filetemp,'/out.RDATA'))
   save(out2, file =  paste0(filetemp, '/out2.RDATA'))
   save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
-  # rm(out2);rm(out);rm(propmsytemp);rm(dat)
+  rm(out2);rm(out);rm(propmsytemp);rm(dat)
 }
 
 
@@ -127,28 +101,36 @@ scend <- data.frame(scen)
 scend[,2:ncol(scen)] <- as.numeric(scend[,2:ncol(scen)] )
 
 data.frame(scen) %>%
-  # select(-SCENARIO_NAME) %>% 
-  # data.frame() %>%
-  # as.numeric()
   mutate(WA = "Linear increasing function; identical between areas") %>%
-  mutate("LOCALR0" = paste(round(as.numeric(NEW_R0_A1),2),round(as.numeric(NEW_R0_A2),2), sep = ", "),
+  mutate(
     NATM = round(as.numeric(NATM),2),
     'GLOBAL_FMSY_A1' = as.numeric(FMSY_GLOBAL)*as.numeric(FPROP_GLOBAL),
-          'LOCAL_FMSY_A1' = as.numeric(FMSY_NEW)*as.numeric(FPROP_NEW),
-          'GLOBAL_FMSY_A2' = as.numeric(FMSY_GLOBAL)*(1-as.numeric(FPROP_GLOBAL)),
-          'LOCAL_FMSY_A2'= as.numeric(FMSY_NEW)*(1-as.numeric(FPROP_NEW)),
-          'GLOBAL_MSY' = as.numeric(MSY_GLOBAL),
-          'LOCAL_MSY' = as.numeric(MSY_NEW),
-          'GLOBAL_SBMSY' = as.numeric(SBMSY_GLOBAL),
-          'LOCAL_SBMSY' = as.numeric(SBMSY_NEW)) %>%
+    'LOCAL_FMSY_A1' = as.numeric(FMSY_NEW)*as.numeric(FPROP_NEW),
+    'GLOBAL_FMSY_A2' = as.numeric(FMSY_GLOBAL)*(1-as.numeric(FPROP_GLOBAL)),
+    'LOCAL_FMSY_A2'= as.numeric(FMSY_NEW)*(1-as.numeric(FPROP_NEW)),
+    'GLOBALFMSY' = paste(round(GLOBAL_FMSY_A1,2),round(GLOBAL_FMSY_A2,2), sep = ", "),
+    'LOCALFMSY' = paste(round(LOCAL_FMSY_A1,2),round(LOCAL_FMSY_A2,2), sep = ", "),
+    'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_NEW),2),
+    'GLOBAL_SBMSY' = round(as.numeric(SBMSY_GLOBAL),2),
+    'LOCAL_SBMSY' = as.numeric(SBMSY_NEW),
+    'GLOBAL_SB0' = as.numeric(A1SB0_old)+as.numeric(A2SB0_old),
+    'LOCAL_SB0' = as.numeric(A1SB0_new)+as.numeric(A2SB0_new),
+    'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
+    'LOCAL_DEPL_TOTAL' = round(LOCAL_SBMSY/LOCAL_SB0,2)) %>%
   
   select('Scenario' = SCENARIO_NAME,
-         "Localized R0 (Area 1, Area 2)" = LOCALR0,
-         "Weight at age" =WA, 
+         'PropR' = 
+         # "Localized R0 (Area 1, Area 2)" = LOCALR0,
+         # "Weight at age" =WA, 
          'Natural Mortality M' = NATM, 
          'Movement' = PSTAY_A1,
-         'Selectivity' = SLX_A50_A1, "Steepness h" = H1, 
-         GLOBAL_FMSY_A1,LOCAL_FMSY_A1,GLOBAL_FMSY_A2,LOCAL_FMSY_A2,GLOBAL_MSY,LOCAL_MSY,GLOBAL_SBMSY,LOCAL_SBMSY ) %>% View()
+         'Selectivity' = SLX_A50_A1,
+         "Steepness h" = H1, 
+         GLOBALFMSY,
+        LOCALFMSY,
+         MSY_RATIO,
+         GLOBAL_DEPL_TOTAL,
+         LOCAL_DEPL_TOTAL) %>% 
  write.csv(., file = here('figs',paste0(Sys.Date(),'-results.csv')), row.names = FALSE) 
 
 
