@@ -115,12 +115,23 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
               "YPR"=YPR[,1:25,]))
 } ## end func
 
-eq3d <- function(SBPR_F, steep, SBPR_0, r0 = R0_gLOBAL){
+eq3d <- function(SBPR_F, steep, SBPR_0, r0 = R0_global){
+  ## these are equivalent
   alpha = SBPR_0*(1-steep)/(4*steep)
-  beta = 5*r0/(4*steep*r0)
+  beta = (5*steep-1)/(4*steep*r0)
   req <- max(0.001, (SBPR_F - alpha)/(beta*SBPR_F)) ## a la SS
+  
+  # alpha = 4.0 * steep*R0_global / (5*steep-1)
+  # beta = ( SBPR_0*(1-steep)) / (5*steep-1)
+  # B_equil = alpha *  SBPR_F - beta
+  # B_equil = max(B_equil,0.0001)
+  # req =(4*steep*R0_global*B_equil) / ( SBPR_0*(1-steep)+(5*steep-1)*B_equil)
   return(req)
+  
 }
+# R0_global*(4*mean(h)*sum(tmp$SBPR) - (1-mean(h))*sum(tmp0$SBPR) )/((5*mean(h)-1)*sum(tmp$SBPR) )
+
+# eq3d(SBPR_F = sum(tmp$SBPR), steep = mean(h), SBPR_0 = sum(tmp0$SBPR))
 
 
 ## takes F, performs optimization and returns derived quants at Rbar hat rprop hat
@@ -205,7 +216,7 @@ makeOut <- function(dat,FFs){
 
     ## equation 3d
 
-    # R0_global*(4*mean(h)*sum(tmp$SBPR) - (1-mean(h))*sum(tmp0$SBPR) )/((5*mean(h)-1)*sum(tmp$SBPR) )
+    # 
     
     out[i,'estRbar',2] <- eq3d(SBPR_0 = sum(tmp0$SBPR), steep = mean(h),
                                r0 = R0_global, SBPR_F = sum(tmp$SBPR))
@@ -371,29 +382,33 @@ getMSY <- function(){
 
 # https://stackoverflow.com/questions/32600722/uniroot-in-r-when-there-are-two-unknowns
 ## we have two unknowns, similar to R setup, which are F input and Fprop
-## First we take integration of our funciton wrt x (call this g(a))
+## First we take integration of our function wrt x (call this g(a))
 dfx.dxSYS_global <- function(Fv_test, Fv_prop){
   ## Fv_prop indicates proportion of Fv_test applied in A1
   opt0 <- optim_loop(FFs=c((Fv_test-0.001)*(Fv_prop), (Fv_test-0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
-  req_global <- eq3d(SBPR_0 = sum(tmp0$SBPR), steep = mean(h),
-       r0 = R0_global, SBPR_F = sum(tmp$SBPR))
+  req_global <- eq3d(SBPR_0 = sum(tmp0$SBPR), 
+                     steep = mean(h),
+                     r0 = R0_global, 
+                     SBPR_F = sum(tmp$SBPR))
   
   # yields <- getYield(passR = R0_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
-  # yields <- getYield(passR = req_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
+  yields <- getYield(passR = req_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
   y1 <- yields$Yield_A1+yields$Yield_A2
   # cat(y1,'\n')
   opt0 <- optim_loop(FFs=c((Fv_test+0.001)*(Fv_prop), (Fv_test+0.001)*(1-Fv_prop)), i = NA)
   opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
-  req_global <- eq3d(SBPR_0 = sum(tmp0$SBPR), steep = mean(h),
-                     r0 = R0_global, SBPR_F = sum(tmp$SBPR))
+  req_global <- eq3d(
+    SBPR_0 = sum(tmp0$SBPR),
+    steep = mean(h),
+    r0 = R0_global,
+    SBPR_F = sum(tmp$SBPR)
+  )
   # yields <- getYield(passR = R0_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
   yields <- getYield(passR = req_global, passRprop =  Rprop_input, YPR_F = tmp$YPR)
-  
   y2 <- yields$Yield_A1+yields$Yield_A2
   # cat(y2,'\n')
   # appx <- (round(y2,1)-round(y1,1))/0.002 #0.002 is total X delta; we are using system yield
-  
   appx <- (y2-y1)/(0.002) #0.002 is total X delta; we are using system yield
   # cat(Fv_test,Fv_prop,appx,'\n')
   return(appx)
