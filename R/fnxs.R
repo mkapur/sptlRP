@@ -270,7 +270,15 @@ makeOut2 <- function(propmsy){
     opt_temp <- opt0$opt_temp; tmp0 <- opt0$tmp0; tmp <- opt0$tmp
     
     out2[i,'estRbar',1] <- opt_temp$par[1];  out2[i,'estRprop',1] <- opt_temp$par[2];
-    out2[i,'estRbar',2] <- R0_global;  out2[i,'estRprop',2] <- Rprop_input
+    
+    alpha = sum(tmp0$SBPR)*(1-mean(h))/(4*mean(h))
+    beta = (5*mean(h)-1)/(4*mean(h)*R0_global)
+    req <- max(0.001, (sum(tmp$SBPR) - alpha)/(beta*sum(tmp$SBPR))) ## a la SS
+    out2[i,'estRbar',2] <- req
+    
+    # out2[i,'estRbar',2] <- R0_global; 
+    out2[i,'estRprop',2] <- Rprop_input
+    
     ## derived quants at optimized value
     yields <- as.numeric(getYield(passR = out2[i,'estRbar',1], passRprop =   out2[i,'estRprop',1], YPR_F = tmp$YPR))
     out2[i,'Yield_A1',1] <- yields[1];  out2[i,'Yield_A2',1] <- yields[2];
@@ -278,7 +286,8 @@ makeOut2 <- function(propmsy){
     sbs <-getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp$SBPR)
     out2[i,'SB_A1',1] <-  as.numeric(sbs[1]);  out2[i,'SB_A2',1] <-  as.numeric(sbs[2]);
     
-    sb0 <- getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
+    sb0 <- getSB(passR = R0_global, passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
+    # sb0 <- getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',1] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',1] <-  as.numeric(sb0[2]);
     
     rexp <- as.numeric(getExpR( SB_F =sbs, SB_0 =sb0, meth = 1))
@@ -287,6 +296,7 @@ makeOut2 <- function(propmsy){
     obsr <- as.numeric(out2[i,'estRbar',1]*c(out2[i,'estRprop',1],1-out2[i,'estRprop',1]))
     out2[i,'obsR_A1',1] <- obsr[1];  out2[i,'obsR_A2',1] <- obsr[2];
     rm(opt0)
+    
     ## derived quants at global value ("current method")
     yields <- as.numeric(getYield(passR = out2[i,'estRbar',2], passRprop =   out2[i,'estRprop',2], YPR_F = tmp$YPR))
     out2[i,'Yield_A1',2] <- yields[1];  out2[i,'Yield_A2',2] <- yields[2];
@@ -294,7 +304,7 @@ makeOut2 <- function(propmsy){
     sbs <-getSB(passR = out2[i,'estRbar',2], passRprop = out2[i,'estRprop',2], SBPR_F = tmp$SBPR)
     out2[i,'SB_A1',2] <-  as.numeric(sbs[1]);  out2[i,'SB_A2',2] <-  as.numeric(sbs[2]);
     
-    sb0 <- getSB(passR = out2[i,'estRbar',2], passRprop = out2[i,'estRprop',2], SBPR_F = tmp0$SBPR)
+    sb0 <- getSB(passR = R0_global, passRprop = out2[i,'estRprop',2], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',2] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',2] <-  as.numeric(sb0[2]);
     
     rexp <- as.numeric(getExpR(SB_F = data.frame(sbs), SB_0 =data.frame(sb0), meth = 2)) ## one value, global rec
