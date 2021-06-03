@@ -143,15 +143,14 @@ optim_loop <- function(FFs,i){
 ## run analysis across discrete surface given input LH and FF vetors
 makeOut <- function(dat,FFs){
   ## Generate a surface of expected yields, given new method
-  out <- array(NA, dim = c(nrow(FFs),17,2), 
+  out <- array(NA, dim = c(nrow(FFs),15,2), 
                dimnames = list(c(1:nrow(FFs)),c("FF_Area1","FF_Area2",
                                                 "estRbar","estRprop",
                                                 "Yield_A1","Yield_A2",
                                                 "SB_A1","SB_A2",
                                                 "SB0_A1","SB0_A2",
                                                 "expR_A1","expR_A2",
-                                                "obsR_A1","obsR_A2","tyield",
-                                                "ralstonR_A1","ralstonR_A2"),
+                                                "obsR_A1","obsR_A2","tyield"),
                                c('new','old'))) ## each slice is old or new
   
   for(i in 1:nrow(FFs)){
@@ -173,10 +172,9 @@ makeOut <- function(dat,FFs){
     sbs <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp$SBPR)
     out[i,'SB_A1',1] <- as.numeric(sbs[1]);  out[i,'SB_A2',1] <- as.numeric(sbs[2]);
     
-    sb0 <- getSB(passR = R0_global, passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
-    
+    # sb0 <- getSB(passR = R0_global, passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     # sb0 <- getSB(passR = out[i,'estRbar',1], passRprop = out[i,'estRprop',1], SBPR_F = tmp0$SBPR)
-    # sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
+    sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
     
     out[i,'SB0_A1',1] <- as.numeric(sb0[1]);  out[i,'SB0_A2',1] <-as.numeric(sb0[2]);
     
@@ -232,11 +230,11 @@ makeOut <- function(dat,FFs){
     out[i,'tyield',1] <- out[i,'Yield_A1',1]+ out[i,'Yield_A2',1]
     out[i,'tyield',2] <- out[i,'Yield_A1',2]+ out[i,'Yield_A2',2]
     
-    out[i,'ralstonR_A1',1] <- out[i,'expR_A1',1] /out[i,'SB_A1',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
-    out[i,'ralstonR_A2',1] <- out[i,'expR_A2',1] /out[i,'SB_A2',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
+    # out[i,'ralstonR_A1',1] <- out[i,'expR_A1',1] /out[i,'SB_A1',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
+    # out[i,'ralstonR_A2',1] <- out[i,'expR_A2',1] /out[i,'SB_A2',1]*(out[i,'SB_A1',1]+out[i,'SB_A2',1])/2
     
-    out[i,'ralstonR_A1',2] <- out[i,'expR_A1',2] /out[i,'SB_A1',2]*(out[i,'SB_A1',2]+out[i,'SB_A2',2])/2
-    out[i,'ralstonR_A2',2] <- out[i,'expR_A2',2] /out[i,'SB_A2',2]*(out[i,'SB_A1',2]+out[i,'SB_A2',2])/2
+    # out[i,'ralstonR_A1',2] <- out[i,'expR_A1',2] /out[i,'SB_A1',2]*(out[i,'SB_A1',2]+out[i,'SB_A2',2])/2
+    # out[i,'ralstonR_A2',2] <- out[i,'expR_A2',2] /out[i,'SB_A2',2]*(out[i,'SB_A1',2]+out[i,'SB_A2',2])/2
     
   } ## end FFs loop
   return(out)
@@ -286,7 +284,8 @@ makeOut2 <- function(propmsy){
     sbs <-getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp$SBPR)
     out2[i,'SB_A1',1] <-  as.numeric(sbs[1]);  out2[i,'SB_A2',1] <-  as.numeric(sbs[2]);
     
-    sb0 <- getSB(passR = R0_global, passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
+    sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
+    # sb0 <- getSB(passR = R0_global, passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     # sb0 <- getSB(passR = out2[i,'estRbar',1], passRprop = out2[i,'estRprop',1], SBPR_F = tmp0$SBPR)
     out2[i,'SB0_A1',1] <-  as.numeric(sb0[1]);  out2[i,'SB0_A2',1] <-  as.numeric(sb0[2]);
     
@@ -456,8 +455,8 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   ## get sbprf and sbpr0 given pars
   ## the sbprF changes with F 
   # sb_0 <- getSB(passR ,passRprop, SBPR_0)
-  sb_0 <- getSB(R0_global ,passRprop, SBPR_0)
-  # sb_0 <- getSB(R0_global ,Rprop_input, SBPR_0)
+  # sb_0 <- getSB(R0_global ,passRprop, SBPR_0)
+  sb_0 <- getSB(R0_global ,Rprop_input, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
   Rexp <- getExpR(SB_F=sb_F, SB_0=sb_0, meth = 1) ## bh vals given pars, als use proposed method
   obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
