@@ -2,7 +2,7 @@
 
 makeDat <- function(nage = 100, 
                     narea =2, 
-                    wa,  
+                    wa = NULL,  
                     mort = exp(-0.2),
                     fec_a50, fec_a95,
                     slx_a50,slx_a95,
@@ -26,7 +26,7 @@ makeDat <- function(nage = 100,
       # 
       len[age] <- 50*(1-exp(-0.2*(age-1)))
       dat[age,"weight",area] <- 0.63*len[age]^1.81
-      
+      if(!is.null(wa)) dat[age,"weight",area] <- 0.8*len[age]^2
       
       # dat[age,"weight",area] <- wa[area] * age 
       
@@ -213,8 +213,8 @@ makeOut <- function(dat,FFs){
     
     out[i,'SB_A1',2] <- as.numeric(sbs[1]);  out[i,'SB_A2',2] <- as.numeric(sbs[2]);
     
-    # sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
-    sb0 <- getSB(passR = R0_global, passRprop = out[i,'estRprop',2], SBPR_F = tmp0$SBPR)
+    sb0 <- getSB(passR = R0_global, passRprop = Rprop_input, SBPR_F = tmp0$SBPR)
+    # sb0 <- getSB(passR = R0_global, passRprop = out[i,'estRprop',2], SBPR_F = tmp0$SBPR)
     out[i,'SB0_A1',2] <- as.numeric(sb0[1]);  out[i,'SB0_A2',2] <- as.numeric(sb0[2]);
     # cat(unlist(sb0),"\n")
     
@@ -446,7 +446,8 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
   ## get sbprf and sbpr0 given pars
   ## the sbprF changes with F 
   # sb_0 <- getSB(passR ,passRprop, SBPR_0)
-  sb_0 <- getSB(R0_global ,Rprop_input, SBPR_0)
+  sb_0 <- getSB(R0_global ,passRprop, SBPR_0)
+  # sb_0 <- getSB(R0_global ,Rprop_input, SBPR_0)
   sb_F <- getSB(passR ,passRprop, SBPR_F)
   Rexp <- getExpR(SB_F=sb_F, SB_0=sb_0, meth = 1) ## bh vals given pars, als use proposed method
   obsR <- passR*c(passRprop,1-passRprop) ## raw rec given rglobal and prop
