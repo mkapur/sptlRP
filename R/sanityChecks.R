@@ -25,11 +25,12 @@
 
 
 ## base case datplot ----
-png(here('figs','testdoPR-movement-PANEL.png'), width = 10, height = 7, units = 'in', res = 520)
+# png(here('figs','testdoPR-movement-PANEL.png'), width = 10, height = 7, units = 'in', res = 520)
 # load("C:/Users/mkapur/Dropbox/UW/sptlRP/OUTPUT/2021-06-02-h=0.7_0.7-Base-Case/dat.rdata")
 
 
-layout.matrix <- matrix(c(1:12), ncol = 3, byrow = T)
+
+layout.matrix <- matrix(c(1:6), ncol = 3, byrow = T)
 
 layout(mat = layout.matrix,
        widths = c(2, 1.75, 2), 
@@ -112,44 +113,7 @@ dev.off()
 ## aep 4x datplot ----
 ## he wants NAA at f0 and Fmsy for each scenario
 load("C:/Users/mkapur/Dropbox/UW/sptlRP/output/2021-06-03datlist.rdata") ## aep 4x scen datlist
-# par(mfrow = c(2,4))
 
-layout.matrix <- matrix(c(1:8), ncol = 4, byrow = F)
-
-layout(mat = layout.matrix) 
-
-for(s in 1:4){
-        tmp <- doPR(datlist[[s]], FF = c(0,0)) ## defaults, no fishing
-        plot(colSums(tmp$NPR[,,1]),type = 'l',
-             main = as.expression(bquote(Total~"Numbers,"~F~"="~0)),
-             ylim = c(0,1),
-             cex.main = 1.5,
-             ylab = 'Numbers-at-Age',
-             # xaxt = 'n',
-             lwd = 2,  )
-        lines(colSums(tmp$NPR[,,2]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
-        legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
-        text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-
-        
-        ## get fmsy from object
-        load(here("output",paste0("2021-06-03-h=0.7_0.7-",SCENNAMES[s],"/out.rdata"))) 
-       out2_new <- data.frame(out[,,'new'])
-        FFvec <- c(out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
-                   out2_new[which.max(out2_new[,'tyield']),'FF_Area2']) 
-        cat(SCENNAMES[s],FFvec,"\n")
-        tmp <- doPR(datlist[[s]], FF =FFvec) 
-        plot(colSums(tmp$NPR[,,1]),type = 'l',
-             main = as.expression(bquote(Total~"Numbers,"~F~"="~F[MSY])),
-             ylim = c(0,1),
-             cex.main = 1.5,
-             ylab = 'Numbers-at-Age',
-             # xaxt = 'n',
-             lwd = 2,  )
-        lines(colSums(tmp$NPR[,,2]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
-        legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
-        text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-}
 
 ## test with movement & some Fs
 png(here('figs','testdoPR-fishing.png'))
