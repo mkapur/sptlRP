@@ -26,13 +26,17 @@ makeDat <- function(nage = 100,
       # 
       len[age] <- 50*(1-exp(-0.2*(age-1)))
       dat[age,"weight",area] <- 0.63*len[age]^1.81
-      if(!is.null(wa)) dat[age,"weight",area] <- 0.8*len[age]^2
+      if(!is.null(wa)) dat[age,"weight",1] <- 0.8*len[age]^2
       
       # dat[age,"weight",area] <- wa[area] * age 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
-      
-      dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
+      if(!is.na(slx_a50[1])){
+        dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
+      } else{
+        dat[age,'fishery_selectivity',area] <- 1 ## full slx
+      }
+    
       dat[1,"fishery_selectivity",area] <- 0 ## don't fish recruits
       dat[age,'mortality',area] <- mort
       
@@ -214,10 +218,6 @@ makeOut <- function(dat,FFs){
     ## old method, use straight inputs
     out[i,'estRprop',2] <- Rprop_input
 
-    ## equation 3d
-
-    # 
-    
     out[i,'estRbar',2] <- eq3d(SBPR_0 = sum(tmp0$SBPR), steep = mean(h),
                                r0 = R0_global, SBPR_F = sum(tmp$SBPR))
     
