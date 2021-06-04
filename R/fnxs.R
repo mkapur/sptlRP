@@ -26,7 +26,7 @@ makeDat <- function(nage = 100,
       # 
       len[age] <- 50*(1-exp(-0.2*(age-1)))
       dat[age,"weight",area] <- 0.63*len[age]^1.81
-      if(!is.null(wa)) dat[age,"weight",1] <- 0.8*len[age]^2
+      if(!is.null(wa)) {dat[age,"weight",1] <- 0.8*len[age]^2}
       
       # dat[age,"weight",area] <- wa[area] * age 
       
