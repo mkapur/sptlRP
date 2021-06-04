@@ -19,15 +19,15 @@ coln <- c( "FMSY_NEW","FMSY_GLOBAL","FPROP_NEW","FPROP_GLOBAL",
            "MSY_NEW","MSY_GLOBAL", "SBMSY_NEW","SBMSY_GLOBAL", 
            "A1SB0_new",'A2SB0_new',
            "A1SB0_old",'A2SB0_old',
-           "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL", 'NEW_R0_A1','NEW_R0_A2') ## scenarios are defined by differeniating
+           "A1DEPL_NEW", "A1DEPL_GLOBAL","A2DEPL_NEW", "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 SCENNAMES <- scen$SCENARIO_NAME
 datlist <- list()
 
 
 ## run simulations ----
-# for(s in 1:nrow(scen)){
-for(s in 1:4){
+for(s in 1:nrow(scen)){
+# for(s in 26:27){
   SCENARIO <- scen[s,'SCENARIO_NAME']
   slx_a50t <- as.numeric(c(scen[s,'SLX_A50_A1'],9))
   slx_a95t <- as.numeric(c(scen[s,'SLX_A95_A1'],13))
@@ -38,8 +38,7 @@ for(s in 1:4){
   h <<- as.numeric(c(scen[s,'H1'],scen[s,'H2']))
   
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
-  if(s != 2){
-    
+  if(length(grep('WAA', SCENARIO)) == 0 ){
     dat <- makeDat(wa = NULL, ## default wa
                    mort = natM,
                    fec_a50 = c(6,6),
@@ -60,19 +59,13 @@ for(s in 1:4){
   # filetemp <- here('figs',paste0("2021-05-25-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
   # load(paste0(filetemp,'/dat.rdata'))
   datlist[[s]] <- dat
-  # FFs <- expand.grid(seq(0,1,0.05),seq(0,1,0.05)) ## instF
-  FFs <- expand.grid(seq(0,2,0.1),seq(0,2,0.1)) ## continuous F, will dictate range of yield plot
+  FFs <- expand.grid(seq(0,20,1),seq(0,20,1)) ## continuous F, will dictate range of yield plot
+  
   out <- makeOut(dat, FFs)
-  # out_use <- data.frame(out[,,'new']) ;
-  # out_use[which.max(out_use$tyield),]
-  # out_use %>% filter(FF_Area2 < 20) %>% select(FF_Area1, FF_Area2, tyield) %>% View()# View(out_use)
-  # outold <- data.frame(out[,,'old'])  ;outold %>% select(FF_Area1, FF_Area2, tyield) %>% View()#
-  # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
-  # with(subset(out_use), plot(FF_Area1 +FF_Area2, tyield))
-  # with(subset(outold), plot(FF_Area1 +FF_Area2, tyield))
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
-  # ## save the max to master table
+  
+  ## save the max to master table
   scen[s,'FMSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'FMSY','new']
   scen[s,'FPROP_NEW'] <- out2[which.max(out2[,'tyield','new']),'Fprop','new']
   scen[s,'MSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'tyield','new']
@@ -95,10 +88,8 @@ for(s in 1:4){
     out2[which.max(out2[,'tyield','old']),"SB0_A1",'old']
   scen[s,'A2DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A2",'old']/
     out2[which.max(out2[,'tyield','old']),"SB0_A2",'old']
-  scen[s,'NEW_R0_A1'] <- out[1,'estRbar','new']*out[1,'estRprop','new']
-  scen[s,'NEW_R0_A2'] <- out[1,'estRbar','new']*(1-out[1,'estRprop','new'])
   
-  # ## save stuff; looks to global SCENARIO for filename
+  ## save stuff; looks to SCENARIO for filename
   filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
   dir.create(filetemp)
   # lapply(list.files(filetemp, pattern = "*.RDATA", full.names = T), load,environment())
@@ -109,9 +100,12 @@ for(s in 1:4){
   save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
   save(dat, file = paste0(filetemp,'/dat.rdata'))
   rm(out2);rm(out);rm(propmsytemp);rm(dat)
+  
+  
 }
 ## save all input data ----
 save(datlist, file = here('output',paste0(Sys.Date(),'datlist.rdata')))
+save(scen, file = here('output',paste0(Sys.Date(),'scen.rdata')))
 
 ## Make table 2 ----
 data.frame(scen) %>%
