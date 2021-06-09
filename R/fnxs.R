@@ -8,9 +8,10 @@ makeDat <- function(nage = 100,
                     slx_a50,slx_a95,
                     pStay = c(0.9,0.6)){
   dat <- array(NA, dim = c(nage+1,length(vals),narea),dimnames = list(c(0:nage), c(vals), c(1:narea)))
-  
+
   for(area in 1:narea){
     len = NULL
+    dat[,'fishery_selectivity',area] <- logistic(0:nage, a50 = slx_a50[area], a95 = slx_a95[area])
     for(age in 1:(nage+1)){
       
       dat[age,"age",area] <- age-1
@@ -22,27 +23,31 @@ makeDat <- function(nage = 100,
       if(age >= 10) dat[age,"proportion_stay",area] <- pStay[area]
       if(all(pStay == 1)) dat[age,"proportion_stay",area] <- 1 ## no movement exception
       
-      ## make weight lenght age correct
-      # 
-      len[age] <- 50*(1-exp(-0.2*(age-1)))
-      dat[age,"weight",area] <- 0.63*len[age]^1.81
-      if(!is.null(wa)) {dat[age,"weight",1] <- 0.8*len[age]^2}
-      
-      # dat[age,"weight",area] <- wa[area] * age 
-      
-      dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
-      if(!is.na(slx_a50[1])){
-        dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
+      ## make weight @ age correct
+      if(is.null(wa)){ ## default WAA
+        len[age] <- 50*(1-exp(-0.15*(age-1)))
+        dat[age,"weight",area] <- 0.63*len[age]^1.81
       } else{
-        dat[age,'fishery_selectivity',area] <- 1 ## full slx
-      }
+        len[age] <- 50*(1-exp(-0.15*(age-1)))
+        dat[age,"weight",2] <- 0.63*len[age]^1.81
+        ## make area 1 bigger
+        len[age] <- 50*(1-exp(-0.3*(age- -1.77)))
+        dat[age,"weight",1] <- 0.8*len[age]^2
+      } 
+
+      dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
+      # if(!is.na(slx_a50[1])){
+      #   dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
+      # } else{
+      #   dat[age,'fishery_selectivity',area] <- 1 ## full slx
+      # }
     
       dat[1,"fishery_selectivity",area] <- 0 ## don't fish recruits
       dat[age,'mortality',area] <- mort
       
     } ## end age
   } ## end area
-  # 
+
   # png(here('figs',paste0(Sys.Date(),"-",SCENARIO,'-inputDat.png')),
   #     width = 8, height = 8, units = 'in', res = 400)
   # par(mfrow = c(2,2), mar = c(4,4,1,1))
@@ -66,7 +71,7 @@ makeDat <- function(nage = 100,
 
 
 
-doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
+doPR <- function(dat, narea = 2, nage = 20, FF = c(0,0)){
   NPR_SURV <- NPR <- BPR <- SBPR <- YPR <- array(NA, dim = c(narea,nage,narea)) ## now 100 ages of record
   NPR_SURV[,1,1] <- NPR[,1,1] <- c(1,0);  NPR_SURV[,1,2] <-  NPR[,1,2] <- c(0,1) ## single recruit to each area
   
@@ -89,10 +94,10 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
           } # end i != j
         }
         # end subareas j
-        NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*exp(-FF[area]) + NCome
+        # NPR[area,age,slice] <- (1-pLeave)*NPR_SURV[area,age,slice]*exp(-FF[area]) + NCome
         Ztemp <- -log(dat[age,'mortality',slice])+dat[age,"fishery_selectivity",area]*FF[area]
         
-        
+        NPR[1,,1] <- N[1,]; NPR[2,,2] <- N[2,]
         # } ## end ages 2:nage
         ## Calc Yield for each area-age - use baranov catch equation!
         ## bpr IS Wa x Nax
@@ -113,11 +118,18 @@ doPR <- function(dat, narea = 2, nage = 100, FF = c(0,0)){
     } ## end areas
   } ## end slices (array)
   # cat(FF,Ztemp,sum(YPR[,,,ny]), sum(NPR[,,,ny]), "\n")
-  return(list("NPR"=NPR[,1:25,],
-              "BPR"=BPR[,1:25,],
-              "SBPR"=SBPR[,1:25,],
-              "YPR"=YPR[,1:25,]))
+  return(list("NPR"= NPR[,1:20,],
+              "BPR"=BPR[,1:20,],
+              "SBPR"=SBPR[,1:20,],
+              "YPR"=YPR[,1:20,]))
 } ## end func
+
+AEPDOPR <- function(
+  
+  
+  
+)
+
 
 eq3d <- function(SBPR_F, steep, SBPR_0, r0 = R0_global){
   ## these are equivalent
