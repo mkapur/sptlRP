@@ -11,7 +11,7 @@ require(png);require(grid);require(gridExtra)
 source(here("R","fnxs.R"))
 
 ## settings and storage----
-R0_global <- 4 ## used in SRR
+R0_global <- 1 ## used in SRR
 scen <- read.csv(here("inputscen.csv")) ## setup
 
 ## things to track
@@ -26,17 +26,14 @@ datlist <- list()
 
 
 ## run simulations ----
-for(s in 1:nrow(scen)){
-# for(s in 26:27){
+# for(s in 1:nrow(scen)){
+for(s in 1:7){
   SCENARIO <- scen[s,'SCENARIO_NAME']
   slx_a50t <- as.numeric(c(scen[s,'SLX_A50_A1'],9))
   slx_a95t <- as.numeric(c(scen[s,'SLX_A95_A1'],13))
   natM <- as.numeric(scen[s,'NATM'])
-  
-  ## global overwrite based on input
   Rprop_input <<- as.numeric(scen[s,'PROPR'])
   h <<- as.numeric(c(scen[s,'H1'],scen[s,'H2']))
-  
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
   if(length(grep('WAA', SCENARIO)) == 0 ){
     dat <- makeDat(wa = NULL, ## default wa
@@ -55,16 +52,15 @@ for(s in 1:nrow(scen)){
                    slx_a95=slx_a95t,
                    pStay=pStayt)
   }
-
-  # filetemp <- here('figs',paste0("2021-05-25-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
+  # filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
   # load(paste0(filetemp,'/dat.rdata'))
+  # lapply(list.files(filetemp, pattern = "*.RDATA", full.names = T), load,environment())
+  # lapply(list.files(filetemp, pattern = "*.rdata", full.names = T), load,environment())
   datlist[[s]] <- dat
-  FFs <- expand.grid(seq(0,20,1),seq(0,20,1)) ## continuous F, will dictate range of yield plot
-  
+  FFs <- expand.grid(seq(0,5,0.05),seq(0,5,0.05)) ## continuous F, will dictate range of yield plot
   out <- makeOut(dat, FFs)
   propmsytemp <- getMSY()
   out2 <- makeOut2(propmsy=propmsytemp)
-  
   ## save the max to master table
   scen[s,'FMSY_NEW'] <- out2[which.max(out2[,'tyield','new']),'FMSY','new']
   scen[s,'FPROP_NEW'] <- out2[which.max(out2[,'tyield','new']),'Fprop','new']
@@ -84,25 +80,29 @@ for(s in 1:nrow(scen)){
   scen[s,'MSY_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),'tyield','old']
   scen[s,'SBMSY_GLOBAL'] <- sum(out2[which.max(out2[,'tyield','old']),"SB_A1",'old'],
                                 out2[which.max(out2[,'tyield','old']),"SB_A2",'old'])
+
+  scen[s,'SBMSY_A1_RATIO'] <- out2[which.max(out2[,'tyield','old']),"SB_A1",'old']/
+                                out2[which.max(out2[,'tyield','new']),"SB_A1",'new']
+
+  scen[s,'SBMSY_A2_RATIO'] <- out2[which.max(out2[,'tyield','old']),"SB_A2",'old']/
+                                  out2[which.max(out2[,'tyield','new']),"SB_A2",'new']
+
   scen[s,'A1DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A1",'old']/
     out2[which.max(out2[,'tyield','old']),"SB0_A1",'old']
   scen[s,'A2DEPL_GLOBAL'] <- out2[which.max(out2[,'tyield','old']),"SB_A2",'old']/
     out2[which.max(out2[,'tyield','old']),"SB0_A2",'old']
   
   ## save stuff; looks to SCENARIO for filename
-  filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
-  dir.create(filetemp)
-  # lapply(list.files(filetemp, pattern = "*.RDATA", full.names = T), load,environment())
-  
+  # filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(h[1],"_",h[2]),"-",SCENARIO))
+  # dir.create(filetemp)
   source(here('R','figs.R'))
-  save(out, file = paste0(filetemp,'/out.RDATA'))
-  save(out2, file =  paste0(filetemp, '/out2.RDATA'))
-  save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
-  save(dat, file = paste0(filetemp,'/dat.rdata'))
-  rm(out2);rm(out);rm(propmsytemp);rm(dat)
-  
-  
+  # save(out, file = paste0(filetemp,'/out.RDATA'))
+  # save(out2, file =  paste0(filetemp, '/out2.RDATA'))
+  # save(propmsytemp, file =  paste0(filetemp, '/propmsy.RDATA'))
+  # save(dat, file = paste0(filetemp,'/dat.rdata'))
+  # rm(out2);rm(out);rm(propmsytemp);rm(dat)
 }
+
 ## save all input data ----
 save(datlist, file = here('output',paste0(Sys.Date(),'datlist.rdata')))
 save(scen, file = here('output',paste0(Sys.Date(),'scen.rdata')))
@@ -118,9 +118,15 @@ data.frame(scen) %>%
     'LOCAL_FMSY_A2'= as.numeric(FMSY_NEW)*(1-as.numeric(FPROP_NEW)),
     'GLOBALFMSY' = paste(round(GLOBAL_FMSY_A1,2),round(GLOBAL_FMSY_A2,2), sep = ", "),
     'LOCALFMSY' = paste(round(LOCAL_FMSY_A1,2),round(LOCAL_FMSY_A2,2), sep = ", "),
-    'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_NEW),2),
+    
+    'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_NEW),2), 
     'GLOBAL_SBMSY' = round(as.numeric(SBMSY_GLOBAL),2),
     'LOCAL_SBMSY' = as.numeric(SBMSY_NEW),
+    
+    'SBMSY_RATIO' = round(GLOBAL_SBMSY/LOCAL_SBMSY,2),
+    'SBMSY_A1_RATIO' = round(as.numeric(SBMSY_A1_RATIO),2),
+    'SBMSY_A2_RATIO' = round(as.numeric(SBMSY_A2_RATIO),2),
+    
     'GLOBAL_SB0' = as.numeric(A1SB0_old)+as.numeric(A2SB0_old),
     'LOCAL_SB0' = as.numeric(A1SB0_new)+as.numeric(A2SB0_new),
     'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
@@ -139,6 +145,9 @@ data.frame(scen) %>%
          SteepnessH,
          GLOBALFMSY,
          LOCALFMSY,
+         SBMSY_RATIO_TOTAL =SBMSY_RATIO,
+         SBMSY_A1_RATIO,
+         SBMSY_A2_RATIO,
          MSY_RATIO,
          GLOBAL_DEPL_TOTAL,
          LOCAL_DEPL_TOTAL) %>% 
