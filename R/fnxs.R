@@ -1,3 +1,11 @@
+vals <- c('age','proportion_stay','weight','maturity',
+          'fishery_selectivity','mortality') ## things to enter into data frame
+
+
+logistic <- function(a,a50,a95){
+  val <- 1/(1+exp(-log(19)*((a-a50)/(a95-a50))))
+  return(val)
+}
 
 makeDat <- function(nage = 100, 
                     narea =2, 
@@ -37,181 +45,199 @@ makeDat <- function(nage = 100,
       } 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
-      # if(!is.na(slx_a50[1])){
-      #   dat[age,'fishery_selectivity',area] <- logistic(a = age, a50 = slx_a50[area], a95 = slx_a95[area])
-      # } else{
-      #   dat[age,'fishery_selectivity',area] <- 1 ## full slx
-      # }
-      
       dat[1,"fishery_selectivity",area] <- 0 ## don't fish recruits
       dat[age,'mortality',area] <- mort
       
     } ## end age
   } ## end area
-  return(list('dat' = dat,"h" = h,"input_prop" = input_prop, 'm' = mort))
+  return(list('dat' = dat,"h" = h,"input_prop" = input_prop, 'M' = mort))
 }
 
 
-logistic <- function(a,a50,a95){
-  val <- 1/(1+exp(-log(19)*((a-a50)/(a95-a50))))
-  return(val)
-}
+doNAA <- function(F1,F2, usedat){
 
-PopN_local <- function(par,
-                       getSBPF0 = FALSE, 
-                       returnVals= FALSE,
-                       slx_a50 = 9, 
-                       slx_a95 = 13,
-                       h = c(0.7,0.7),
-                       pstay_a1 = dat[,'proportion_stay',1],
-                       pstay_a2 = dat[,'proportion_stay',2]){
-  F1 <- exp(par[1])
-  F2 <- exp(par[2])
-  Nages <- 20
-  Ages <- 0:(Nages-1)
-  # LAA <- 100*(1.0-exp(-0.2*(Ages)))
-  # WAA <- 0.00001*LAA^3
-  LAA <- 50*(1-exp(-0.15*(Ages)))
-  WAA <- 0.63*LAA^1.81
-  
-  # Sel <- rep(0,Nages)
-  # Sel[6:Nages] <- 1
-  Sel <- matrix(0,nrow=2,ncol=Nages)
-  Sel[1,] <- logistic(a = Ages, a50 = slx_a50, a95 = slx_a95)
-  Sel[2,] <- logistic(a = Ages, a50 = 9, a95 = 13)
-  # cat('NASEL',sum(is.na(Sel)),"\n")
-  Fec <- Sel*WAA
-  M <- 0.2
-  Steep <- h
-  
-  Z<- matrix(0,nrow=2,ncol=Nages)
-  for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1
-  for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2
-  # cat('NAZ',sum(is.na(Z)),"\n")
-  ## NEED MOVEMENT HERE
-  N<- matrix(0,nrow=2,ncol=Nages)
-  N[1,1] <-  Prop
-  for (Iage in 2:Nages) N[1,Iage] <- N[1,Iage-1]*exp(-Z[1,Iage-1])
-  N[1,Nages] <- N[1,Nages]/(1-exp(-Z[1,Nages]))
-  N[2,1] <- 1.0-Prop
-  for (Iage in 2:Nages) N[2,Iage] <- N[2,Iage-1]*exp(-Z[2,Iage-1])
-  N[2,Nages] <- N[2,Nages]/(1-exp(-Z[2,Nages]))
-  #if (Detail==T) print(N)
-  #if (Detail==T) print(Z)
-  # cat('NAN',sum(is.na(N)),"\n")
-  
-  SSB <- Cat <- Recr <- c(0,0)
-  for(i in 1:2){
-    for (Iage in 1:Nages) Cat[i] <- Cat[i] + WAA[Iage]*Sel[Iage]*c(F1,F2)[i]*N[i,Iage]/Z[i,Iage]*(1.0-exp(-Z[i,Iage]))
-    for (Iage in 1:Nages) SSB[i] <- SSB[i] + Fec[Iage]*N[i,Iage]
-    
-    Top <- 4*Steep[i]*SSB[i]/SBPF0[i] - (1-Steep[i])
-    Bot <- (5*Steep[i]-1)*SSB[i]/SBPF0[i]
-    Recr[i] <- Top/Bot
-    
-  }
-  # cat('Recr',sum(is.na(Recr)),"\n")
-  # cat('Cat',sum(is.na(Cat)),"\n")
-  # cat('SSB',sum(is.na(SSB)),"\n")
-  
-  
-  if(getSBPF0 == T){
-    return(SSB) ## stop here, no need for recruit (prop already inside)
-  } else if(returnVals == T){
-    Cat <- Cat*Recr ## yeq, sys
-    SSB <- SSB*Recr ## ssbeq, sys
-    return(list('Prop','F1','F2','Cat1' = Cat[1], 'Cat2' = Cat[2],
-                'Rec1' = Recr[1], 'Rec2' = Recr[2],
-                'SSB1' = SSB[1], 'SSB2' = SSB[2],
-                'SBPF01' = SBPF0[1],'SBPF02' = SBPF0[2],
-                'tyield' = sum(Cat),
-                'trec' = sum(Recr),
-                'tSSB' = sum(SSB),
-                'tSBPF0' = sum(SBPF0),
-                'tDepl' = sum(SSB)/sum(SBPF0)))
-  }else{
-    Cat <- Cat*Recr ## yeq, sys
-    SSB <- SSB*Recr ## ssbeq, sys
-    if (Detail==T) cat(round(c(Prop,F1,F2,sum(Cat),sum(Recr), sum(SSB),sum(SBPF0),sum(SSB)/sum(SBPF0)),1),"\n")
-    
-    obj <- -sum(Cat)
-    return(obj)
-  }
-}
 
-PopN_global <-function(par, 
-                       returnVals= F, 
-                       slx_a50 = 9, 
-                       slx_a95=13,
-                       h = 0.7,
-                       pstay_a1 = dat[,'proportion_stay',1],
-                       pstay_a2 = dat[,'proportion_stay',2]){
-  F1 <- exp(par[1])
-  F2 <- exp(par[2])
-  Nages <- 20
-  Ages <- 0:(Nages-1)
-  # LAA <- 100*(1.0-exp(-0.2*(Ages)))
-  # WAA <- 0.00001*LAA^3
-  LAA <- 50*(1-exp(-0.15*(Ages)))
-  WAA <- 0.63*LAA^1.81
+  M <- usedat$M
+  h <- usedat$h
   
-  # Sel <- rep(0,Nages)
-  # Sel[6:Nages] <- 1
-  Sel <- matrix(0,nrow=2,ncol=Nages)
-  Sel[1,] <- logistic(a = Ages, a50 = slx_a50, a95 = slx_a95)
-  Sel[2,] <- logistic(a = Ages, a50 = 9, a95 = 13)
-  
-  Fec <- Sel*WAA
-  M <- 0.2
-  Steep <- mean(h) ## covers if >2
-  
+  ## run area-specific NAA
   Z<- matrix(0,nrow=2,ncol=Nages)
   for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1
   for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2
   
   
+  N <- array(NA, dim = c(narea,Nages,narea)) ## this is not NPR, since we are starting with proportions
+  ## assign recruits to each area
+  N[,1:2,1] <- c(1,0) #c(dat$input_prop,0)
+  N[,1:2,2] <- c(0,1) #c(0,1-dat$input_prop)
+  ## survive and move at once
+  for(slice in 1:narea){
+    for(age in 2:Nages){
+      for(area in 1:narea){
+        pLeave = NCome = 0
+        for(jarea in 1:narea){
+          if(area != jarea){
+            pLeave = pLeave + (1-usedat$dat[age,"proportion_stay",area]) ##  leaving for elsewhere
+            NCome = NCome +(1-usedat$dat[age,"proportion_stay",jarea])*
+              N[jarea,age-1,slice]*exp(-Z[jarea, age-1]) ## mortality in other area
+          } # end i != j
+        }  # end subareas j
+        N[area,age,slice] <- (1-pLeave)*N[area,age-1,slice]*exp(-Z[area, age-1]) + NCome
+      } ## end sink-area loop
+    } ## end ages
+  } ## end source-area loop
+  for(slice in 1:narea){
+    for(area in 1:narea){
+      N[area,Nages,slice] <-    N[area,Nages,slice]/(1-exp(-Z[area,Nages]))
+    }}
+  # cat(N[1,2,1],"\n")
+  return(list('N' = N,'Z' = Z))
+}
+
+
+
+runSim <- function(par, 
+                   dat, 
+                   ret = c('opt','vals')[1], 
+                   assume = 'GLOBAL'){
+  ## load settings
+  F1 <- par[1]
+  F2 <- par[2]
   
-  N<- matrix(0,nrow=2,ncol=Nages)
-  N[1,1] <-  Prop
-  for (Iage in 2:Nages) N[1,Iage] <- N[1,Iage-1]*exp(-Z[1,Iage-1])
-  N[1,Nages] <- N[1,Nages]/(1-exp(-Z[1,Nages]))
-  N[2,1] <- 1.0-Prop
-  for (Iage in 2:Nages) N[2,Iage] <- N[2,Iage-1]*exp(-Z[2,Iage-1])
-  N[2,Nages] <- N[2,Nages]/(1-exp(-Z[2,Nages]))
-  #if (Detail==T) print(N)
-  #if (Detail==T) print(Z)
+  WAA[1,] <- dat$dat[Ages+1,'weight',1]
+  WAA[2,] <- dat$dat[Ages+1,'weight',2]
+  Sel[1,] <- dat$dat[Ages+1,"fishery_selectivity",1] #logistic(a = Ages, a50 = slx_a50, a95 = slx_a95)
+  Sel[2,] <- dat$dat[Ages+1,"fishery_selectivity",2] #logistic(a = Ages, a50 = 9, a95 = 13)
+  Fec[1,] <- Sel[1,]*WAA[1,]
+  Fec[2,] <- Sel[2,]*WAA[2,]
   
-  Cat <- 0
-  for (Iage in 1:Nages) Cat <- Cat + WAA[Iage]*Sel[Iage]*F1*N[1,Iage]/Z[1,Iage]*(1.0-exp(-Z[1,Iage]))
-  for (Iage in 1:Nages) Cat <- Cat + WAA[Iage]*Sel[Iage]*F2*N[2,Iage]/Z[2,Iage]*(1.0-exp(-Z[2,Iage]))
-  
-  SSB <- 0
-  for (Iage in 1:Nages) SSB <- SSB + Fec[Iage]*N[1,Iage]
-  for (Iage in 1:Nages) SSB <- SSB + Fec[Iage]*N[2,Iage]
-  
-  
-  Top <- 4*Steep*SSB/SBPF0 - (1-Steep)
-  Bot <- (5*Steep-1)*SSB/SBPF0
-  Recr <- Top/Bot
-  
-  Cat <- Cat*Recr ## yeq, sys
-  SSB <- SSB*Recr ## ssbeq, sys
-  
-  if(returnVals == T){
-    return(list('Prop','F1','F2',
-                # 'Cat1' = Cat[1], 'Cat2' = Cat[2],
-                # 'Rec1' = Recr[1], 'Rec2' = Recr[2],
-                # 'SSB1' = SSB[1], 'SSB2' = SSB[2],
-                # 'SBPF01' = SBPF0[1],'SBPF02' = SBPF0[2],
-                'tyield' = sum(Cat),
-                'trec' = sum(Recr),
-                'tSSB' = sum(SSB),
-                'tSBPF0' = sum(SBPF0),
-                'tDepl' = sum(SSB)/sum(SBPF0)))
-  }else{
-    if (Detail==T) cat(round(c(Prop,F1,F2,Cat,Recr,SSB,SBPF0,SSB/SBPF0),1),"\n")
+  N_F0 <- doNAA(F1=0,F2=0, usedat =dat)$N
+  N_Z_F <- doNAA(F1,F2, usedat = dat)
+  # cat('didNAA',"\n")
+  ## derived quants on a per-area basis
+  ## because we included propr here, SSB already is SBPR
+  SSB <- SBPF0 <- Cat <- c(0,0)
+  for(area in 1:2){
+    for (Iage in 1:Nages) SBPF0[area] <- SBPF0[area] + Fec[area,Iage]*sum(N_F0[area,Iage,1:2])
+    for (Iage in 1:Nages) Cat[area] <- Cat[area] + WAA[area,Iage]*Sel[area,Iage]*c(F1,F2)[area]*sum(N_Z_F$N[area,Iage,1:2])/
+        N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
     
-    obj <- -Cat
+    for (Iage in 1:Nages) SSB[area] <- SSB[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
+  }
+
+  req_global <- getEqR(assumption = 'GLOBAL', SBPF0 = sum(SBPF0), SSB =  sum(SSB), Prop=dat$input_prop, Steep = mean(dat$h)) 
+  req_local <- getEqR(assumption = 'LOCAL', SBPF0=SBPF0, SSB=SSB , Prop=dat$input_prop, Steep = dat$h)$par 
+  
+  Recr = c(req_global, req_local[1])
+  rprop_est = req_local[2]
+  ## equilibrium yields
+  global_catch <-  Cat*Recr[1]
+  local_catch <-   Cat*Recr[2]
+  # cat(global_catch,"\n")
+  # cat(local_catch,"\n")
+  ## switch for what to return 
+  global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
+  global_sb0_a2 <- SBPF0[2]*Recr[2]*(1-dat$input_prop)
+  global_tssb0 <-  sum(global_sb0_a1,global_sb0_a2)
+  global_ssb_a1 <- SSB[1]*Recr[1]*dat$input_prop
+  global_ssb_a2 <- SSB[2]*Recr[1]*(1-dat$input_prop)
+  global_tssb <- sum(global_ssb_a1,global_ssb_a2)
+  global_depl_a1 <- global_ssb_a1/global_sb0_a1
+  global_depl_a2 <- global_ssb_a2/global_sb0_a2
+  global_tdepl <- global_tssb/ global_tssb0
+  
+  local_sb0_a1 <- SBPF0[1]*Recr[1]*rprop_est
+  local_sb0_a2 <- SBPF0[2]*Recr[2]*(1-rprop_est)
+  local_tssb0 <-  sum(local_sb0_a1,local_sb0_a2)
+  local_ssb_a1 <- SSB[1]*Recr[2]*rprop_est
+  local_ssb_a2 <- SSB[2]*Recr[2]*(1-rprop_est)
+  local_tssb <- sum(local_ssb_a1,local_ssb_a2)
+  local_depl_a1 <- local_ssb_a1/local_sb0_a1
+  local_depl_a2 <- local_ssb_a2/local_sb0_a2
+  local_tdepl <- local_tssb/ local_tssb0
+  
+  # if(F2 == 0) cat( SBPF0[2],"\n")
+  # if(F2 == 0) cat( SSB[2],"\n")
+  # if(F2 == 0) cat( local_catch[2],"\n")
+  # if(F2 == 0) cat( global_catch[2],"\n")
+  # if(F2 == exp(2)) cat( SBPF0[2],"\n")
+  # if(F2 == exp(2)) cat( SSB[2],"\n")
+  # if(F2 == exp(2)) cat( local_catch[2],"\n")
+  # if(F2 == exp(2)) cat( global_catch[2],"\n")
+  if(ret == 'vals'){
+   
+    
+    return(c("tyield_global" = sum(global_catch),
+             "tyield_local" = sum(local_catch),
+             "local_tssb0" = local_tssb0,
+             "global_tssb0" =  global_tssb0, 
+             "local_tssb" = local_tssb, 
+             "global_tssb" = global_tssb,
+             "req_local"= req_local[1], ## just return req not prop
+             "req_global" =req_global))
+    
+  }else{
+    if(assume == "GLOBAL"){obj <- -sum(global_catch)}
+    else{obj <- -sum(local_catch)}
     return(obj)
   }
+}
+
+
+getSB <- function(passR, passRprop, SBPR_F){
+  # SBPR_F_A1 <- sum(SBPR_F[1,,1],SBPR_F[1,,2])
+  # SBPR_F_A2 <- sum(SBPR_F[2,,1],SBPR_F[2,,2])
+  SB_A1 <- SBPR_F[1]*passR*passRprop
+  SB_A2 <- SBPR_F[2]*passR*(1-passRprop)
+  return(list('SB_A1'=SB_A1,"SB_A2"=SB_A2))
+}
+
+optimFunc <- function(par,SBPR_0,SBPR_F){
+  # cat(par,"\n")
+  passR <- par[1]; passRprop <- par[2]
+  # print(passR)
+  # print(passRprop)
+  sb_0 <- getSB(1, dat$input_prop, SBPR_0)
+  sb_F <- getSB(passR ,passRprop, SBPR_F)
+  Rexp = c(0,0)
+  for(i in 1:narea){
+    if(i == 1){
+      num <- passRprop*4*dat$h[[i]]*1*sb_F[[i]]/sb_0[[i]]
+    } else{
+      num <- (1-passRprop)*4*dat$h[[i]]*1*sb_F[[i]]/sb_0[[i]]
+    }
+    denom1 <- sb_F[[i]]/sb_0[[i]]*(5*dat$h[[i]]-1)
+    denom2 <- (1-dat$h[[i]])
+    Rexp[i] = num/(denom1+denom2)
+  } ## end area loop
+  obsR <- passR*c(passRprop,1-passRprop)
+  obj <- sum((obsR - Rexp)^2)
+  return(obj)
+}
+
+getEqR <- function(assumption = 'GLOBAL', SBPF0, SSB, Prop, Steep){
+  if(assumption == 'GLOBAL'){
+    # use summed qtties and return straight up req
+    Top <- 4*Steep*SSB/SBPF0 - (1-Steep)
+    Bot <- (5*Steep-1)*SSB/SBPF0
+    Recr <- Top/Bot
+    return(max(1e-4,Recr))
+  } else{
+    ## optimize
+    opt_temp <- optim(par = c(1,Prop),
+                      SBPR_F = SSB,
+                      SBPR_0 = SBPF0,
+                      lower = c(1E-4,1E-4),
+                      upper = c(NA,0.9999),
+                      method = "L-BFGS-B",
+                      fn = optimFunc, hessian = FALSE,
+                      control = list(
+                        maxit = 1000,
+                        ndeps = rep(1e-4,2)))
+    return(opt_temp)
+    # Top <- 4*Steep[area]*SSB[area]/SBPF0[area] - (1-Steep[area])
+    # Bot <- (5*Steep[area]-1)*SSB[area]/SBPF0[area]
+    # Recr[area] <- Top/Bot
+  }
+  
 }
