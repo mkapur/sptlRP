@@ -1,3 +1,9 @@
+## load settings
+Nages <- 20 
+narea <- 2
+Ages <- 0:(Nages-1)
+
+
 vals <- c('age','proportion_stay','weight','maturity',
           'fishery_selectivity','mortality') ## things to enter into data frame
 
@@ -54,7 +60,7 @@ makeDat <- function(nage = 100,
 }
 
 
-doNAA <- function(F1,F2, usedat){
+doNAA <- function(F1,F2, usedat, Sel){
 
 
   M <- usedat$M
@@ -100,19 +106,16 @@ runSim <- function(par,
                    dat, 
                    ret = c('opt','vals')[1], 
                    assume = 'GLOBAL'){
-  ## load settings
+
   F1 <- par[1]
   F2 <- par[2]
-  
-  WAA[1,] <- dat$dat[Ages+1,'weight',1]
-  WAA[2,] <- dat$dat[Ages+1,'weight',2]
-  Sel[1,] <- dat$dat[Ages+1,"fishery_selectivity",1] #logistic(a = Ages, a50 = slx_a50, a95 = slx_a95)
-  Sel[2,] <- dat$dat[Ages+1,"fishery_selectivity",2] #logistic(a = Ages, a50 = 9, a95 = 13)
-  Fec[1,] <- Sel[1,]*WAA[1,]
-  Fec[2,] <- Sel[2,]*WAA[2,]
-  
-  N_F0 <- doNAA(F1=0,F2=0, usedat =dat)$N
-  N_Z_F <- doNAA(F1,F2, usedat = dat)
+
+  WAA <-  matrix(c(dat$dat[Ages+1,'weight',1], dat$dat[Ages+1,'weight',2]),nrow=2,ncol=Nages, byrow = T)
+  Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
+  Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
+    
+  N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
+  N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
   # cat('didNAA',"\n")
   ## derived quants on a per-area basis
   ## because we included propr here, SSB already is SBPR
@@ -133,8 +136,8 @@ runSim <- function(par,
   ## equilibrium yields
   global_catch <-  Cat*Recr[1]
   local_catch <-   Cat*Recr[2]
-  # cat(global_catch,"\n")
-  # cat(local_catch,"\n")
+  cat(global_catch,"\n")
+  cat(local_catch,"\n")
   ## switch for what to return 
   global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
   global_sb0_a2 <- SBPF0[2]*Recr[2]*(1-dat$input_prop)
