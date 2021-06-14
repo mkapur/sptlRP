@@ -127,17 +127,19 @@ runSim <- function(par,
     
     for (Iage in 1:Nages) SSB[area] <- SSB[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
-
+  # cat(sum(SBPF0),"\n")
+  # cat(SBPF0,"\n")
   req_global <- getEqR(assumption = 'GLOBAL', SBPF0 = sum(SBPF0), SSB =  sum(SSB), Prop=dat$input_prop, Steep = mean(dat$h)) 
-  req_local <- getEqR(assumption = 'LOCAL', SBPF0=SBPF0, SSB=SSB , Prop=dat$input_prop, Steep = dat$h)$par 
+  req_local <- getEqR(assumption = 'LOCAL', SBPF0=SBPF0, SSB=SSB , Prop=dat$input_prop, Steep = dat$h)
   
-  Recr = c(req_global, req_local[1])
-  rprop_est = req_local[2]
+  Recr = c(req_global, req_local$par[1])
+  rprop_est = req_local$par[2]
+  # Recr = c(req_global, req_local)
   ## equilibrium yields
   global_catch <-  Cat*Recr[1]
   local_catch <-   Cat*Recr[2]
-  cat(global_catch,"\n")
-  cat(local_catch,"\n")
+  # cat(global_catch,"\n")
+  # cat(local_catch,"\n")
   ## switch for what to return 
   global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
   global_sb0_a2 <- SBPF0[2]*Recr[2]*(1-dat$input_prop)
@@ -168,8 +170,6 @@ runSim <- function(par,
   # if(F2 == exp(2)) cat( local_catch[2],"\n")
   # if(F2 == exp(2)) cat( global_catch[2],"\n")
   if(ret == 'vals'){
-   
-    
     return(c("tyield_global" = sum(global_catch),
              "tyield_local" = sum(local_catch),
              "local_tssb0" = local_tssb0,
@@ -226,6 +226,16 @@ getEqR <- function(assumption = 'GLOBAL', SBPF0, SSB, Prop, Steep){
     Recr <- Top/Bot
     return(max(1e-4,Recr))
   } else{
+    
+    ## raw calc
+    # Recr <- c(0,0)
+    # for(i in 1:2){
+    #   Top <- 4*Steep[i]*SSB[i]/SBPF0[i] - (1-Steep[i])
+    #   Bot <- (5*Steep[i]-1)*SSB[i]/SBPF0[i]
+    #   Recr[i] <- max(1e-4,Top/Bot)
+    # }
+    # 
+    # return(Recr)
     ## optimize
     opt_temp <- optim(par = c(1,Prop),
                       SBPR_F = SSB,
@@ -238,9 +248,6 @@ getEqR <- function(assumption = 'GLOBAL', SBPF0, SSB, Prop, Steep){
                         maxit = 1000,
                         ndeps = rep(1e-4,2)))
     return(opt_temp)
-    # Top <- 4*Steep[area]*SSB[area]/SBPF0[area] - (1-Steep[area])
-    # Bot <- (5*Steep[area]-1)*SSB[area]/SBPF0[area]
-    # Recr[area] <- Top/Bot
   }
   
 }
