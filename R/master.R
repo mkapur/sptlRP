@@ -14,27 +14,32 @@ source(here("R","fnxs.R"))
 ## run simulations
 scen <- read.csv(here("inputscen.csv")) ## setup
 s = 1
-# FFs <- expand.grid(seq(95,100,1),seq(0,10,1))
-FF.vec = seq(0,1.10,0.05)
+# FFs <- expand.grid(seq(1,100,1),seq(0,10,1))
+FF.vec = seq(0,1.1,0.05)
 # FF.vec = seq(95,100,1)
 FFs <- expand.grid(FF.vec,FF.vec) 
 dim(FFs)
 
 ## things to track
-coln <- c( "FMSY_LOCAL",
-           "FMSY_GLOBAL",
-           "MSY_LOCAL",
-           "MSY_GLOBAL",
-           "SBMSY_LOCAL",
-           "SBMSY_GLOBAL", 
-           "A1SB0_LOCAL",
-           'A2SB0_LOCAL',
-           "A1SB0_old",
-           'A2SB0_old',
-           "A1DEPL_LOCAL",
-           "A1DEPL_GLOBAL",
-           "A2DEPL_LOCAL",
-           "A2DEPL_GLOBAL" )
+coln <- c( 
+  "FMSY_GLOBAL_A1",
+  "FMSY_GLOBAL_A2",
+  "FMSY_LOCAL_A1",
+  "FMSY_LOCAL_A2",
+  "FMSY_LOCAL", 
+  "FMSY_GLOBAL",
+  "MSY_LOCAL",
+  "MSY_GLOBAL",
+  "SBMSY_LOCAL",
+  "SBMSY_GLOBAL", 
+  "A1SB0_LOCAL",
+  'A2SB0_LOCAL',
+  "A1SB0_old",
+  'A2SB0_old',
+  "A1DEPL_LOCAL",
+  "A1DEPL_GLOBAL",
+  "A2DEPL_LOCAL",
+  "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 
 for(s in 1:6){ #nrow(scen)){
@@ -68,29 +73,28 @@ for(s in 1:6){ #nrow(scen)){
                                    c("FF_Area1","FF_Area2",'tSSB', 'req', 'tSSB0',"tyield"),
                                    c('local','global'))) 
   for(i in 1:nrow(FFs)){
-    if(i %% 100 == 0) cat(i,"\n")
+    if(i %% 100 == 0) cat(i/nrow(FFs),"\n")
     surface[i,'FF_Area1',] <- FFs[i,1];  surface[i,'FF_Area2',] <- FFs[i,2]
     ## fill in surface
     useFs <- log(as.numeric(c(FFs[i,])))
     tyields <-  runSim(par =useFs, dat, ret = 'vals', assume = NA)
-    
-    surface[i,'tSSB','local'] <- tyields$local_tssb
-    surface[i,'tSSB','global'] <- tyields$global_tssb
-    surface[i,'tSSB0','local'] <- tyields$local_tssb0
-    surface[i,'tSSB0','global'] <- tyields$global_tssb0
-    surface[i,'req','local'] <- tyields$req_local.par[1]
-    surface[i,'req','global'] <- tyields$req_global
-    surface[i,'tyield','local'] <- tyields$tyield_local
-    surface[i,'tyield','global'] <- tyields$tyield_global
+    surface[i,'tSSB','local'] <- tyields['local_tssb']
+    surface[i,'tSSB','global'] <-  tyields['global_tssb'] #tyields$global_tssb
+    surface[i,'tSSB0','local'] <- tyields['local_tssb0'] #tyields$local_tssb0
+    surface[i,'tSSB0','global'] <- tyields['global_tssb0'] #tyields$global_tssb0
+    surface[i,'req','local'] <- tyields['req_local'] #tyields$req_local[1]
+    surface[i,'req','global'] <- tyields['req_global'] #tyields$req_global
+    surface[i,'tyield','local'] <- tyields['tyield_local'] #tyields$tyield_local
+    surface[i,'tyield','global'] <- tyields['tyield_global'] #tyields$tyield_global
   } ## end nrow FFs
 
   ## find MSY ----
-  ulim = 1e2
+  ulim = log(1e2)
   ss_global <- optim(par = c(0.5,0.5),
                      dat= dat,
                      assume = 'GLOBAL',
                      ret = 'optim',
-                     # lower = c(-Inf,0),
+                     # lower = c(,0),
                      # upper = c(ulim,ulim),
                      # method = 'L-BFGS-B',
                      fn=runSim,
@@ -126,22 +130,29 @@ for(s in 1:6){ #nrow(scen)){
   # print(refpts_global$)
   # print(refpts_local)
   
-  scen[s,'FMSY_LOCAL'] <- sum(ss_local$par)
+  scen[s,'FMSY_LOCAL_A1'] <- exp(ss_local$par)[1]
+  scen[s,'FMSY_LOCAL_A2'] <- exp(ss_local$par)[2]
+  scen[s,'FMSY_GLOBAL_A1'] <-exp(ss_global$par)[1]
+  scen[s,'FMSY_GLOBAL_A2'] <- exp(ss_global$par)[2]
+  
+  scen[s,'FMSY_LOCAL'] <- sum(exp(ss_local$par))
   scen[s,'MSY_LOCAL'] <- refpts_local['tyield_local']
   scen[s,'SBMSY_LOCAL'] <- refpts_local['local_tssb']
-  scen[s,'A1DEPL_LOCAL'] <- NA
-  scen[s,'A2DEPL_LOCAL'] <- NA
-  scen[s,'A1SB0_LOCAL'] <-  NA
-  scen[s,'A2SB0_LOCAL'] <-  NA
-  scen[s,'A1SB0_old'] <-  NA
-  scen[s,'A2SB0_old'] <-  NA
-  scen[s,'FMSY_GLOBAL'] <- sum(ss_global$par)
+  scen[s,'A1SB0_LOCAL'] <-  refpts_local['local_tssb0']*refpts_local['req_local_prop']
+  scen[s,'A2SB0_LOCAL'] <-  refpts_local['local_tssb0']*(1-refpts_local['req_local_prop'])
+  
+  scen[s,'A1DEPL_LOCAL'] <-  (refpts_local['local_tssb']*refpts_local['req_local_prop'])/  scen[s,'A1SB0_LOCAL']
+  scen[s,'A2DEPL_LOCAL'] <- (refpts_local['local_tssb']*(1-refpts_local['req_local_prop']))/   scen[s,'A2SB0_LOCAL']
+
+  scen[s,'A1SB0_GLOBAL'] <-   refpts_global['global_tssb0']*dat$input_prop
+  scen[s,'A2SB0_GLOBAL'] <-  refpts_global['global_tssb0']*(1-dat$input_prop)
+  scen[s,'FMSY_GLOBAL'] <- sum(exp(ss_global$par))
   scen[s,'MSY_GLOBAL'] <-  refpts_global['tyield_global']
   scen[s,'SBMSY_GLOBAL'] <- refpts_global['global_tssb']
-  scen[s,'SBMSY_A1_RATIO'] <- NA
-  scen[s,'SBMSY_A2_RATIO'] <- NA
-  scen[s,'A1DEPL_GLOBAL'] <- NA
-  scen[s,'A2DEPL_GLOBAL'] <- NA
+  scen[s,'SBMSY_A1_RATIO'] <- (refpts_global['global_tssb']*dat$input_prop)/(refpts_local['local_tssb']*refpts_local['req_local_prop'])
+  scen[s,'SBMSY_A2_RATIO'] <- (refpts_global['global_tssb']*(1-dat$input_prop))/(refpts_local['local_tssb']*(1-refpts_local['req_local_prop']))
+  scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL'] 
+  scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
 
   maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
   global <- data.frame(surface[,,'global']) %>%
@@ -151,6 +162,8 @@ for(s in 1:6){ #nrow(scen)){
     ggsidekick::theme_sleek() +
     theme(legend.position = 'top')+
     scale_fill_viridis_c() +
+    scale_x_continuous(limits = c(NA,maxf1)) +
+    scale_y_continuous(limits = c(NA,maxf1)) +
     geom_point(data = NULL,
                aes(x = exp(ss_global$par[1]), y = exp(ss_global$par[2])),
                fill = NA, color = 'blue', size = 2, pch =15) +
@@ -159,13 +172,13 @@ for(s in 1:6){ #nrow(scen)){
              y = 0.85*maxf1,
              size = 5,
              color = 'blue',
-             label = as.expression(bquote(MSY[global]~ "="~.(round(refpts_global$tyield_global,2))))) +
+             label = as.expression(bquote(MSY[Global]~ "="~.(round(refpts_global['tyield_global'],2))))) +
     annotate('text',
              x =0.6*maxf1,
              y = 0.8*maxf1,
              size = 5,
              color ='blue',
-             label = as.expression(bquote(F[MSY_global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
+             label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
     labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
 
   
@@ -177,6 +190,8 @@ for(s in 1:6){ #nrow(scen)){
     ggsidekick::theme_sleek() +
     theme(legend.position = 'top')+
     scale_fill_viridis_c() +
+    scale_x_continuous(limits = c(NA,maxf1)) +
+    scale_y_continuous(limits = c(NA,maxf1)) +
     geom_point(data = NULL,
                aes(x = exp(ss_local$par[1]), y = exp(ss_local$par[2])),
                fill = NA, color = 'blue', size = 2, pch =15)+
@@ -185,7 +200,7 @@ for(s in 1:6){ #nrow(scen)){
              y = 0.85*maxf1,
              size = 5,
              color = 'blue',
-             label = as.expression(bquote(MSY[Local]~ "="~.(round(refpts_local$tyield_local,2))))) +
+             label = as.expression(bquote(MSY[Local]~ "="~.(round(refpts_local['tyield_local'],2))))) +
     annotate('text',
              x =0.6*maxf1,
              y = 0.8*maxf1,
@@ -215,32 +230,30 @@ data.frame(scen) %>%
   mutate(WA = "Linear increasing function; identical between areas") %>%
   mutate(
     NATM = round(as.numeric(-log(NATM)),2),
-    # 'GLOBAL_FMSY_A1' = as.numeric(FMSY_GLOBAL)*as.numeric(FPROP_GLOBAL),
-    # 'LOCAL_FMSY_A1' = as.numeric(FMSY_NEW)*as.numeric(FPROP_NEW),
-    # 'GLOBAL_FMSY_A2' = as.numeric(FMSY_GLOBAL)*(1-as.numeric(FPROP_GLOBAL)),
-    # 'LOCAL_FMSY_A2'= as.numeric(FMSY_NEW)*(1-as.numeric(FPROP_NEW)),
+    'GLOBAL_FMSY_A1' = FMSY_GLOBAL_A1,
+    'LOCAL_FMSY_A1' = FMSY_LOCAL_A1,
+    'GLOBAL_FMSY_A2' = FMSY_GLOBAL_A2,
+    'LOCAL_FMSY_A2'= FMSY_LOCAL_A2,
     'GLOBALFMSY' = paste(round(GLOBAL_FMSY_A1,2),round(GLOBAL_FMSY_A2,2), sep = ", "),
     'LOCALFMSY' = paste(round(LOCAL_FMSY_A1,2),round(LOCAL_FMSY_A2,2), sep = ", "),
     
-    'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_NEW),2), 
+    'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_LOCAL),2), 
     'GLOBAL_SBMSY' = round(as.numeric(SBMSY_GLOBAL),2),
-    'LOCAL_SBMSY' = as.numeric(SBMSY_NEW),
+    'LOCAL_SBMSY' = as.numeric(SBMSY_LOCAL),
     
     'SBMSY_RATIO' = round(GLOBAL_SBMSY/LOCAL_SBMSY,2),
-    # 'SBMSY_A1_RATIO' = round(as.numeric(SBMSY_A1_RATIO),2),
-    # 'SBMSY_A2_RATIO' = round(as.numeric(SBMSY_A2_RATIO),2),
+    'SBMSY_A1_RATIO' = round(as.numeric(SBMSY_A1_RATIO),2),
+    'SBMSY_A2_RATIO' = round(as.numeric(SBMSY_A2_RATIO),2),
     
-    # 'GLOBAL_SB0' = as.numeric(A1SB0_old)+as.numeric(A2SB0_old),
-    # 'LOCAL_SB0' = as.numeric(A1SB0_new)+as.numeric(A2SB0_new),
-    # 'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
-    # 'LOCAL_DEPL_TOTAL' = round(LOCAL_SBMSY/LOCAL_SB0,2),
+    'GLOBAL_SB0' = as.numeric(A1SB0_old)+as.numeric(A2SB0_old),
+    'LOCAL_SB0' = as.numeric(A1SB0_LOCAL)+as.numeric(A2SB0_LOCAL),
+    'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
+    'LOCAL_DEPL_TOTAL' = round(LOCAL_SBMSY/LOCAL_SB0,2),
     'SteepnessH' =  paste(H1,H2,sep = ", "),
     'Movement' = ifelse(PSTAY_A1 == '0.9', 'Fig. 1B',
                         ifelse(PSTAY_A1 == 1, "Fig. 1C",  "Fig. 1D")),
     'Selectivity' = ifelse(SLX_A50_A1  == '9', 'Fig. 1E', 
                            ifelse(SLX_A50_A1  ==7, "Fig. 1F","Fig. 1G"))) %>%
-  
-  
   select('Scenario' = SCENARIO_NAME,
          'PropR' = PROPR,
          'Natural Mortality M' = NATM, 
