@@ -47,7 +47,7 @@ makeDat <- function(nage = 100,
         dat[age,"weight",2] <- 0.63*len[age]^1.81
         ## make area 1 bigger
         len[age] <- 50*(1-exp(-0.3*(age- -1.77)))
-        dat[age,"weight",1] <- 0.8*len[age]^2
+        dat[age,"weight",1] <- 0.8*len[age]^1.81
       } 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
@@ -107,9 +107,11 @@ runSim <- function(par,
                    ret = c('opt','vals')[1], 
                    assume = 'GLOBAL'){
 
-  F1 <- par[1]
-  F2 <- par[2]
-
+  # F1 <- par[1]
+  # F2 <- par[2]
+  F1 = exp(par[1])
+  F2 = exp(par[2])
+  
   WAA <-  matrix(c(dat$dat[Ages+1,'weight',1], dat$dat[Ages+1,'weight',2]),nrow=2,ncol=Nages, byrow = T)
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
   Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
@@ -119,44 +121,66 @@ runSim <- function(par,
   # cat('didNAA',"\n")
   ## derived quants on a per-area basis
   ## because we included propr here, SSB already is SBPR
-  SSB <- SBPF0 <- Cat <- c(0,0)
+  SBPR <- SBPF0 <- Cat <- c(0,0)
   for(area in 1:2){
     for (Iage in 1:Nages) SBPF0[area] <- SBPF0[area] + Fec[area,Iage]*sum(N_F0[area,Iage,1:2])
     for (Iage in 1:Nages) Cat[area] <- Cat[area] + WAA[area,Iage]*Sel[area,Iage]*c(F1,F2)[area]*sum(N_Z_F$N[area,Iage,1:2])/
         N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
     
-    for (Iage in 1:Nages) SSB[area] <- SSB[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
+    for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
   # cat(sum(SBPF0),"\n")
+  # cat(sum(SBPR),"\n")
   # cat(SBPF0,"\n")
-  req_global <- getEqR(assumption = 'GLOBAL', SBPF0 = sum(SBPF0), SSB =  sum(SSB), Prop=dat$input_prop, Steep = mean(dat$h)) 
-  req_local <- getEqR(assumption = 'LOCAL', SBPF0=SBPF0, SSB=SSB , Prop=dat$input_prop, Steep = dat$h)
+  req_global <- getEqR(assumption = 'GLOBAL', SBPF0 = sum(SBPF0), SSB =  sum(SBPR), Prop=dat$input_prop, Steep = mean(dat$h)) 
+  req_local <- getEqR(assumption = 'LOCAL', SBPF0=SBPF0, SSB=SBPR , Prop=dat$input_prop, Steep = dat$h)
+  # cat(req_local$par[1],"\n")
   
   Recr = c(req_global, req_local$par[1])
   rprop_est = req_local$par[2]
-  # Recr = c(req_global, req_local)
   ## equilibrium yields
   global_catch <-  Cat*Recr[1]
   local_catch <-   Cat*Recr[2]
-  # cat(global_catch,"\n")
-  # cat(local_catch,"\n")
+  cat(global_catch,"\n")
+  cat(local_catch,"\n")
   ## switch for what to return 
-  global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
-  global_sb0_a2 <- SBPF0[2]*Recr[2]*(1-dat$input_prop)
-  global_tssb0 <-  sum(global_sb0_a1,global_sb0_a2)
-  global_ssb_a1 <- SSB[1]*Recr[1]*dat$input_prop
-  global_ssb_a2 <- SSB[2]*Recr[1]*(1-dat$input_prop)
-  global_tssb <- sum(global_ssb_a1,global_ssb_a2)
+
+  # global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
+  # global_sb0_a2 <- SBPF0[2]*Recr[2]*(1-dat$input_prop)
+  # global_tssb0 <-  sum(global_sb0_a1,global_sb0_a2)
+  sb_0 <- as.numeric(getSB(1, dat$input_prop, SBPR_F =SBPF0 ))
+  global_sb0_a1 <- sb_0[1]
+  global_sb0_a2 <- sb_0[2]
+  global_tssb0 <-  sum(sb_0[1],sb_0[2])
+  
+  # global_ssb_a1 <- SSB[1]*Recr[1]*dat$input_prop
+  # global_ssb_a2 <- SSB[2]*Recr[1]*(1-dat$input_prop)
+  # global_tssb <- sum(global_ssb_a1,global_ssb_a2)
+  ssb <- as.numeric(getSB(1, dat$input_prop, SBPR_F =SBPR ))
+  global_ssb_a1 <- ssb[1] #SSB[1]*Recr[1]*dat$input_prop
+  global_ssb_a2 <- ssb[2] #SSB[2]*Recr[1]*(1-dat$input_prop)
+  global_tssb <- sum(ssb[1],ssb[2])
+  
   global_depl_a1 <- global_ssb_a1/global_sb0_a1
   global_depl_a2 <- global_ssb_a2/global_sb0_a2
   global_tdepl <- global_tssb/ global_tssb0
   
-  local_sb0_a1 <- SBPF0[1]*Recr[1]*rprop_est
-  local_sb0_a2 <- SBPF0[2]*Recr[2]*(1-rprop_est)
-  local_tssb0 <-  sum(local_sb0_a1,local_sb0_a2)
-  local_ssb_a1 <- SSB[1]*Recr[2]*rprop_est
-  local_ssb_a2 <- SSB[2]*Recr[2]*(1-rprop_est)
-  local_tssb <- sum(local_ssb_a1,local_ssb_a2)
+  # local_sb0_a1 <- SBPF0[1]*Recr[1]*rprop_est
+  # local_sb0_a2 <- SBPF0[2]*Recr[2]*(1-rprop_est)
+  # local_tssb0 <-  sum(local_sb0_a1,local_sb0_a2)
+  sb_0 <- as.numeric(getSB(1, rprop_est, SBPR_F =SBPF0 ))
+  local_sb0_a1 <- sb_0[1]
+  local_sb0_a2 <- sb_0[2]
+  local_tssb0 <-  sum(sb_0[1], sb_0[2])
+  
+  # local_ssb_a1 <- SSB[1]*Recr[2]*rprop_est
+  # local_ssb_a2 <- SSB[2]*Recr[2]*(1-rprop_est)
+  # local_tssb <- sum(local_ssb_a1,local_ssb_a2)
+  ssb <- as.numeric(getSB(1, rprop_est, SBPR_F =SBPR ))
+  local_ssb_a1 <- ssb[1]
+  local_ssb_a2 <- ssb[2]
+  local_tssb <-  sum(ssb[1], ssb[2])
+  
   local_depl_a1 <- local_ssb_a1/local_sb0_a1
   local_depl_a2 <- local_ssb_a2/local_sb0_a2
   local_tdepl <- local_tssb/ local_tssb0
@@ -213,7 +237,10 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
     denom2 <- (1-dat$h[[i]])
     Rexp[i] = num/(denom1+denom2)
   } ## end area loop
+
   obsR <- passR*c(passRprop,1-passRprop)
+  # cat(obsR,"\n")
+  # cat(Rexp,'\n')
   obj <- sum((obsR - Rexp)^2)
   return(obj)
 }
@@ -241,7 +268,7 @@ getEqR <- function(assumption = 'GLOBAL', SBPF0, SSB, Prop, Steep){
                       SBPR_F = SSB,
                       SBPR_0 = SBPF0,
                       lower = c(1E-4,1E-4),
-                      upper = c(NA,0.9999),
+                      upper = c(NA,1-1E-5),
                       method = "L-BFGS-B",
                       fn = optimFunc, hessian = FALSE,
                       control = list(
