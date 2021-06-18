@@ -1,127 +1,16 @@
-Prop <- 0.7
+require(here)
+require(dplyr)
+require(ggplot2)
 
-logistic <- function(a,a50,a95){
-  val <- 1/(1+exp(-log(19)*((a-a50)/(a95-a50))))
-  return(val)
-}
-
-PopN_local <- function(par, getSB0 = FALSE){
-  F1 <- exp(par[1])
-  F2 <- exp(par[2])
-  Nages <- 20
-  Ages <- 0:(Nages-1)
-  # LAA <- 100*(1.0-exp(-0.2*(Ages)))
-  # WAA <- 0.00001*LAA^3
-  LAA <- 50*(1-exp(-0.15*(Ages)))
-  WAA <- 0.63*LAA^1.81
-  
-  # Sel <- rep(0,Nages)
-  # Sel[6:Nages] <- 1
-  Sel <- logistic(a = Ages, a50 = 9, a95 = 13)
-  
-  Fec <- Sel*WAA
-  M <- 0.2
-  Steep <- c(0.7,0.7)
-  
-  Z<- matrix(0,nrow=2,ncol=Nages)
-  for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[Iage]*F1
-  for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[Iage]*F2
-  
-  ## NEED MOVEMENT HERE
-  N<- matrix(0,nrow=2,ncol=Nages)
-  N[1,1] <-  Prop
-  for (Iage in 2:Nages) N[1,Iage] <- N[1,Iage-1]*exp(-Z[1,Iage-1])
-  N[1,Nages] <- N[1,Nages]/(1-exp(-Z[1,Nages]))
-  N[2,1] <- 1.0-Prop
-  for (Iage in 2:Nages) N[2,Iage] <- N[2,Iage-1]*exp(-Z[2,Iage-1])
-  N[2,Nages] <- N[2,Nages]/(1-exp(-Z[2,Nages]))
-  #if (Detail==T) print(N)
-  #if (Detail==T) print(Z)
-
-  SSB <- Cat <- Recr <- c(0,0)
-  for(i in 1:2){
-    for (Iage in 1:Nages) Cat[i] <- Cat[i] + WAA[Iage]*Sel[Iage]*c(F1,F2)[i]*N[i,Iage]/Z[i,Iage]*(1.0-exp(-Z[i,Iage]))
-    for (Iage in 1:Nages) SSB[i] <- SSB[i] + Fec[Iage]*N[i,Iage]
-
-    Top <- 4*Steep[i]*SSB[i]/SBPF0[i] - (1-Steep[i])
-    Bot <- (5*Steep[i]-1)*SSB[i]/SBPF0[i]
-    Recr[i] <- Top/Bot
-
-  }
-
-  if(getSB0 == T){
-    return(SSB)
-  } else{
-    Cat <- Cat*Recr ## yeq, sys
-    SSB <- SSB*Recr ## ssbeq, sys
-    if (Detail==T) cat(round(c(Prop,F1,F2,sum(Cat),sum(Recr), sum(SSB),sum(SBPF0),sum(SSB)/sum(SBPF0)),1),"\n")
-    
-    obj <- -sum(Cat)
-    return(obj)
-  }
-
-}
-
-PopN_global <-function(par){
- F1 <- exp(par[1])
- F2 <- exp(par[2])
- Nages <- 20
- Ages <- 0:(Nages-1)
- # LAA <- 100*(1.0-exp(-0.2*(Ages)))
- # WAA <- 0.00001*LAA^3
- LAA <- 50*(1-exp(-0.15*(Ages)))
- WAA <- 0.63*LAA^1.81
- 
- # Sel <- rep(0,Nages)
- # Sel[6:Nages] <- 1
- Sel <- logistic(a = Ages, a50 = 9, a95 = 13)
- 
- Fec <- Sel*WAA
- M <- 0.2
- Steep <- 0.7
- 
- Z<- matrix(0,nrow=2,ncol=Nages)
- for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[Iage]*F1
- for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[Iage]*F2
- 
- ## NEED MOVEMENT HERE
- N<- matrix(0,nrow=2,ncol=Nages)
- N[1,1] <-  Prop
- for (Iage in 2:Nages) N[1,Iage] <- N[1,Iage-1]*exp(-Z[1,Iage-1])
- N[1,Nages] <- N[1,Nages]/(1-exp(-Z[1,Nages]))
- N[2,1] <- 1.0-Prop
- for (Iage in 2:Nages) N[2,Iage] <- N[2,Iage-1]*exp(-Z[2,Iage-1])
- N[2,Nages] <- N[2,Nages]/(1-exp(-Z[2,Nages]))
- #if (Detail==T) print(N)
- #if (Detail==T) print(Z)
- 
- Cat <- 0
- for (Iage in 1:Nages) Cat <- Cat + WAA[Iage]*Sel[Iage]*F1*N[1,Iage]/Z[1,Iage]*(1.0-exp(-Z[1,Iage]))
- for (Iage in 1:Nages) Cat <- Cat + WAA[Iage]*Sel[Iage]*F2*N[2,Iage]/Z[2,Iage]*(1.0-exp(-Z[2,Iage]))
- 
- SSB <- 0
- for (Iage in 1:Nages) SSB <- SSB + Fec[Iage]*N[1,Iage]
- for (Iage in 1:Nages) SSB <- SSB + Fec[Iage]*N[2,Iage]
- 
- 
- Top <- 4*Steep*SSB/SBPF0 - (1-Steep)
- Bot <- (5*Steep-1)*SSB/SBPF0
- Recr <- Top/Bot
- 
- Cat <- Cat*Recr ## yeq, sys
- SSB <- SSB*Recr ## ssbeq, sys
- if (Detail==T) cat(round(c(Prop,F1,F2,Cat,Recr,SSB,SBPF0,SSB/SBPF0),1),"\n")
- 
- obj <- -Cat
- return(obj)
-}
-
-
+## sanity check 1 ----
+## Confirm without movement things are equivalent
+## among methods and across Prop
+source(here('R','fnxs-dep2.r'))
+Prop <- 0.5
 Detail <- T
-
-## PROP F1 F2 CAT RECR DEPL
-SBPF0 <- 480.904 # 10.92109 GLOBAL
+SBPF0 <- 100.3253#480.904 # GLOBAL
 PopN_global(c(-10000,-100000)) ## F=0
+
 for (II in 1:9) {
   Prop <- II*0.1
   Detail <- F
@@ -130,12 +19,121 @@ for (II in 1:9) {
   Detail <- T
   PopN_global(ss$par)
 }
-
-
 for (II in 1:9) {
   Prop <- II*0.1
+  Detail <- F
   ## UPDATE SB0 based on prop
-  SBPF0 <- PopN_local(c(-10000,-10000), getSB0=T) ## F=0
+  SBPF0 <- PopN_local(c(-10000,-10000), getSBPF0=T) ## F=0
+  PopN_local(c(-10000,-10000)) ## F=0
+  # cat(Prop,"\t",SBPF0,"\t", sum(SBPF0),"\n")
+
+  ss <- optim(par=c(log(0.1),log(0.1)),
+              fn=PopN_local, 
+              lower = c(-10000,-10000),
+              upper = c(log(10000),log(10000)),
+              method = 'L-BFGS-B')
+  ss <- optim(par=ss$par,
+              fn=PopN_local,
+              lower = c(-10000,-10000),
+              upper = c(log(10000),log(10000)),
+              method = 'L-BFGS-B')
+  Detail <- T
+  PopN_local(ss$par)
+}
+
+## run simulations
+scen <- read.csv(here("inputscen.csv")) ## setup
+
+for(i in 1:nrow(scen)){
+  Detail=F
+  Prop = scen[i,'PROPR']
+  Steep <- c(scen[i,'H1'],scen[i,'H2'])
+  a50 <- scen[i,'H1']
+  ## build surface
+  FFs <- expand.grid(seq(0,5,0.05),seq(0,5,0.05)) ## continuous F, will dictate range of yield plot
+  surface <- array(NA, dim = c(nrow(FFs),15,2), 
+                   dimnames = list(c(1:nrow(FFs)),c("FF_Area1","FF_Area2",
+                                                    "estRbar","estRprop",
+                                                    "Yield_A1","Yield_A2",
+                                                    "SB_A1","SB_A2",
+                                                    "SB0_A1","SB0_A2",
+                                                    "expR_A1","expR_A2",
+                                                    "obsR_A1","obsR_A2","tyield"),
+                                   c('local','global'))) ## each slice is old or new
+  for(i in 1:nrow(FFs)){
+    pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
+    if(length(grep('WAA', SCENARIO)) == 0 ){
+      dat <- makeDat(wa = NULL, ## default wa
+                     mort = natM,
+                     h = c(0.7,0.7),
+                     input_prop = Prop,
+                     fec_a50 = c(6,6),
+                     fec_a95 = c(12,12),
+                     slx_a50=slx_a50t,
+                     slx_a95=slx_a95t,
+                     pStay=pStayt)
+    } else{
+      dat <- makeDat(wa = c(10,5), ## higher
+                     mort = natM,
+                     fec_a50 = c(6,6),
+                     fec_a95 = c(12,12),
+                     slx_a50=slx_a50t,
+                     slx_a95=slx_a95t,
+                     pStay=pStayt)
+    }
+    
+    ## generate the surface
+    SBPF0 <- PopN_local(getSBPF0=T, 
+                        slx_a50 = 9, 
+                        slx_a95=13,
+                        h = Steep,
+                        pstay_a1 = dat[,'proportion_stay',1],
+                        pstay_a2 = dat[,'proportion_stay',2],
+                        par = log(as.numeric(c(FFs[i,])))) ## F=0
+    tmp_local <- PopN_global(returnVals = T, 
+                             slx_a50 = 9, 
+                             slx_a95=13,
+                             h = Steep,
+                             pstay_a1 = dat[,'proportion_stay',1],
+                             pstay_a2 = dat[,'proportion_stay',2],
+                             par = log(as.numeric(c(FFs[i,]))))
+    
+    SBPF0 <- 480.904 
+    tmp_global <- PopN_local(returnVals = T, par =  log(as.numeric(c(FFs[i,]) )))
+    
+    surface[i,'FF_Area1',] <- FFs[i,1]
+    surface[i,'FF_Area2',] <- FFs[i,2]
+    surface[i,'tyield','local'] <- tmp_local$tyield
+    surface[i,'tyield','global'] <- tmp_global$tyield
+  }
+  
+  
+  ## global surface ----
+  tmp_global <- PopN_local(returnVals = T, par =  log(as.numeric(c(FFs[i,]) )))
+  SBPF0 <- PopN_local(c(-10000,-10000), getSBPF0=T) ## F=0
+  # cat(Prop,"\t",SBPF0,"\t", sum(SBPF0),"\n")
+  Detail <- F
+  ss <- optim(par=c(log(0.1),log(0.1)),
+              fn=PopN_local, 
+              lower = c(-10000,-10000),
+              upper = c(log(10000),log(10000)),
+              method = 'L-BFGS-B')
+  ss <- optim(par=ss$par,
+              fn=PopN_local,
+              lower = c(-10000,-10000),
+              upper = c(log(10000),log(10000)),
+              method = 'L-BFGS-B')
+  Detail <- T
+  PopN_local(ss$par)
+  ## global optim
+
+  surface[i,'tyield','local'] <- tmp_local$tyield
+  surface[i,'tyield','global'] <- tmp_global$tyield
+  ## local surface
+  tmp_local <- PopN_global(returnVals = T, par = log(as.numeric(c(FFs[i,]) )))
+  
+  ## local optim
+  SBPF0 <- PopN_local(c(-10000,-10000), getSBPF0=T) ## F=0
   # cat(Prop,"\t",SBPF0,"\t", sum(SBPF0),"\n")
   Detail <- F
   ss <- optim(par=c(log(0.1),log(0.1)),
@@ -151,4 +149,60 @@ for (II in 1:9) {
   Detail <- T
   PopN_local(ss$par)
 }
+
+## generate surface for plot
+FFs <- expand.grid(seq(0,5,0.05),seq(0,5,0.05)) ## continuous F, will dictate range of yield plot
+surface <- array(NA, dim = c(nrow(FFs),15,2), 
+                 dimnames = list(c(1:nrow(FFs)),c("FF_Area1","FF_Area2",
+                                                  "estRbar","estRprop",
+                                                  "Yield_A1","Yield_A2",
+                                                  "SB_A1","SB_A2",
+                                                  "SB0_A1","SB0_A2",
+                                                  "expR_A1","expR_A2",
+                                                  "obsR_A1","obsR_A2","tyield"),
+                                 c('local','global'))) ## each slice is old or new
+for(i in 1:nrow(FFs)){
+  
+  ## generate the surface
+  tmp_local <- PopN_global(returnVals = T, par = log(as.numeric(c(FFs[i,]) )))
+  tmp_global <- PopN_local(returnVals = T, par =  log(as.numeric(c(FFs[i,]) )))
+  surface[i,'FF_Area1',] <- FFs[i,1]
+  surface[i,'FF_Area2',] <- FFs[i,2]
+  surface[i,'tyield','local'] <- tmp_local$tyield
+  surface[i,'tyield','global'] <- tmp_global$tyield
+}
+
+data.frame(surface[,,'local']) %>%
+  select(FF_Area1,FF_Area2, Yield_Total =tyield) %>%  
+  reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+  # mutate(Area = substr(variable,7,8), yield = value) %>%
+  mutate(yield = value) %>%
+  select(-variable,-value) %>% 
+  ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = yield)) +
+  geom_tile() +
+  coord_equal() +
+  ggsidekick::theme_sleek() +
+  theme(legend.position = 'top',plot.margin=grid::unit(c(0,0,0,0), "mm")) +
+  scale_fill_gradient2(low = "white", high = "grey11")+
+  geom_point(data = out2_new, aes(x = out2_new[which.max(out2_new[,'tyield']),'FF_Area1'],
+                                  y = out2_new[which.max(out2_new[,'tyield']),'FF_Area2']), 
+             fill = NA, color = 'gold', size = 2, pch =15)+
+  annotate('text',
+           x =0.6*maxf1,
+           y = 0.85*maxf1,
+           size = 5,
+           color = 'gold',
+           label = as.expression(bquote(MSY[Local]~
+                                          "="~.(round(out2_new[which.max(out2_new[,'tyield']),
+                                                               'tyield']))))) +
+  annotate('text',
+           x =0.6*maxf1,
+           y = 0.8*maxf1,
+           size = 5,
+           color ='gold',
+           label = as.expression(bquote(F[MSY_Local]~"="~.(round(out2_new[which.max(out2_new$tyield),'FF_Area1'],2))~"Area 1, "~.
+                                        (round(out2_new[which.max(out2_new$tyield),'FF_Area2'],2))~"Area 2"))) +
+  
+  labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
+
 
