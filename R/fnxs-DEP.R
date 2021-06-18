@@ -514,9 +514,6 @@ optimFunc <- function(par,SBPR_0,SBPR_F){
 ## set up readable data frame with movement, selex, wtage, maturity inputs for each area
 ## each par will be of length 2, representing the two areas
 ## pStay indicates the residency rate for ages 10+; linear to this between age 1-11 
-vals <- c('age','proportion_stay','weight','maturity',
-          'fishery_selectivity','mortality') ## things to enter into data frame
-
 
 
 
