@@ -1,0 +1,26 @@
+Scenario,PropR,Natural Mortality M,Movement,Selectivity,SteepnessH,GLOBALFMSY,LOCALFMSY,SBMSY_RATIO_TOTAL,SBMSY_A1_RATIO,SBMSY_A2_RATIO,MSY_RATIO,GLOBAL_DEPL_TOTAL,LOCAL_DEPL_TOTAL
+NoMovement_Rprop=0.5,0.5,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.42, 0.42",1,1,1,1,0.33,0.33
+NoMovement_Rprop=0.6,0.6,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.36, 0.5",1,1.08,0.89,1,0.33,0.34
+NoMovement_Rprop=0.7,0.7,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.32, 0.61",0.98,1.13,0.75,0.98,0.33,0.34
+NoMovement_Rprop=0.8,0.8,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.3, 4.76",0.81,0.65,16226.35,0.76,0.33,0.41
+Symmetrical_Movement,0.5,0.2,Fig. 1D,Fig. 1E,"0.7, 0.7","0, 0.98","0, 0.98",1,1.01,0.99,1,0.33,0.33
+PstayA1 = 0.6,0.5,0.2,Fig. 1D,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+PstayA1 = 0.7,0.5,0.2,Fig. 1D,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+PstayA1 = 0.8,0.5,0.2,Fig. 1D,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+PstayA1 = 0.6 PstayA2 = 0.3,0.5,0.2,Fig. 1D,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+PstayA1 = 0.8 PstayA2 = 0.6,0.5,0.2,Fig. 1D,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+NoMovement_HigherWAA_Rprop=0.5,0.5,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+A1 Sink Rprop = 0.5,0.5,0.2,Fig. 1B,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+Base-Case,0.5,0.2,Fig. 1B,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+a1 low selex + symmetrical movement,0.5,0.2,Fig. 1D,Fig. 1F,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+a1 low selex,0.5,0.2,Fig. 1B,Fig. 1F,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+a1 hi selex,0.5,0.2,Fig. 1B,Fig. 1G,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+lower m,0.5,0.1,Fig. 1B,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+higher m,0.5,0.4,Fig. 1B,Fig. 1E,"0.7, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+lower h,0.5,0.2,Fig. 1B,Fig. 1E,"0.5, 0.5","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+higher h,0.5,0.2,Fig. 1B,Fig. 1E,"0.9, 0.9","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+lowerh-no movement,0.5,0.2,Fig. 1C,Fig. 1E,"0.5, 0.5","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+combo h-base movement,0.5,0.2,Fig. 1B,Fig. 1E,"0.7, 0.5","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+rev combo h-base movement,0.5,0.2,Fig. 1B,Fig. 1E,"0.5, 0.7","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+low h high m -base movement,0.5,0.1,Fig. 1B,Fig. 1E,"0.5, 0.5","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA
+high h low m -base,0.5,0.4,Fig. 1B,Fig. 1E,"0.9, 0.9","NA, NA","NA, NA",NA,NA,NA,NA,NA,NA

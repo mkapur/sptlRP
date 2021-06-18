@@ -118,14 +118,28 @@ runSim <- function(par,
     
   N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
   N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
+
   # cat('didNAA',"\n")
   ## derived quants on a per-area basis
   ## because we included propr here, SSB already is SBPR
   SBPR <- SBPF0 <- Cat <- c(0,0)
   for(area in 1:2){
     for (Iage in 1:Nages) SBPF0[area] <- SBPF0[area] + Fec[area,Iage]*sum(N_F0[area,Iage,1:2])
+    # cat(sum(N_Z_F$N[area,,1:2])/   N_Z_F$Z[area,]*(1.0-exp(-N_Z_F$Z[area,])),"\n")
+
+    # if(area ==1){
+    # prod = NULL
+    # for (Iage in 1:Nages){
+    #   prod[Iage] <- sum(N_Z_F$N[area,Iage,1:2])/ N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
+    #   prod[Iage] = ifelse(prod[Iage] < 5e-2,0,prod[Iage])
+    #   # cat(prod[Iage],"\n")
+    #   # cat(WAA[area,Iage]*Sel[area,Iage]*c(F1,F2)[area]*prod[Iage],"\n")
+    #   Cat[area] <- Cat[area] +WAA[area,Iage]*Sel[area,Iage]*c(F1,F2)[area]*prod[Iage]
+    #   # }
+    # }
+    
     for (Iage in 1:Nages) Cat[area] <- Cat[area] + WAA[area,Iage]*Sel[area,Iage]*c(F1,F2)[area]*sum(N_Z_F$N[area,Iage,1:2])/
-        N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
+    N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
     
     for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
@@ -136,13 +150,14 @@ runSim <- function(par,
   req_local <- getEqR(assumption = 'LOCAL', SBPF0=SBPF0, SSB=SBPR , Prop=dat$input_prop, Steep = dat$h)
   # cat(req_local$par[1],"\n")
   
+  
   Recr = c(req_global, req_local$par[1])
   rprop_est = req_local$par[2]
   ## equilibrium yields
   global_catch <-  Cat*Recr[1]
   local_catch <-   Cat*Recr[2]
-  cat(global_catch,"\n")
-  cat(local_catch,"\n")
+  # cat(global_catch,"\n")
+  # cat(local_catch,"\n")
   ## switch for what to return 
 
   # global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
@@ -198,9 +213,18 @@ runSim <- function(par,
              "tyield_local" = sum(local_catch),
              "local_tssb0" = local_tssb0,
              "global_tssb0" =  global_tssb0, 
+             
              "local_tssb" = local_tssb, 
              "global_tssb" = global_tssb,
-             "req_local"= req_local[1], ## just return req not prop
+             
+             "local_a1ssb" = local_ssb_a1, 
+             "global_a1ssb" = global_ssb_a1,
+             
+             "local_a2ssb" = local_ssb_a2, 
+             "global_a2ssb" = global_ssb_a2,
+             
+             "req_local"= req_local$par[1], ## just return req not prop
+             "req_local_prop" = rprop_est,
              "req_global" =req_global))
     
   }else{
@@ -274,6 +298,7 @@ getEqR <- function(assumption = 'GLOBAL', SBPF0, SSB, Prop, Steep){
                       control = list(
                         maxit = 1000,
                         ndeps = rep(1e-4,2)))
+    
     return(opt_temp)
   }
   
