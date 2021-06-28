@@ -1,5 +1,0 @@
-Scenario,PropR,Natural Mortality M,Movement,Selectivity,SteepnessH,GLOBALFMSY,LOCALFMSY,SBMSY_RATIO_TOTAL,SBMSY_A1_RATIO,SBMSY_A2_RATIO,MSY_RATIO,GLOBAL_DEPL_TOTAL,LOCAL_DEPL_TOTAL
-NoMovement_Rprop=0.5,0.5,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.42, 0.42",1,1,1,1,0.33,0.33
-NoMovement_Rprop=0.6,0.6,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.36, 0.5",1,1.08,0.89,1,0.33,0.34
-NoMovement_Rprop=0.7,0.7,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.32, 0.61",0.98,1.13,0.75,0.98,0.33,0.34
-NoMovement_Rprop=0.8,0.8,0.2,Fig. 1C,Fig. 1E,"0.7, 0.7","0.42, 0.42","0.3, 4.76",0.81,0.65,16226.35,0.76,0.33,0.41

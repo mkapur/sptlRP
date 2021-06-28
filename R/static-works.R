@@ -110,7 +110,8 @@ PopN_global <-function(par){
   
   Cat <- Cat*Recr ## yeq, sys
   SSB <- SSB*Recr ## ssbeq, sys
-  if (Detail==T) cat(round(c(Prop,F1,F2,Cat,Recr,SSB,SBPF0,SSB/SBPF0),1),"\n")
+  # if (Detail==T) cat(round(c(Prop,F1,F2,Cat,Recr,SSB,SBPF0,SSB/SBPF0),1),"\n")
+  if (Detail==T) cat(SBPF0,"\n")
   
   obj <- -Cat
   return(obj)
@@ -121,7 +122,7 @@ Detail <- T
 
 ## PROP F1 F2 CAT RECR DEPL
 SBPF0 <- 480.904 # 10.92109 GLOBAL
-PopN_global(c(-10000,-100000)) ## F=0
+PopN_global(c(-10000,-10000)) ## F=0
 for (II in 1:9) {
   Prop <- II*0.1
   Detail <- F
