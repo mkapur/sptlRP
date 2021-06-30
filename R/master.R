@@ -39,7 +39,8 @@ coln <- c(
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 
 for(s in 1:nrow(scen)){
-
+  # for(s in c(9,10,19,22,23)){
+    
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
