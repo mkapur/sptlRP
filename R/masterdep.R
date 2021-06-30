@@ -5,12 +5,11 @@
 rm(list = ls())
 require(dplyr)
 require(here)
-require(ggplot2); require(patchwork)
+require(ggplot2);require(ggsidekick);require(patchwork)
 require(reshape2)
 require(png);require(grid);require(gridExtra)
 
-# source("fnxs.R")
-source(here('aep0629','fnxs.R'))
+source(here("R","fnxs.R"))
 ## run simulations
 scen <- read.csv(here("inputscen.csv")) ## setup
 GLOBAL_R0 = 1
@@ -38,7 +37,7 @@ coln <- c(
   "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 
-for(s in 1:5){
+for(s in 1:4){
 
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -64,12 +63,9 @@ for(s in 1:5){
                    slx_a95= c(as.numeric(scen[s,'SLX_A95_A1']),13),
                    pStay=pStayt)
   }
- #print(dat)
-  
-  
+
   FMAX <- scen[s,'FMAX']
   FF.vec = seq(0,FMAX,0.05)
-  # FF.vec = seq(0,5,0.05)
   FFs <- expand.grid(FF.vec,FF.vec) 
   
   surface <- array(NA, dim = c(nrow(FFs),7,2), 
@@ -110,7 +106,7 @@ for(s in 1:5){
                        maxit = 1000,
                        ndeps = rep(1e-4,2)))
   # ulim = 1.5
-  ss_local <- optim(par = ss_global$par,
+  ss_local <- optim(par = c(0.5,0.5),
                     dat= dat,
                     assume = 'LOCAL',
                     ret = 'optim',
@@ -123,7 +119,6 @@ for(s in 1:5){
                       ndeps = rep(1e-4,2)))
   cat( exp(ss_global$par),"\n")
   cat( exp(ss_local$par),"\n")
-  print("test")
 
   
   ## pull out values at FMSY
@@ -160,7 +155,7 @@ for(s in 1:5){
     ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
     geom_tile() +
     coord_equal() +
-    #ggsidekick::theme_sleek() +
+    ggsidekick::theme_sleek() +
     theme(legend.position = 'top')+
     scale_fill_viridis_c() +
     scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
@@ -189,7 +184,7 @@ for(s in 1:5){
     ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
     geom_tile() +
     coord_equal() +
-    #ggsidekick::theme_sleek() +
+    ggsidekick::theme_sleek() +
     theme(legend.position = 'top')+
     scale_fill_viridis_c() +
     scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
@@ -228,49 +223,51 @@ for(s in 1:5){
 
 
 ## format all scenarios in to table and save
-data.frame(scen) %>%
-  mutate(WA = "Linear increasing function; identical between areas") %>%
-  mutate(
-    NATM = round(as.numeric(-log(NATM)),2),
-    'GLOBAL_FMSY_A1' = FMSY_GLOBAL_A1,
-    'LOCAL_FMSY_A1' = FMSY_LOCAL_A1,
-    'GLOBAL_FMSY_A2' = FMSY_GLOBAL_A2,
-    'LOCAL_FMSY_A2'= FMSY_LOCAL_A2,
-    'GLOBALFMSY' = paste(round(GLOBAL_FMSY_A1,2),round(GLOBAL_FMSY_A2,2), sep = ", "),
-    'LOCALFMSY' = paste(round(LOCAL_FMSY_A1,2),round(LOCAL_FMSY_A2,2), sep = ", "),
-
-    'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_LOCAL),2),
-    'GLOBAL_SBMSY' = round(as.numeric(SBMSY_GLOBAL),2),
-    'LOCAL_SBMSY' = as.numeric(SBMSY_LOCAL),
-
-    'SBMSY_RATIO' = round(GLOBAL_SBMSY/LOCAL_SBMSY,2),
-    'SBMSY_A1_RATIO' = round(as.numeric(SBMSY_A1_RATIO),2),
-    'SBMSY_A2_RATIO' = round(as.numeric(SBMSY_A2_RATIO),2),
-
-    'GLOBAL_SB0' = as.numeric(A1SB0_GLOBAL)+as.numeric(A2SB0_GLOBAL),
-    'LOCAL_SB0' = as.numeric(A1SB0_LOCAL)+as.numeric(A2SB0_LOCAL),
-    'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
-    'LOCAL_DEPL_TOTAL' = round(LOCAL_SBMSY/LOCAL_SB0,2),
-    'SteepnessH' =  paste(H1,H2,sep = ", "),
-    'Movement' = ifelse(PSTAY_A1 == '0.9', 'Fig. 1B',
-                        ifelse(PSTAY_A1 == 1, "Fig. 1C",  "Fig. 1D")),
-    'Selectivity' = ifelse(SLX_A50_A1  == '9', 'Fig. 1E',
-                           ifelse(SLX_A50_A1  ==7, "Fig. 1F","Fig. 1G"))) %>%
-  select('Scenario' = SCENARIO_NAME,
-         'PropR' = PROPR,
-         'Natural Mortality M' = NATM,
-         Movement, Selectivity,
-         SteepnessH,
-         GLOBALFMSY,
-         LOCALFMSY,
-         SBMSY_RATIO_TOTAL =SBMSY_RATIO,
-         SBMSY_A1_RATIO,
-         SBMSY_A2_RATIO,
-         MSY_RATIO,
-         GLOBAL_DEPL_TOTAL,
-         LOCAL_DEPL_TOTAL) %>%
-  write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
-
+# data.frame(scen) %>%
+#   mutate(WA = "Linear increasing function; identical between areas") %>%
+#   mutate(
+#     NATM = round(as.numeric(-log(NATM)),2),
+#     'GLOBAL_FMSY_A1' = FMSY_GLOBAL_A1,
+#     'LOCAL_FMSY_A1' = FMSY_LOCAL_A1,
+#     'GLOBAL_FMSY_A2' = FMSY_GLOBAL_A2,
+#     'LOCAL_FMSY_A2'= FMSY_LOCAL_A2,
+#     'GLOBALFMSY' = paste(round(GLOBAL_FMSY_A1,2),round(GLOBAL_FMSY_A2,2), sep = ", "),
+#     'LOCALFMSY' = paste(round(LOCAL_FMSY_A1,2),round(LOCAL_FMSY_A2,2), sep = ", "),
+#     
+#     'MSY_RATIO' =  round(as.numeric(MSY_GLOBAL)/as.numeric(MSY_LOCAL),2), 
+#     'GLOBAL_SBMSY' = round(as.numeric(SBMSY_GLOBAL),2),
+#     'LOCAL_SBMSY' = as.numeric(SBMSY_LOCAL),
+#     
+#     'SBMSY_RATIO' = round(GLOBAL_SBMSY/LOCAL_SBMSY,2),
+#     'SBMSY_A1_RATIO' = round(as.numeric(SBMSY_A1_RATIO),2),
+#     'SBMSY_A2_RATIO' = round(as.numeric(SBMSY_A2_RATIO),2),
+#     
+#     'GLOBAL_SB0' = as.numeric(A1SB0_GLOBAL)+as.numeric(A2SB0_GLOBAL),
+#     'LOCAL_SB0' = as.numeric(A1SB0_LOCAL)+as.numeric(A2SB0_LOCAL),
+#     'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
+#     'LOCAL_DEPL_TOTAL' = round(LOCAL_SBMSY/LOCAL_SB0,2),
+#     'SteepnessH' =  paste(H1,H2,sep = ", "),
+#     'Movement' = ifelse(PSTAY_A1 == '0.9', 'Fig. 1B',
+#                         ifelse(PSTAY_A1 == 1, "Fig. 1C",  "Fig. 1D")),
+#     'Selectivity' = ifelse(SLX_A50_A1  == '9', 'Fig. 1E', 
+#                            ifelse(SLX_A50_A1  ==7, "Fig. 1F","Fig. 1G"))) %>%
+#   select('Scenario' = SCENARIO_NAME,
+#          'PropR' = PROPR,
+#          'Natural Mortality M' = NATM, 
+#          Movement, Selectivity,
+#          SteepnessH,
+#          GLOBALFMSY,
+#          LOCALFMSY,
+#          SBMSY_RATIO_TOTAL =SBMSY_RATIO,
+#          SBMSY_A1_RATIO,
+#          SBMSY_A2_RATIO,
+#          MSY_RATIO,
+#          GLOBAL_DEPL_TOTAL,
+#          LOCAL_DEPL_TOTAL) %>% 
+#   write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE) 
+# 
+# 
+# 
 # data.frame(surface[,,'global']) %>%
 #   filter(FF_Area2 == 0.5) %>%
 #   ggplot(., aes(x = (FF_Area1), y = tyield)) + 
