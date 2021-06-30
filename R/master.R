@@ -38,7 +38,7 @@ coln <- c(
   "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 
-for(s in 12:13){
+for(s in 1:nrow(scen)){
 
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -283,12 +283,12 @@ data.frame(scen) %>%
          LOCAL_DEPL_TOTAL) %>%
   write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
 
-data.frame(surface[,,'global']) %>%
-  filter(FF_Area2 == 1) %>%
-  ggplot(., aes(x = (FF_Area1), y = tyield)) +
-  geom_point()
-
-data.frame(surface[,,'local']) %>%
-  filter(FF_Area2 == 0) %>%
-  ggplot(., aes(x = (FF_Area1), y = tyield)) +
-  geom_point()
+# data.frame(surface[,,'global']) %>%
+#   filter(FF_Area2 == 1) %>%
+#   ggplot(., aes(x = (FF_Area1), y = tyield)) +
+#   geom_point()
+# 
+# data.frame(surface[,,'local']) %>%
+#   filter(FF_Area2 == 0) %>%
+#   ggplot(., aes(x = (FF_Area1), y = tyield)) +
+#   geom_point()

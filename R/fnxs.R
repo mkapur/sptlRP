@@ -61,7 +61,7 @@ makeDat <- function(nage = 100,
 
 
 doNAA <- function(F1,F2, usedat, Sel){
-  M <- exp(-usedat$M)
+  M <- usedat$M
   h <- usedat$h
   
   ## run area-specific NAA
