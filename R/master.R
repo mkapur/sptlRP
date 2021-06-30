@@ -38,14 +38,14 @@ coln <- c(
   "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 
-for(s in 1:nrow(scen)){
+for(s in 12:13){
 
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
   if(length(grep('WAA', SCENARIO)) == 0 ){
     dat <- makeDat(wa = NULL, ## default wa
-                   mort = -log(scen[s,'NATM']),
+                   mort = scen[s,'NATM'],
                    h = steeps,
                    input_prop = scen[s,'PROPR'],
                    fec_a50 = c(6,6),
@@ -55,7 +55,7 @@ for(s in 1:nrow(scen)){
                    pStay=pStayt)
   } else{
     dat <- makeDat(wa = "NOTNULL",
-                   mort = -log(scen[s,'NATM']),
+                   mort = scen[s,'NATM'],
                    h = steeps,
                    input_prop = scen[s,'PROPR'],
                    fec_a50 = c(6,6),
