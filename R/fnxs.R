@@ -46,8 +46,8 @@ makeDat <- function(nage = 100,
         len[age] <- 50*(1-exp(-0.15*(age-1)))
         dat[age,"weight",2] <- 0.63*len[age]^1.81
         ## make area 1 bigger
-        len[age] <- 50*(1-exp(-0.3*(age- -1.77)))
-        dat[age,"weight",1] <- 0.8*len[age]^1.81
+        len[age] <- 50*(1-exp(-0.15*(age-1)))
+        dat[age,"weight",1] <- 0.65*len[age]^1.81
       } 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
@@ -69,7 +69,7 @@ doNAA <- function(F1,F2, usedat, Sel){
   for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1
   for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2
 
-  N <- array(NA, dim = c(narea,Nages,narea)) ## this is not NPR, since we are starting with proportions
+  N <- array(NA, dim = c(narea,Nages,narea)) 
   ## assign single recruit to each area
   N[,1:2,1] <- c(1,0) #c(dat$input_prop,0)
   N[,1:2,2] <- c(0,1) #c(0,1-dat$input_prop)
