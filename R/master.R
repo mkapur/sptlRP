@@ -10,7 +10,7 @@ require(reshape2)
 require(png);require(grid);require(gridExtra)
 
 # source("fnxs.R")
-source(here('aep0629','fnxs.R'))
+source(here('R','fnxs.R'))
 ## run simulations
 scen <- read.csv(here("inputscen.csv")) ## setup
 GLOBAL_R0 = 1
@@ -38,7 +38,7 @@ coln <- c(
   "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 
-for(s in 1:5){
+for(s in 1:nrow(scen)){
 
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -77,7 +77,7 @@ for(s in 1:5){
                                    c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
                                    c('local','global'))) 
   for(i in 1:nrow(FFs)){
-    if(i %% 100 == 0) cat(i,"\n")
+    if(i %% 100 ==0) cat(i,"\n")
     surface[i,'FF_Area1',] <- FFs[i,1];  surface[i,'FF_Area2',] <- FFs[i,2]
     ## fill in surface
     useFs <- log(as.numeric(c(FFs[i,])))
@@ -97,8 +97,8 @@ for(s in 1:5){
   
   
   ## find MSY ----
-  # ulim = log(1e2)
-  ss_global <- optim(par = c(0.5,0.5),
+  # ulim = log(10)
+  ss_global <- optim(par = c(0.41,0.41),
                      dat= dat,
                      assume = 'GLOBAL',
                      ret = 'optim',
@@ -109,8 +109,18 @@ for(s in 1:5){
                      control = list(
                        maxit = 1000,
                        ndeps = rep(1e-4,2)))
-  # ulim = 1.5
-  ss_local <- optim(par = ss_global$par,
+  ss_global <- optim(par = ss_global$par,
+                     dat= dat,
+                     assume = 'GLOBAL',
+                     ret = 'optim',
+                     # lower = c(,0),
+                     # upper = c(ulim,ulim),
+                     # method = 'L-BFGS-B',
+                     fn=runSim,
+                     control = list(
+                       maxit = 1000,
+                       ndeps = rep(1e-4,2)))
+  ss_local <- optim(par =  ss_global$par,
                     dat= dat,
                     assume = 'LOCAL',
                     ret = 'optim',
@@ -121,6 +131,8 @@ for(s in 1:5){
                     control = list(
                       maxit = 1000,
                       ndeps = rep(1e-4,2)))
+
+
   cat( exp(ss_global$par),"\n")
   cat( exp(ss_local$par),"\n")
   print("test")
@@ -254,7 +266,7 @@ data.frame(scen) %>%
     'SteepnessH' =  paste(H1,H2,sep = ", "),
     'Movement' = ifelse(PSTAY_A1 == '0.9', 'Fig. 1B',
                         ifelse(PSTAY_A1 == 1, "Fig. 1C",  "Fig. 1D")),
-    'Selectivity' = ifelse(SLX_A50_A1  == '9', 'Fig. 1E',
+    'Selectivity' = ifelse(SLX_A50_A1  == 9, 'Fig. 1E',
                            ifelse(SLX_A50_A1  ==7, "Fig. 1F","Fig. 1G"))) %>%
   select('Scenario' = SCENARIO_NAME,
          'PropR' = PROPR,
@@ -264,19 +276,19 @@ data.frame(scen) %>%
          GLOBALFMSY,
          LOCALFMSY,
          SBMSY_RATIO_TOTAL =SBMSY_RATIO,
-         SBMSY_A1_RATIO,
-         SBMSY_A2_RATIO,
+         # SBMSY_A1_RATIO,
+         # SBMSY_A2_RATIO,
          MSY_RATIO,
          GLOBAL_DEPL_TOTAL,
          LOCAL_DEPL_TOTAL) %>%
   write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
 
-# data.frame(surface[,,'global']) %>%
-#   filter(FF_Area2 == 0.5) %>%
-#   ggplot(., aes(x = (FF_Area1), y = tyield)) + 
-#   geom_point()
-# 
-# data.frame(surface[,,'local']) %>%
-#   filter(FF_Area2 == 0.5) %>%
-#   ggplot(., aes(x = (FF_Area1), y = tyield)) + 
-#   geom_point()
+data.frame(surface[,,'global']) %>%
+  filter(FF_Area2 == 1) %>%
+  ggplot(., aes(x = (FF_Area1), y = tyield)) +
+  geom_point()
+
+data.frame(surface[,,'local']) %>%
+  filter(FF_Area2 == 0) %>%
+  ggplot(., aes(x = (FF_Area1), y = tyield)) +
+  geom_point()
