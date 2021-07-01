@@ -40,9 +40,9 @@ scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 datlist <- list()
 
 ## run sims ----
-# for(s in 1:nrow(scen)){
-for(s in c(1,8:11)){
-  
+for(s in 1:nrow(scen)){
+# for(s in c(1:5)){
+  #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
@@ -70,12 +70,10 @@ for(s in c(1,8:11)){
  #print(dat)
   datlist[[s]] <- dat
   
-  #* build surface ----
+  # #* build surface ----
   FMAX <- scen[s,'FMAX']
   FF.vec = seq(0,FMAX,0.05)
-  # FF.vec = seq(0,5,0.05)
   FFs <- expand.grid(FF.vec,FF.vec)
-
   surface <- array(NA, dim = c(nrow(FFs),7,2),
                    dimnames = list(c(1:nrow(FFs)),
                                    c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
@@ -97,7 +95,7 @@ for(s in c(1,8:11)){
     surface[i,'tyield','local'] <- tyields['tyield_local'] #tyields$tyield_local
     surface[i,'tyield','global'] <- tyields['tyield_global'] #tyields$tyield_global
   } ## end nrow FFs
-  head(surface)
+  # # head(surface)
 
 
   #* find MSY ----
@@ -124,34 +122,51 @@ for(s in c(1,8:11)){
                      control = list(
                        maxit = 1000,
                        ndeps = rep(1e-4,2)))
-  ss_local <- optim(par =  ss_global$par,
-                    dat= dat,
-                    assume = 'LOCAL',
-                    ret = 'optim',
-                    # lower = c(-1000,-1000),
-                    # upper = c(-0.22,NA),
-                    # method = 'L-BFGS-B',
-                    fn=runSim,
-                    control = list(
-                      maxit = 1000,
-                      ndeps = rep(1e-4,2)))
   
-  ss_local <- optim(par = ss_local$par,
-                    dat= dat,
-                    assume = 'LOCAL',
-                    ret = 'optim',
-                    # lower = c(-1000,-1000),
-                    # upper = c(-0.22,NA),
-                    # method = 'L-BFGS-B',
-                    fn=runSim,
-                    control = list(
-                      maxit = 1000,
-                      ndeps = rep(1e-4,2)))
-
-
+  cat(SCENARIO,"\n")
+  
+  cat(steeps,"\n")
   cat( exp(ss_global$par),"\n")
-  cat( exp(ss_local$par),"\n")
-  print("test")
+  # cat( exp(ss_local$par),"\n")
+  
+  # ss_local <- optim(par =  ss_global$par,
+  #                   dat= dat,
+  #                   assume = 'LOCAL',
+  #                   ret = 'optim',
+  #                   # lower = c(-1000,-1000),
+  #                   # upper = c(-0.22,NA),
+  #                   # method = 'L-BFGS-B',
+  #                   fn=runSim,
+  #                   control = list(
+  #                     maxit = 1000,
+  #                     ndeps = rep(1e-4,2)))
+  # cat( exp(ss_local$par),"\n")
+    ss_local <- optim(par = log(c(0.2,0.2)),
+                      dat= dat,
+                      assume = 'LOCAL',
+                      ret = 'optim',
+                      # lower = c(-1000,-1000),
+                      # upper = c(-0.22,NA),
+                      # method = 'L-BFGS-B',
+                      fn=runSim,
+                      control = list(
+                        maxit = 1000,
+                        ndeps = rep(1e-4,2)))
+    cat( exp(ss_local$par),"\n")
+    ss_local <- optim(par = ss_local$par,
+                      dat= dat,
+                      assume = 'LOCAL',
+                      ret = 'optim',
+                      # lower = c(-1000,-1000),
+                      # upper = c(-0.22,NA),
+                      # method = 'L-BFGS-B',
+                      fn=runSim,
+                      control = list(
+                        maxit = 1000,
+                        ndeps = rep(1e-4,2)))
+    
+    cat( exp(ss_local$par),"\n")
+
 
 
   refpts_local <-  runSim(par =ss_local$par,dat, ret = 'vals', assume = NA)
@@ -211,9 +226,9 @@ for(s in c(1,8:11)){
              color ='blue',
              label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
     labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
-
-
-
+  # 
+  # 
+  # 
   locl <- data.frame(surface[,,'local']) %>%
     filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
     ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
@@ -305,7 +320,7 @@ data.frame(scen) %>%
          MSY_RATIO,
          GLOBAL_DEPL_TOTAL,
          LOCAL_DEPL_TOTAL) %>% 
-  View()
+  # View()
   write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
 
 # data.frame(surface[,,'global']) %>%
