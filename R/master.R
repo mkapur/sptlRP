@@ -37,10 +37,12 @@ coln <- c(
   "A2DEPL_LOCAL",
   "A2DEPL_GLOBAL" )
 scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
+datlist <- list()
 
-for(s in 1:nrow(scen)){
-  # for(s in c(9,10,19,22,23)){
-    
+## run sims ----
+# for(s in 1:nrow(scen)){
+for(s in c(1,8:11)){
+  
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
@@ -66,17 +68,18 @@ for(s in 1:nrow(scen)){
                    pStay=pStayt)
   }
  #print(dat)
+  datlist[[s]] <- dat
   
-  
+  #* build surface ----
   FMAX <- scen[s,'FMAX']
   FF.vec = seq(0,FMAX,0.05)
   # FF.vec = seq(0,5,0.05)
-  FFs <- expand.grid(FF.vec,FF.vec) 
-  
-  surface <- array(NA, dim = c(nrow(FFs),7,2), 
+  FFs <- expand.grid(FF.vec,FF.vec)
+
+  surface <- array(NA, dim = c(nrow(FFs),7,2),
                    dimnames = list(c(1:nrow(FFs)),
                                    c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
-                                   c('local','global'))) 
+                                   c('local','global')))
   for(i in 1:nrow(FFs)){
     if(i %% 100 ==0) cat(i,"\n")
     surface[i,'FF_Area1',] <- FFs[i,1];  surface[i,'FF_Area2',] <- FFs[i,2]
@@ -95,11 +98,11 @@ for(s in 1:nrow(scen)){
     surface[i,'tyield','global'] <- tyields['tyield_global'] #tyields$tyield_global
   } ## end nrow FFs
   head(surface)
-  
-  
-  ## find MSY ----
+
+
+  #* find MSY ----
   # ulim = log(10)
-  ss_global <- optim(par = c(0.41,0.41),
+  ss_global <- optim(par = log(c(0.47,0.47)),
                      dat= dat,
                      assume = 'GLOBAL',
                      ret = 'optim',
@@ -126,7 +129,19 @@ for(s in 1:nrow(scen)){
                     assume = 'LOCAL',
                     ret = 'optim',
                     # lower = c(-1000,-1000),
-                    # upper = c(1,1),
+                    # upper = c(-0.22,NA),
+                    # method = 'L-BFGS-B',
+                    fn=runSim,
+                    control = list(
+                      maxit = 1000,
+                      ndeps = rep(1e-4,2)))
+  
+  ss_local <- optim(par = ss_local$par,
+                    dat= dat,
+                    assume = 'LOCAL',
+                    ret = 'optim',
+                    # lower = c(-1000,-1000),
+                    # upper = c(-0.22,NA),
                     # method = 'L-BFGS-B',
                     fn=runSim,
                     control = list(
@@ -138,11 +153,12 @@ for(s in 1:nrow(scen)){
   cat( exp(ss_local$par),"\n")
   print("test")
 
-  
-  ## pull out values at FMSY
+
   refpts_local <-  runSim(par =ss_local$par,dat, ret = 'vals', assume = NA)
   refpts_global <-  runSim(par =ss_global$par,dat, ret = 'vals', assume = NA)
 
+  #* fill scen----
+  
   scen[s,'FMSY_LOCAL_A1'] <- exp(ss_local$par)[1]
   scen[s,'FMSY_LOCAL_A2'] <- exp(ss_local$par)[2]
   scen[s,'FMSY_GLOBAL_A1'] <-exp(ss_global$par)[1]
@@ -167,6 +183,7 @@ for(s in 1:nrow(scen)){
   scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
   scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
 
+  #* plotting ----
   maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
   global <- data.frame(surface[,,'global']) %>%
     filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
@@ -228,6 +245,7 @@ for(s in 1:nrow(scen)){
   ## viewing plots in this manner requires the patchwork() package
   locl   | global
 
+  #* save -----
   filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(steeps[1],"_",steeps[2]),"-",SCENARIO))
   dir.create(filetemp)
   ggsave(locl   | global,
@@ -240,11 +258,11 @@ for(s in 1:nrow(scen)){
 } ## end s in scen
 
 
-## format all scenarios in to table and save
+## make results table ----
 data.frame(scen) %>%
   mutate(WA = "Linear increasing function; identical between areas") %>%
   mutate(
-    NATM = round(as.numeric(-log(NATM)),2),
+    NATM,
     'GLOBAL_FMSY_A1' = FMSY_GLOBAL_A1,
     'LOCAL_FMSY_A1' = FMSY_LOCAL_A1,
     'GLOBAL_FMSY_A2' = FMSY_GLOBAL_A2,
@@ -264,14 +282,19 @@ data.frame(scen) %>%
     'LOCAL_SB0' = as.numeric(A1SB0_LOCAL)+as.numeric(A2SB0_LOCAL),
     'GLOBAL_DEPL_TOTAL' = round(GLOBAL_SBMSY/GLOBAL_SB0,2),
     'LOCAL_DEPL_TOTAL' = round(LOCAL_SBMSY/LOCAL_SB0,2),
+    'WAA' = 'Fig. 1A',
     'SteepnessH' =  paste(H1,H2,sep = ", "),
-    'Movement' = ifelse(PSTAY_A1 == '0.9', 'Fig. 1B',
-                        ifelse(PSTAY_A1 == 1, "Fig. 1C",  "Fig. 1D")),
-    'Selectivity' = ifelse(SLX_A50_A1  == 9, 'Fig. 1E',
-                           ifelse(SLX_A50_A1  ==7, "Fig. 1F","Fig. 1G"))) %>%
+    'Movement' = ifelse(PSTAY_A2 == 1,
+                        'Fig. 1D',
+                        ifelse(PSTAY_A2 == 0.75, 
+                               "Fig. 1C", 
+                               "Fig. 1E")),
+    'Selectivity' = ifelse(SLX_A50_A1  == 9, 'Fig. 1F',
+                           ifelse(SLX_A50_A1  ==7, "Fig. 1G","Fig. 1H"))) %>%
   select('Scenario' = SCENARIO_NAME,
          'PropR' = PROPR,
          'Natural Mortality M' = NATM,
+         'Weight at Age' = WAA,
          Movement, Selectivity,
          SteepnessH,
          GLOBALFMSY,
@@ -281,7 +304,8 @@ data.frame(scen) %>%
          # SBMSY_A2_RATIO,
          MSY_RATIO,
          GLOBAL_DEPL_TOTAL,
-         LOCAL_DEPL_TOTAL) %>%
+         LOCAL_DEPL_TOTAL) %>% 
+  View()
   write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
 
 # data.frame(surface[,,'global']) %>%
@@ -290,6 +314,6 @@ data.frame(scen) %>%
 #   geom_point()
 # 
 # data.frame(surface[,,'local']) %>%
-#   filter(FF_Area2 == 0) %>%
+#   filter(FF_Area2 == 1.0) %>%
 #   ggplot(., aes(x = (FF_Area1), y = tyield)) +
 #   geom_point()
