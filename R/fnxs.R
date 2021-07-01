@@ -1,5 +1,5 @@
 ## load settings
-Nages <- 20 
+Nages <- 100#20 
 narea <- 2
 Ages <- 0:(Nages-1)
 
@@ -46,8 +46,10 @@ makeDat <- function(nage = 100,
         len[age] <- 50*(1-exp(-0.15*(age-1)))
         dat[age,"weight",2] <- 0.63*len[age]^1.81
         ## make area 1 bigger
-        len[age] <- 50*(1-exp(-0.15*(age-1)))
-        dat[age,"weight",1] <- 0.65*len[age]^1.81
+        len[age] <- max(0,50*(1-exp(-0.15*(age-2))))
+        # if(age ==1) cat(len[age],"\n")
+        dat[age,"weight",1] <- 0.63*len[age]^1.81
+        # if(age ==1) cat(dat[age,"weight",1],"\n")
       } 
       
       dat[age,'maturity',area] <- logistic(a = age, a50 = fec_a50[area], a95 = fec_a95[area])
@@ -94,6 +96,7 @@ doNAA <- function(F1,F2, usedat, Sel){
       N[area,Nages,slice] <-    N[area,Nages,slice]/(1-exp(-Z[area,Nages]))
     }}
   # cat(N[1,2,1],"\n")
+  # plot(N)
   return(list('N' = N,'Z' = Z))
 }
 
@@ -113,6 +116,15 @@ runSim <- function(par,
     
   N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
   N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
+  
+  # par(mfrow = c(1,3))
+  # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  # points(N_F0[2,,1])
+  # plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  # points(N_F0[2,,2])
+  # plot(rowSums(N_F0[1,,]), col = 'blue', main = 'totals', ylim = c(0,1))
+  # points(rowSums(N_F0[2,,]))
+  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
 
   ## derived quants on a per-area basis
   ## these are per one recruit (no prop here)
@@ -152,6 +164,7 @@ runSim <- function(par,
   local_catch <-   Cat[1,1]*Recr_local[1]+Cat[2,1]*Recr_local[1]+Cat[1,2]*Recr_local[2]+Cat[2,2]*Recr_local[2]
   #print(global_catch)
   #print(local_catch)
+  # if(round(global_catch,2) != round(local_catch,2)) print(c(F1,F2))
   Recr <- c(sum(Recr_global),sum(Recr_local))
   #AAA
   
