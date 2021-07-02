@@ -156,10 +156,9 @@ runSim <- function(par,
   Recr_global = c(req_global*dat$input_prop,req_global*(1-dat$input_prop))
   Recr_local <- c(req_local$par[1]*req_local$par[2],req_local$par[1]*(1-req_local$par[2]))
   rprop_est = req_local$par[2]
-  ## equilibrium yields - should these not consider prop?
   #print(Cat)
-  #print(Recr_global)
-  #print(Recr_local)
+  # print(Recr_global)
+  # print(Recr_local)
   global_catch <-  Cat[1,1]*Recr_global[1]+Cat[2,1]*Recr_global[1]+Cat[1,2]*Recr_global[2]+Cat[2,2]*Recr_global[2]
   local_catch <-   Cat[1,1]*Recr_local[1]+Cat[2,1]*Recr_local[1]+Cat[1,2]*Recr_local[2]+Cat[2,2]*Recr_local[2]
   #print(global_catch)
@@ -266,9 +265,11 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
     # Bot <- (5*Steep-1)*SSB/SBPF0
     # Recr <- Top/Bot
     # return(max(1e-4,Recr))
+    # cat(Steep,"\n")
     
     SBPR <- SBPF0 <- Cat <- c(0,0)
-    Nages <- 20
+    # Nages <- 20
+    Nages = 100
     for(area in 1:2){
       for (Iage in 1:Nages) SBPF0[area] <- SBPF0[area] + Fec[area,Iage]*(Prop*N_F0[area,Iage,1]+(1-Prop)*N_F0[area,Iage,2])
       for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*(Prop*N_Z_F[area,Iage,1]+(1-Prop)*N_Z_F[area,Iage,2])
@@ -292,7 +293,7 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
     # 
     # return(Recr)
     ## optimize
-    opt_temp <- optim(par = c(1,Prop),
+    opt_temp <- optim(par = c(1,0.5),
                       Fec = Fec,
                       N_F0 = N_F0,
                       N_Z_F = N_Z_F,
@@ -303,7 +304,6 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
                       control = list(
                         maxit = 1000,
                         ndeps = rep(1e-4,2)))
-    
     return(opt_temp)
   }
   
@@ -312,13 +312,14 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
 
 optimFunc <- function(par,Fec,N_F0,N_Z_F){
   # cat(par,"\n")
+  # cat(dat$h,"\n")
   passR <- par[1]; passRprop <- par[2]
   #print(passR)
   #print(passRprop)
   sb_F <- sb_0 <- Cat <- c(0,0)
   PropF0 = dat$input_prop
   RecF0 = GLOBAL_R0
-  Nages <- 20
+  Nages <- 100 #20
   for(area in 1:2){
     for (Iage in 1:Nages) sb_0[area] <- sb_0[area] + RecF0*Fec[area,Iage]*(PropF0*N_F0[area,Iage,1]+(1-PropF0)*N_F0[area,Iage,2])
     for (Iage in 1:Nages) sb_F[area] <- sb_F[area] + passR*Fec[area,Iage]*(passRprop*N_Z_F[area,Iage,1]+(1-passRprop)*N_Z_F[area,Iage,2])
@@ -326,12 +327,12 @@ optimFunc <- function(par,Fec,N_F0,N_Z_F){
   Rexp = c(0,0)
   for(i in 1:narea){
     if(i == 1){
-      num <- GLOBAL_R0*passRprop*4*dat$h[[i]]*sb_F[[i]]/sb_0[[i]]
+      num <- GLOBAL_R0*passRprop*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
     } else{
-      num <- GLOBAL_R0*(1-passRprop)*4*dat$h[[i]]*sb_F[[i]]/sb_0[[i]]
+      num <- GLOBAL_R0*(1-passRprop)*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
     }
-    denom1 <- sb_F[[i]]/sb_0[[i]]*(5*dat$h[[i]]-1)
-    denom2 <- (1-dat$h[[i]])
+    denom1 <- sb_F[[i]]/sb_0[[i]]*(5*dat$h[i]-1)
+    denom2 <- (1-dat$h[i])
     Rexp[i] = num/(denom1+denom2)
   } ## end area loop
   
