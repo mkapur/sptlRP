@@ -315,12 +315,12 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
                       Fec = Fec,
                       N_F0 = N_F0,
                       N_Z_F = N_Z_F,
-                      lower = c(1E-4,1E-4),
-                      upper = c(NA,NA),
-                      method = "L-BFGS-B",
+                      # lower = c(1E-4,1E-4),
+                      # upper = c(NA,NA),
+                      # method = "L-BFGS-B",
                       fn = optimFunc, hessian = FALSE,
                       control = list(
-                        maxit = 10000,
+                        maxit = 1000,
                         ndeps = rep(1e-4,2)))
     # cat(opt_temp$par,"\n")
     return(opt_temp)
