@@ -122,7 +122,12 @@ for(s in 1:nrow(scen)){
   cat(dat$h,"\n")
   cat( round(exp(ss_global$par),2),"\n")
   
-  ss_local <- optim(par =  log(c(0.05,0.05)),
+  start <-  if(s != 9) log(c(0.05,0.05)) else(ss_global$par)
+
+  
+  
+  
+  ss_local <- optim(par = start,
                     dat= dat,
                     assume = 'LOCAL',
                     ret = 'optim',
@@ -306,8 +311,8 @@ data.frame(scen) %>%
          MSY_RATIO,
          GLOBAL_DEPL_TOTAL,
          LOCAL_DEPL_TOTAL) %>%
-  View()
-# write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
+  # View()
+write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
 
 # data.frame(surface[,,'global']) %>%
 #   filter(FF_Area2 == 1) %>%
