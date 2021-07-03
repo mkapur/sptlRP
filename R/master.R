@@ -40,8 +40,8 @@ scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 datlist <- list()
 
 ## run sims ----
-# for(s in 1:nrow(scen)){
-for(s in c(1:5)){
+for(s in 1:nrow(scen)){
+# for(s in c(1:5)){
   #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -106,6 +106,7 @@ for(s in c(1:5)){
                        maxit = 1000,
                        ndeps = rep(1e-4,2)))
   for(k in 1:5){
+  
     ss_global <- optim(par = ss_global$par,
                        dat= dat,
                        assume = 'GLOBAL',
@@ -119,10 +120,9 @@ for(s in c(1:5)){
   
   cat(SCENARIO,"\n")
   cat(dat$h,"\n")
-  cat( exp(ss_global$par),"\n")
+  cat( round(exp(ss_global$par),2),"\n")
   
-  
-  ss_local <- optim(par =  ss_global$par,
+  ss_local <- optim(par =  log(c(0.05,0.05)),
                     dat= dat,
                     assume = 'LOCAL',
                     ret = 'optim',
@@ -130,17 +130,22 @@ for(s in c(1:5)){
                     control = list(
                       maxit = 100000,
                       ndeps = rep(1e-4,2)))
+  cat( round(exp(ss_local$par),2),"\n")
   for(k in 1:5){
-  ss_local <- optim(par = ss_local$par,
-                    dat= dat,
-                    assume = 'LOCAL',
-                    ret = 'optim',
-                    fn=runSim,
-                    control = list(
-                      maxit = 1000,
-                      ndeps = rep(1e-4,2)))
+    ## save time if stabilized
+    if(all(round(exp(ss_local$par),2) == round(exp(ss_global$par),2))) next()
+    ss_local <- optim(par = ss_local$par,
+                      dat= dat,
+                      assume = 'LOCAL',
+                      ret = 'optim',
+                      fn=runSim,
+                      control = list(
+                        maxit = 1000,
+                        ndeps = rep(1e-4,2)))
+    cat( round(exp(ss_local$par),2),"\n")
+    
   }
-  cat( exp(ss_local$par),"\n")
+  cat( round(exp(ss_local$par),2),"\n")
   # 
   # dat$h = c(0.6,0.8)
   # tt <- runSim(par = log(c(0.45,0.45)), dat, ret = 'vals', assume = NA);tt
@@ -152,29 +157,29 @@ for(s in c(1:5)){
   cat(refpts_local['req_local_prop'],"\n")
   
   #* fill scen----
-  # scen[s,'FMSY_LOCAL_A1'] <- exp(ss_local$par)[1]
-  # scen[s,'FMSY_LOCAL_A2'] <- exp(ss_local$par)[2]
-  # scen[s,'FMSY_GLOBAL_A1'] <-exp(ss_global$par)[1]
-  # scen[s,'FMSY_GLOBAL_A2'] <- exp(ss_global$par)[2]
-  # 
-  # scen[s,'FMSY_LOCAL'] <- sum(exp(ss_local$par))
-  # scen[s,'MSY_LOCAL'] <- refpts_local['tyield_local']
-  # scen[s,'SBMSY_LOCAL'] <- refpts_local['local_tssb']
-  # scen[s,'A1SB0_LOCAL'] <-  refpts_local['local_tssb0']*refpts_local['req_local_prop']
-  # scen[s,'A2SB0_LOCAL'] <-  refpts_local['local_tssb0']*(1-refpts_local['req_local_prop'])
-  # 
-  # scen[s,'A1DEPL_LOCAL'] <-  (refpts_local['local_tssb']*refpts_local['req_local_prop'])/  scen[s,'A1SB0_LOCAL']
-  # scen[s,'A2DEPL_LOCAL'] <- (refpts_local['local_tssb']*(1-refpts_local['req_local_prop']))/   scen[s,'A2SB0_LOCAL']
-  # 
-  # scen[s,'A1SB0_GLOBAL'] <-   refpts_global['global_tssb0']*dat$input_prop
-  # scen[s,'A2SB0_GLOBAL'] <-  refpts_global['global_tssb0']*(1-dat$input_prop)
-  # scen[s,'FMSY_GLOBAL'] <- sum(exp(ss_global$par))
-  # scen[s,'MSY_GLOBAL'] <-  refpts_global['tyield_global']
-  # scen[s,'SBMSY_GLOBAL'] <- refpts_global['global_tssb']
-  # scen[s,'SBMSY_A1_RATIO'] <- refpts_global['global_a1ssb']/refpts_local['local_a1ssb']
-  # scen[s,'SBMSY_A2_RATIO'] <- refpts_global['global_a2ssb']/refpts_local['local_a2ssb']
-  # scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
-  # scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
+  scen[s,'FMSY_LOCAL_A1'] <- exp(ss_local$par)[1]
+  scen[s,'FMSY_LOCAL_A2'] <- exp(ss_local$par)[2]
+  scen[s,'FMSY_GLOBAL_A1'] <-exp(ss_global$par)[1]
+  scen[s,'FMSY_GLOBAL_A2'] <- exp(ss_global$par)[2]
+
+  scen[s,'FMSY_LOCAL'] <- sum(exp(ss_local$par))
+  scen[s,'MSY_LOCAL'] <- refpts_local['tyield_local']
+  scen[s,'SBMSY_LOCAL'] <- refpts_local['local_tssb']
+  scen[s,'A1SB0_LOCAL'] <-  refpts_local['local_tssb0']*refpts_local['req_local_prop']
+  scen[s,'A2SB0_LOCAL'] <-  refpts_local['local_tssb0']*(1-refpts_local['req_local_prop'])
+
+  scen[s,'A1DEPL_LOCAL'] <-  (refpts_local['local_tssb']*refpts_local['req_local_prop'])/  scen[s,'A1SB0_LOCAL']
+  scen[s,'A2DEPL_LOCAL'] <- (refpts_local['local_tssb']*(1-refpts_local['req_local_prop']))/   scen[s,'A2SB0_LOCAL']
+
+  scen[s,'A1SB0_GLOBAL'] <-   refpts_global['global_tssb0']*dat$input_prop
+  scen[s,'A2SB0_GLOBAL'] <-  refpts_global['global_tssb0']*(1-dat$input_prop)
+  scen[s,'FMSY_GLOBAL'] <- sum(exp(ss_global$par))
+  scen[s,'MSY_GLOBAL'] <-  refpts_global['tyield_global']
+  scen[s,'SBMSY_GLOBAL'] <- refpts_global['global_tssb']
+  scen[s,'SBMSY_A1_RATIO'] <- refpts_global['global_a1ssb']/refpts_local['local_a1ssb']
+  scen[s,'SBMSY_A2_RATIO'] <- refpts_global['global_a2ssb']/refpts_local['local_a2ssb']
+  scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
+  scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
   # 
   # #* plotting ----
   # maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
@@ -298,7 +303,7 @@ data.frame(scen) %>%
          MSY_RATIO,
          GLOBAL_DEPL_TOTAL,
          LOCAL_DEPL_TOTAL) %>% 
-  # View()
+  View()
 write.csv(., file = here('output',paste0(Sys.Date(),'-results.csv')), row.names = FALSE)
 
 # data.frame(surface[,,'global']) %>%
