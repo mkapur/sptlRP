@@ -352,10 +352,12 @@ optimFunc <- function(par,Fec,N_F0,N_Z_F){
   Rexp = c(0,0)
   for(i in 1:narea){
     if(i == 1){
-      num <- GLOBAL_R0*passRprop*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
+      # num <- GLOBAL_R0*passRprop*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
+      num <- GLOBAL_R0*PropF0*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
       # cat(i,"\t",num,"\n")
     } else{
-      num <- GLOBAL_R0*(1-passRprop)*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
+      # num <- GLOBAL_R0*(1-passRprop)*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
+      num <- GLOBAL_R0*(1-PropF0)*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
       # cat(i,"\t",num,"\n")
     }
     denom1 <- sb_F[[i]]/sb_0[[i]]*(5*dat$h[i]-1)
