@@ -140,12 +140,15 @@ runSim <- function(par,
     for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
   
+  
+  # dat$h = c(0.6,0.8)
   req_global <- getEqR(assumption = 'GLOBAL', 
                        Fec = Fec,
                        N_F0 = N_F0,
                        N_Z_F = N_Z_F$N,
                        Prop=dat$input_prop, 
                        Steep = mean(dat$h)) 
+  
   req_local <- getEqR(assumption = 'LOCAL', 
                       Fec = Fec,
                       N_F0 = N_F0,
@@ -153,18 +156,22 @@ runSim <- function(par,
                       Prop=dat$input_prop,
                       Steep = dat$h)
 
+
   Recr_global = c(req_global*dat$input_prop,req_global*(1-dat$input_prop))
   Recr_local <- c(req_local$par[1]*req_local$par[2],req_local$par[1]*(1-req_local$par[2]))
   rprop_est = req_local$par[2]
-  #print(Cat)
+  Recr <- c(sum(Recr_global),sum(Recr_local))
+  # print(Recr)
   # print(Recr_global)
   # print(Recr_local)
+  # print(rprop_est)
+ 
   global_catch <-  Cat[1,1]*Recr_global[1]+Cat[2,1]*Recr_global[1]+Cat[1,2]*Recr_global[2]+Cat[2,2]*Recr_global[2]
   local_catch <-   Cat[1,1]*Recr_local[1]+Cat[2,1]*Recr_local[1]+Cat[1,2]*Recr_local[2]+Cat[2,2]*Recr_local[2]
   #print(global_catch)
   #print(local_catch)
   # if(round(global_catch,2) != round(local_catch,2)) print(c(F1,F2))
-  Recr <- c(sum(Recr_global),sum(Recr_local))
+
   #AAA
   
   ## versions that consider propr
@@ -277,33 +284,43 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
     SBPF0 <- sum(SBPF0)
     SSB  <- sum(SBPR)
 
-    alpha = SBPF0*(1-Steep)/(4*Steep)
-    beta = (5*Steep-1)/(4*Steep*GLOBAL_R0)
+    alpha <- SBPF0*(1-Steep)/(4*Steep)
+    beta <- (5*Steep-1)/(4*Steep*GLOBAL_R0)
     req <- max(0.001, (SSB - alpha)/(beta*SSB)) ## a la SS
     #cat("LocalR",req,"\n")
   } else{
     
     ## raw calc
     # Recr <- c(0,0)
+    # SBPR <- SBPF0 <- Cat <- c(0,0)
+    # # Nages <- 20
+    # Nages = 100
+    # for(area in 1:2){
+    #   for (Iage in 1:Nages) SBPF0[area] <- SBPF0[area] + Fec[area,Iage]*(Prop*N_F0[area,Iage,1]+(1-Prop)*N_F0[area,Iage,2])
+    #   for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*(Prop*N_Z_F[area,Iage,1]+(1-Prop)*N_Z_F[area,Iage,2])
+    # }
     # for(i in 1:2){
-    #   Top <- 4*Steep[i]*SSB[i]/SBPF0[i] - (1-Steep[i])
-    #   Bot <- (5*Steep[i]-1)*SSB[i]/SBPF0[i]
+    #   Top <- 4*Steep[i]*SBPR[i]/SBPF0[i] - (1-Steep[i])
+    #   Bot <- (5*Steep[i]-1)*SBPR[i]/SBPF0[i]
     #   Recr[i] <- max(1e-4,Top/Bot)
     # }
-    # 
-    # return(Recr)
+
+    # print(Recr)
+    # return(list('par' = c(sum(Recr), Recr[1]/Recr[2])))
     ## optimize
+    # dat$h = c(0.6,0.8)
     opt_temp <- optim(par = c(1,0.5),
                       Fec = Fec,
                       N_F0 = N_F0,
                       N_Z_F = N_Z_F,
                       lower = c(1E-4,1E-4),
-                      upper = c(NA,1-1E-5),
+                      upper = c(NA,1),
                       method = "L-BFGS-B",
                       fn = optimFunc, hessian = FALSE,
                       control = list(
-                        maxit = 1000,
+                        maxit = 10000,
                         ndeps = rep(1e-4,2)))
+    # cat(opt_temp$par,"\n")
     return(opt_temp)
   }
   
@@ -324,21 +341,26 @@ optimFunc <- function(par,Fec,N_F0,N_Z_F){
     for (Iage in 1:Nages) sb_0[area] <- sb_0[area] + RecF0*Fec[area,Iage]*(PropF0*N_F0[area,Iage,1]+(1-PropF0)*N_F0[area,Iage,2])
     for (Iage in 1:Nages) sb_F[area] <- sb_F[area] + passR*Fec[area,Iage]*(passRprop*N_Z_F[area,Iage,1]+(1-passRprop)*N_Z_F[area,Iage,2])
   }
+  # cat(sb_F,"\n")
+  # cat(sb_0,"\n")
   Rexp = c(0,0)
   for(i in 1:narea){
     if(i == 1){
       num <- GLOBAL_R0*passRprop*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
+      # cat(i,"\t",num,"\n")
     } else{
       num <- GLOBAL_R0*(1-passRprop)*4*dat$h[i]*sb_F[[i]]/sb_0[[i]]
+      # cat(i,"\t",num,"\n")
     }
     denom1 <- sb_F[[i]]/sb_0[[i]]*(5*dat$h[i]-1)
     denom2 <- (1-dat$h[i])
+    # cat(i,"\t",denom1+denom2,"\n")
     Rexp[i] = num/(denom1+denom2)
   } ## end area loop
   
   obsR <- passR*c(passRprop,1-passRprop)
-  #cat(obsR,"\n")
-  #cat(Rexp,'\n')
+  # cat(obsR,"\n")
+  # cat(Rexp,'\n')
   obj <- sum((obsR - Rexp)^2)
   #cat(passR,passRprop,obj,"\n")
   return(obj)
