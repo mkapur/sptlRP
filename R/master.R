@@ -40,8 +40,8 @@ scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 datlist <- list()
 
 ## run sims ----
-for(s in 1:nrow(scen)){
-# for(s in c(1:5)){
+# for(s in 1:nrow(scen)){
+for(s in c(1:3,8:16)){
   #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -71,32 +71,32 @@ for(s in 1:nrow(scen)){
   datlist[[s]] <- dat
   
   # #* build surface ----
-  FMAX <- scen[s,'FMAX']
-  FF.vec = seq(0,FMAX,0.05)
-  FFs <- expand.grid(FF.vec,FF.vec)
-  surface <- array(NA, dim = c(nrow(FFs),7,2),
-                   dimnames = list(c(1:nrow(FFs)),
-                                   c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
-                                   c('local','global')))
-  for(i in 1:nrow(FFs)){
-    if(i %% 100 ==0) cat(i,"\n")
-    surface[i,'FF_Area1',] <- FFs[i,1];  surface[i,'FF_Area2',] <- FFs[i,2]
-    ## fill in surface
-    useFs <- log(as.numeric(c(FFs[i,])))
-    tyields <-  runSim(par =useFs, dat, ret = 'vals', assume = NA)
-    surface[i,'tSSB','local'] <- tyields['local_tssb']
-    surface[i,'tSSB','global'] <-  tyields['global_tssb'] #tyields$global_tssb
-    surface[i,'tSSB0','local'] <- tyields['local_tssb0'] #tyields$local_tssb0
-    surface[i,'tSSB0','global'] <- tyields['global_tssb0'] #tyields$global_tssb0
-    surface[i,'req','local'] <- tyields['req_local'] #tyields$req_local[1]
-    surface[i,'req_prop','local'] <- tyields['req_local_prop'] #tyields$req_local[1]
-    surface[i,'req','global'] <- tyields['req_global'] #tyields$req_global
-    surface[i,'req_prop','global'] <- dat$input_prop
-    surface[i,'tyield','local'] <- tyields['tyield_local'] #tyields$tyield_local
-    surface[i,'tyield','global'] <- tyields['tyield_global'] #tyields$tyield_global
-  } ## end nrow FFs
-  # # head(surface)
-
+  # FMAX <- scen[s,'FMAX']
+  #  FF.vec = seq(0,FMAX,0.05)
+  # #FF.vec = seq(0,2.5,0.1)
+  # FFs <- expand.grid(FF.vec,FF.vec)
+  # surface <- array(NA, dim = c(nrow(FFs),7,2),
+  #                  dimnames = list(c(1:nrow(FFs)),
+  #                                  c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
+  #                                  c('local','global')))
+  # for(i in 1:nrow(FFs)){
+  #   if(i %% 100 ==0) cat(i,"\n")
+  #   surface[i,'FF_Area1',] <- FFs[i,1];  surface[i,'FF_Area2',] <- FFs[i,2]
+  #   ## fill in surface
+  #   useFs <- log(as.numeric(c(FFs[i,])))
+  #   tyields <-  runSim(par =useFs, dat, ret = 'vals', assume = NA)
+  #   surface[i,'tSSB','local'] <- tyields['local_tssb']
+  #   surface[i,'tSSB','global'] <-  tyields['global_tssb'] #tyields$global_tssb
+  #   surface[i,'tSSB0','local'] <- tyields['local_tssb0'] #tyields$local_tssb0
+  #   surface[i,'tSSB0','global'] <- tyields['global_tssb0'] #tyields$global_tssb0
+  #   surface[i,'req','local'] <- tyields['req_local'] #tyields$req_local[1]
+  #   surface[i,'req_prop','local'] <- tyields['req_local_prop'] #tyields$req_local[1]
+  #   surface[i,'req','global'] <- tyields['req_global'] #tyields$req_global
+  #   surface[i,'req_prop','global'] <- dat$input_prop
+  #   surface[i,'tyield','local'] <- tyields['tyield_local'] #tyields$tyield_local
+  #   surface[i,'tyield','global'] <- tyields['tyield_global'] #tyields$tyield_global
+  # } ## end nrow FFs
+  # # # head(surface)
 
   #* find MSY ----
   # ulim = log(10)
@@ -124,35 +124,46 @@ for(s in 1:nrow(scen)){
                        ndeps = rep(1e-4,2)))
   
   cat(SCENARIO,"\n")
-  
-  cat(steeps,"\n")
+  cat(dat$h,"\n")
   cat( exp(ss_global$par),"\n")
   # cat( exp(ss_local$par),"\n")
   
-  # ss_local <- optim(par =  ss_global$par,
-  #                   dat= dat,
-  #                   assume = 'LOCAL',
-  #                   ret = 'optim',
-  #                   # lower = c(-1000,-1000),
-  #                   # upper = c(-0.22,NA),
-  #                   # method = 'L-BFGS-B',
-  #                   fn=runSim,
-  #                   control = list(
-  #                     maxit = 1000,
-  #                     ndeps = rep(1e-4,2)))
-  # cat( exp(ss_local$par),"\n")
-    ss_local <- optim(par = log(c(0.2,0.2)),
-                      dat= dat,
-                      assume = 'LOCAL',
-                      ret = 'optim',
-                      # lower = c(-1000,-1000),
-                      # upper = c(-0.22,NA),
-                      # method = 'L-BFGS-B',
-                      fn=runSim,
-                      control = list(
-                        maxit = 1000,
-                        ndeps = rep(1e-4,2)))
-    cat( exp(ss_local$par),"\n")
+  ss_local <- optim(par =  ss_global$par,
+                    dat= dat,
+                    assume = 'LOCAL',
+                    ret = 'optim',
+                    # lower = c(-1000,-1000),
+                    # upper = c(-0.22,NA),
+                    # method = 'L-BFGS-B',
+                    fn=runSim,
+                    control = list(
+                      maxit = 1000,
+                      ndeps = rep(1e-4,2)))
+  cat( exp(ss_local$par),"\n")
+    # ss_local <- optim(par = log(c(0.2 ,0.5 )),
+    #                              dat= dat,
+    #                   assume = 'LOCAL',
+    #                   ret = 'optim',
+    #                   # lower = c(-1000,-1000),
+    #                   # upper = c(-0.22,NA),
+    #                   # method = 'L-BFGS-B',
+    #                   fn=runSim,
+    #                   control = list(
+    #                     maxit = 1000,
+    #                     ndeps = rep(1e-9,2)))
+    # cat( exp(ss_local$par),"\n")
+    # ss_local <- optim(par = log(c(0.2898236 ,0.6234624 )),
+    #                   dat= dat,
+    #                   assume = 'LOCAL',
+    #                   ret = 'optim',
+    #                   # lower = c(-1000,-1000),
+    #                   # upper = c(-0.22,NA),
+    #                   # method = 'L-BFGS-B',
+    #                   fn=runSim,
+    #                   control = list(
+    #                     maxit = 100000,
+    #                     ndeps = rep(1e-4,2)))
+    # cat( exp(ss_local$par),"\n")
     ss_local <- optim(par = ss_local$par,
                       dat= dat,
                       assume = 'LOCAL',
@@ -166,14 +177,17 @@ for(s in 1:nrow(scen)){
                         ndeps = rep(1e-4,2)))
     
     cat( exp(ss_local$par),"\n")
-
-
-
+# 
+    # dat$h = c(0.6,0.8)
+    # tt <- runSim(par = log(c(0.45,0.45)), dat, ret = 'vals', assume = NA);tt
+    # tt <- runSim(par = c(-1000,-1000), dat, ret = 'vals', assume = NA)
+    # tt['req_local']*c(tt['req_local_prop'],1-tt['req_local_prop'])
+    
   refpts_local <-  runSim(par =ss_local$par,dat, ret = 'vals', assume = NA)
   refpts_global <-  runSim(par =ss_global$par,dat, ret = 'vals', assume = NA)
-
-  #* fill scen----
+  cat(refpts_local['req_local_prop'],"\n")
   
+  #* fill scen----
   scen[s,'FMSY_LOCAL_A1'] <- exp(ss_local$par)[1]
   scen[s,'FMSY_LOCAL_A2'] <- exp(ss_local$par)[2]
   scen[s,'FMSY_GLOBAL_A1'] <-exp(ss_global$par)[1]
@@ -199,77 +213,77 @@ for(s in 1:nrow(scen)){
   scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
 
   #* plotting ----
-  maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
-  global <- data.frame(surface[,,'global']) %>%
-    filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
-    ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
-    geom_tile() +
-    coord_equal() +
-    #ggsidekick::theme_sleek() +
-    theme(legend.position = 'top')+
-    scale_fill_viridis_c() +
-    scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    geom_point(data = NULL,
-               aes(x = exp(ss_global$par[1]), y = exp(ss_global$par[2])),
-               fill = NA, color = 'blue', size = 2, pch =15) +
-    annotate('text',
-             x =0.6*maxf1,
-             y = 0.85*maxf1,
-             size = 3,
-             color = 'blue',
-             label = as.expression(bquote(MSY[Global]~ "="~.(round(refpts_global['tyield_global'],2))))) +
-    annotate('text',
-             x =0.6*maxf1,
-             y = 0.8*maxf1,
-             size = 3,
-             color ='blue',
-             label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
-    labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
+  # maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
+  # global <- data.frame(surface[,,'global']) %>%
+  #   filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
+  #   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
+  #   geom_tile() +
+  #   coord_equal() +
+  #   #ggsidekick::theme_sleek() +
+  #   theme(legend.position = 'top')+
+  #   scale_fill_viridis_c() +
+  #   scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
+  #   scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
+  #   geom_point(data = NULL,
+  #              aes(x = exp(ss_global$par[1]), y = exp(ss_global$par[2])),
+  #              fill = NA, color = 'blue', size = 2, pch =15) +
+  #   annotate('text',
+  #            x =0.6*maxf1,
+  #            y = 0.85*maxf1,
+  #            size = 3,
+  #            color = 'blue',
+  #            label = as.expression(bquote(MSY[Global]~ "="~.(round(refpts_global['tyield_global'],2))))) +
+  #   annotate('text',
+  #            x =0.6*maxf1,
+  #            y = 0.8*maxf1,
+  #            size = 3,
+  #            color ='blue',
+  #            label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
+  #   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
+  # #
+  # #
+  # #
+  # locl <- data.frame(surface[,,'local']) %>%
+  #   filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
+  #   ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
+  #   geom_tile() +
+  #   coord_equal() +
+  #   #ggsidekick::theme_sleek() +
+  #   theme(legend.position = 'top')+
+  #   scale_fill_viridis_c() +
+  #   scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
+  #   scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
+  #   geom_point(data = NULL,
+  #              aes(x = exp(ss_local$par[1]), y = exp(ss_local$par[2])),
+  #              fill = NA, color = 'blue', size = 2, pch =15)+
+  #   annotate('text',
+  #            x =0.6*maxf1,
+  #            y = 0.85*maxf1,
+  #            size = 3,
+  #            color = 'blue',
+  #            label = as.expression(bquote(MSY[Local]~ "="~.(round(refpts_local['tyield_local'],2))))) +
+  #   annotate('text',
+  #            x =0.6*maxf1,
+  #            y = 0.8*maxf1,
+  #            size = 3,
+  #            color ='blue',
+  #            label = as.expression(bquote(F[MSY_Local]~"="~.(round(exp(ss_local$par[1]),2))~"Area 1, "~.(round(exp(ss_local$par[2]),2))~"Area 2"))) +
+  #   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
   # 
   # 
+  # ## viewing plots in this manner requires the patchwork() package
+  # locl   | global
   # 
-  locl <- data.frame(surface[,,'local']) %>%
-    filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
-    ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
-    geom_tile() +
-    coord_equal() +
-    #ggsidekick::theme_sleek() +
-    theme(legend.position = 'top')+
-    scale_fill_viridis_c() +
-    scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    geom_point(data = NULL,
-               aes(x = exp(ss_local$par[1]), y = exp(ss_local$par[2])),
-               fill = NA, color = 'blue', size = 2, pch =15)+
-    annotate('text',
-             x =0.6*maxf1,
-             y = 0.85*maxf1,
-             size = 3,
-             color = 'blue',
-             label = as.expression(bquote(MSY[Local]~ "="~.(round(refpts_local['tyield_local'],2))))) +
-    annotate('text',
-             x =0.6*maxf1,
-             y = 0.8*maxf1,
-             size = 3,
-             color ='blue',
-             label = as.expression(bquote(F[MSY_Local]~"="~.(round(exp(ss_local$par[1]),2))~"Area 1, "~.(round(exp(ss_local$par[2]),2))~"Area 2"))) +
-    labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
-
-
-  ## viewing plots in this manner requires the patchwork() package
-  locl   | global
-
-  #* save -----
-  filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(steeps[1],"_",steeps[2]),"-",SCENARIO))
-  dir.create(filetemp)
-  ggsave(locl   | global,
-         file = paste0(filetemp,"/heatmap.png"),
-         width = 8, height = 6, unit = 'in', dpi = 520)
-  save(ss_local, file = paste0(filetemp,'/ss_local.RDATA'))
-  save(ss_global, file = paste0(filetemp,'/ss_local.RDATA'))
-  save(surface, file = paste0(filetemp,'/surface.RDATA'))
-  rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
+  # #* save -----
+  # filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(steeps[1],"_",steeps[2]),"-",SCENARIO))
+  # dir.create(filetemp)
+  # ggsave(locl   | global,
+  #        file = paste0(filetemp,"/heatmap.png"),
+  #        width = 8, height = 6, unit = 'in', dpi = 520)
+  # save(ss_local, file = paste0(filetemp,'/ss_local.RDATA'))
+  # save(ss_global, file = paste0(filetemp,'/ss_local.RDATA'))
+  # save(surface, file = paste0(filetemp,'/surface.RDATA'))
+  # rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
 } ## end s in scen
 
 
@@ -332,3 +346,52 @@ data.frame(scen) %>%
 #   filter(FF_Area2 == 1.0) %>%
 #   ggplot(., aes(x = (FF_Area1), y = tyield)) +
 #   geom_point()
+
+par(mfrow = c(1,4))
+## same mean (h)
+a1 = rnorm(1000,25,1)
+a2 = rnorm(1000,25,1)
+meana = rowMeans(cbind(a1,a2))
+plot(density(a1),col = 'blue', ylim = c(0,1), xlim = c(20,30), main = 'same h')
+lines(density(a2), col = 'red')
+lines(density(rbind(a1,a2)), col = 'purple')
+lines(density(meana), col = 'black')
+text(25,0.8, label = round(mean(rbind(a1,a2))), col = 'purple')
+text(25,0.75, label = round(mean(meana)))
+legend('topright', legend = c('a1','a2','sum of areas','mean of areas'),col = c('blue','red','purple','black'),
+       lty = 1)
+
+## diff mean (h)
+a1 = rnorm(10000,24,1)
+a2 = rnorm(10000,26,1)
+meana = rowMeans(cbind(a1,a2))
+plot(density(a1),col = 'blue', ylim = c(0,1), xlim = c(20,30), main = 'bracket h')
+lines(density(a2), col = 'red')
+lines(density(rbind(a1,a2)), col = 'purple')
+lines(density(meana), col = 'black')
+text(25,0.8, label = round(mean(rbind(a1,a2))), col = 'purple')
+text(25,0.75, label = round(mean(meana)))
+
+## asym (h)
+a1 = rnorm(10000,22,1)
+a2 = rnorm(10000,26,1)
+suma = rowSums(cbind(a1,a2))
+meana = rowMeans(cbind(a1,a2))
+plot(density(a1),col = 'blue', ylim = c(0,1), xlim = c(20,30), main = 'assym h')
+lines(density(a2), col = 'red')
+lines(density(rbind(a1,a2)), col = 'purple')
+lines(density(meana), col = 'black')
+text(25,0.8, label = round(mean(rbind(a1,a2))), col = 'purple')
+text(25,0.75, label = round(mean(meana)))
+
+## asym (h)
+a1 = rnorm(10000,25,1)
+a2 = rnorm(10000,26,1)
+suma = rowSums(cbind(a1,a2))
+meana = rowMeans(cbind(a1,a2))
+plot(density(a1),col = 'blue', ylim = c(0,1), xlim = c(20,30), main = 'assym h')
+lines(density(a2), col = 'red')
+lines(density(rbind(a1,a2)), col = 'purple')
+lines(density(meana), col = 'black')
+text(25,0.8, label = round(mean(rbind(a1,a2))), col = 'purple')
+text(25,0.75, label = round(mean(meana)))
