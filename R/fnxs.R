@@ -158,9 +158,11 @@ runSim <- function(par,
 
 
   Recr_global = c(req_global*dat$input_prop,req_global*(1-dat$input_prop))
-  Recr_local <- c(req_local$par[1]*req_local$par[2],req_local$par[1]*(1-req_local$par[2]))
-  rprop_est = req_local$par[2]
+  # Recr_local <- c(req_local$par[1]*req_local$par[2],req_local$par[1]*(1-req_local$par[2]))
+  # rprop_est = req_local$par[2]
+  Recr_local <- c(req_local$par[1],req_local$par[2])
   Recr <- c(sum(Recr_global),sum(Recr_local))
+  rprop_est = req_local$par[1]/Recr[2]
   # print(Recr)
   # print(Recr_global)
   # print(Recr_local)
@@ -309,12 +311,12 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
     # return(list('par' = c(sum(Recr), Recr[1]/Recr[2])))
     ## optimize
     # dat$h = c(0.6,0.8)
-    opt_temp <- optim(par = c(1,0.5),
+    opt_temp <- optim(par = c(0.5,0.5),
                       Fec = Fec,
                       N_F0 = N_F0,
                       N_Z_F = N_Z_F,
                       lower = c(1E-4,1E-4),
-                      upper = c(NA,1),
+                      upper = c(NA,NA),
                       method = "L-BFGS-B",
                       fn = optimFunc, hessian = FALSE,
                       control = list(
@@ -330,7 +332,10 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
 optimFunc <- function(par,Fec,N_F0,N_Z_F){
   # cat(par,"\n")
   # cat(dat$h,"\n")
-  passR <- par[1]; passRprop <- par[2]
+  # passR <- par[1]; passRprop <- par[2]
+  passR1 <- par[1]; passR2 <- par[2]
+  passR = sum(passR1,passR2)
+  passRprop = passR1/sum(passR)
   #print(passR)
   #print(passRprop)
   sb_F <- sb_0 <- Cat <- c(0,0)
@@ -340,6 +345,7 @@ optimFunc <- function(par,Fec,N_F0,N_Z_F){
   for(area in 1:2){
     for (Iage in 1:Nages) sb_0[area] <- sb_0[area] + RecF0*Fec[area,Iage]*(PropF0*N_F0[area,Iage,1]+(1-PropF0)*N_F0[area,Iage,2])
     for (Iage in 1:Nages) sb_F[area] <- sb_F[area] + passR*Fec[area,Iage]*(passRprop*N_Z_F[area,Iage,1]+(1-passRprop)*N_Z_F[area,Iage,2])
+    # for (Iage in 1:Nages) sb_F[area] <- sb_F[area] + Fec[area,Iage]*(passR1*N_Z_F[area,Iage,1])+passR2*N_Z_F[area,Iage,2]
   }
   # cat(sb_F,"\n")
   # cat(sb_0,"\n")
