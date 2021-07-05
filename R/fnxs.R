@@ -101,6 +101,44 @@ doNAA <- function(F1,F2, usedat, Sel){
 }
 
 
+## AEP IDEA - use with src-sink only
+doNAA2 <- function(F1,F2, usedat, Sel){
+  M <- usedat$M
+  h <- usedat$h
+  
+  ## run area-specific NAA treating all movement as mortality
+  Z<- matrix(0,nrow=2,ncol=Nages)
+  for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1*(1-usedat$dat[Iage,"proportion_stay",1])
+  for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2*(1-usedat$dat[Iage,"proportion_stay",2])
+  
+  N <- array(NA, dim = c(narea,Nages,narea)) 
+  ## assign single recruit to each area
+  N[,1:2,1] <- c(1,0) #c(dat$input_prop,0)
+  N[,1:2,2] <- c(0,1) #c(0,1-dat$input_prop)
+  ## survive and move at once
+  for(slice in 1:narea){
+    for(age in 2:Nages){
+      for(area in 1:narea){
+        pLeave = NCome = 0
+        for(jarea in 1:narea){
+          if(area != jarea){
+            pLeave = pLeave + (1-usedat$dat[age,"proportion_stay",area]) ##  leaving for elsewhere
+            NCome = NCome +(1-usedat$dat[age,"proportion_stay",jarea])*
+              N[jarea,age-1,slice]*exp(-Z[jarea, age-1]) ## mortality in other area
+          } # end i != j
+        }  # end subareas j
+        N[area,age,slice] <- N[area,age-1,slice]*exp(-Z[area, age-1]) 
+      } ## end sink-area loop
+    } ## end ages
+  } ## end source-area loop
+  for(slice in 1:narea){
+    for(area in 1:narea){
+      N[area,Nages,slice] <-    N[area,Nages,slice]/(1-exp(-Z[area,Nages]))
+    }}
+  # cat(N[1,2,1],"\n")
+  # plot(N)
+  return(list('N' = N,'Z' = Z))
+}
 
 runSim <- function(par, 
                    dat, 
@@ -114,17 +152,20 @@ runSim <- function(par,
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
   Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
     
-  N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
-  N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
+  # N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
+  # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
   
-  # par(mfrow = c(1,3))
-  # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  # points(N_F0[2,,1])
-  # plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  # points(N_F0[2,,2])
-  # plot(rowSums(N_F0[1,,]), col = 'blue', main = 'totals', ylim = c(0,1))
-  # points(rowSums(N_F0[2,,]))
-  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel)$N
+  N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel)
+  
+  par(mfrow = c(1,3))
+  plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  points(N_F0[2,,1])
+  plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  points(N_F0[2,,2])
+  plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  lines(colSums(N_F0[,,2]))
+  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
 
   ## derived quants on a per-area basis
   ## these are per one recruit (no prop here)
@@ -141,7 +182,7 @@ runSim <- function(par,
   }
   
   
-  # dat$h = c(0.6,0.8)
+
   req_global <- getEqR(assumption = 'GLOBAL', 
                        Fec = Fec,
                        N_F0 = N_F0,
