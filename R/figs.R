@@ -83,7 +83,7 @@ local <- out_use %>%
   #            fill = NA,
   #            size = 2, alpha = 0.3) +
   geom_point(data = out2_local, aes(x = out2_local[which.max(out2_local[,'tyield']),'FF_Area1'],
-                                  y = out2_local[which.max(out2_local[,'tyield']),'FF_Area2']), 
+                                    y = out2_local[which.max(out2_local[,'tyield']),'FF_Area2']), 
              fill = NA, color = 'gglobal', size = 2, pch =15)+
   annotate('text',
            x =0.6*maxf1,
@@ -92,7 +92,7 @@ local <- out_use %>%
            color = 'gglobal',
            label = as.expression(bquote(MSY[Local]~
                                           "="~.(round(out2_local[which.max(out2_local[,'tyield']),
-                                                               'tyield']))))) +
+                                                                 'tyield']))))) +
   annotate('text',
            x =0.6*maxf1,
            y = 0.8*maxf1,
@@ -100,7 +100,7 @@ local <- out_use %>%
            color ='gglobal',
            label = as.expression(bquote(F[MSY_Local]~"="~.(round(out2_local[which.max(out2_local$tyield),'FF_Area1'],2))~"Area 1, "~.
                                         (round(out2_local[which.max(out2_local$tyield),'FF_Area2'],2))~"Area 2"))) +
- 
+  
   labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO) 
 
 ## global assumption panel ----
@@ -128,7 +128,7 @@ global <- out_use %>%
   # geom_point(data = out2_global, aes(x = FF_Area1, y = FF_Area2),fill = NA, 
   #            color = 'navy', size = 2, alpha = 0.3) +
   geom_point(data = out2_global, aes(x = out2_global[which.max(out2_global[,'tyield']),'FF_Area1'],
-                                  y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
+                                     y = out2_global[which.max(out2_global[,'tyield']),'FF_Area2']),
              fill = NA, color = 'gglobal', size = 2, pch =15)+
   annotate('text',
            x =0.6*maxf1,
@@ -137,7 +137,7 @@ global <- out_use %>%
            color ='gglobal',
            label = as.expression(bquote(MSY[Global]~
                                           "="~.(round(out2_global[which.max(out2_global[,'tyield']),
-                                                               'tyield']))))) +
+                                                                  'tyield']))))) +
   annotate('text',
            x =0.6*maxf1,
            y = 0.8*maxf1,
@@ -154,88 +154,99 @@ cat(paste0('saved ',Sys.Date(),"-",SCENARIO,"-FvsYield_compare.png", '\n'))
 
 
 ## NAA Panel ---- 
-png(paste0(filetemp,'/testdoPR-movement-PANEL.png'),
-    width = 10, height =8, unit = 'in', res = 520)
-
-layout.matrix <- matrix(c(1:6), ncol = 3, byrow = T)
-
-layout(mat = layout.matrix) 
-tmp <- doPR(datlist[[s]], FF = c(0,0)) ## defaults, no fishing
-par(mar = c(0,4,1.5,1))
-## spawn-src F0
-plot(tmp$NPR[1,,1], lwd = 2,
-     ylim = c(0,1),   
-     xlab = 'Age',
-     xaxt = 'n',
-     type = 'l',   
-     cex.main = 1.5,
-     main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~0)),
-     ylab = 'Numbers-per-recruit' );
-lines(tmp$NPR[2,,1], lwd = 2, col = 'blue') ## should look reasonable
-axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
-text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-par(mar = c(0,0,1.5,1))
-plot(tmp$NPR[1,,2],type = 'l',
-     cex.main = 1.5,
-     main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~0)),
-     ylim = c(0,1),
-     ylab = 'Numbers-per-recruit',
-     xaxt = 'n',
-     lwd = 2,  )
-lines(tmp$NPR[2,,2],lwd = 2, col = 'blue') ## should look reasonable
-text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-
-## total Ns F0
-par(mar = c(0,4,1.5,1))
-plot(colSums(tmp$NPR[,,1]),type = 'l',
-     main = as.expression(bquote(Total~"Numbers,"~F~"="~0)),
-     ylim = c(0,1),
-     cex.main = 1.5,
-     ylab = 'Numbers-at-Age',
-     xaxt = 'n',
-     lwd = 2,  )
-lines(colSums(tmp$NPR[,,2]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
-legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
-text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-
-FFvec <- c(out2_local[which.max(out2_local[,'tyield']),'FF_Area1'],
-           out2_local[which.max(out2_local[,'tyield']),'FF_Area2'])
-
-tmp <- doPR(datlist[[s]], FF =FFvec)
-
-## spawn-src fmsy
-par(mar = c(4,4,1.5,1))
-plot(tmp$NPR[1,,1], lwd = 2,
-     ylim = c(0,1),   xlab = 'Age',type = 'l',     cex.main = 1.5,
-     main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
-     ylab = 'Numbers-per-recruit' );
-lines(tmp$NPR[2,,1], lwd = 2, col = 'blue') ## should look reasonable
-axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
-text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-par(mar = c(4,0,1.5,1))
-plot(tmp$NPR[1,,2],type = 'l',
-     cex.main = 1.5,
-     main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~F[MSY])),
-     ylim = c(0,1),
-     ylab = 'Numbers-per-recruit',
-     xlab = 'Age',
-     lwd = 2,  )
-lines(tmp$NPR[2,,2],lwd = 2, col = 'blue') ## should look reasonable
-text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-
-## TOTAL NS FMSY
-par(mar = c(4,4,1.5,1))
-plot(colSums(tmp$NPR[,,1]),type = 'l',
-     main = as.expression(bquote(Total~"Numbers,"~F~"="~F[MSY])),
-     ylim = c(0,1),
-     cex.main = 1.5,
-     ylab = 'Numbers-at-Age',
-     # xaxt = 'n',
-     lwd = 2,  )
-lines(colSums(tmp$NPR[,,2]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
-legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
-text(x = 15, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-
-dev.off()
-
+SCENNAMES = scen[,1]
+for(s in 1:nrow(scen)){
+  png(here('figs',paste0(scen[s,1],'-testdoPR-movement-PANEL.png')),
+      width = 10, height =8, unit = 'in', res = 520)
+  
+  layout.matrix <- matrix(c(1:6), ncol = 3, byrow = T)
+  
+  layout(mat = layout.matrix) 
+  
+  WAA <-  matrix(c(dat$dat[Ages+1,'weight',1], dat$dat[Ages+1,'weight',2]),nrow=2,ncol=Nages, byrow = T)
+  Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
+  Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
+  
+  tmp <- doNAA(F1=0,F2=0, usedat =datlist[[s]], Sel)
+  # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
+  # tmp <- doPR(, FF = c(0,0)) ## defaults, no fishing
+  par(mar = c(0,4,1.5,1))
+  ## spawn-src F0
+  plot(tmp$N[1,,1], lwd = 2,
+       ylim = c(0,1),   
+       xlab = 'Age',
+       xaxt = 'n',
+       type = 'l',   
+       cex.main = 1.5,
+       main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~0)),
+       ylab = 'Numbers-per-recruit' );
+  lines(tmp$N[2,,1], lwd = 2, col = 'blue') ## should look reasonable
+  axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
+  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  
+  par(mar = c(0,0,1.5,1))
+  plot(tmp$N[1,,2],type = 'l',
+       cex.main = 1.5,
+       main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~0)),
+       ylim = c(0,1),
+       ylab = 'Numbers-per-recruit',
+       xaxt = 'n',
+       yaxt = 'n',
+       lwd = 2,  )
+  lines(tmp$N[2,,2],lwd = 2, col = 'blue') ## should look reasonable
+  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  
+  ## total Ns F0
+  par(mar = c(0,4,1.5,1))
+  plot(rowSums(tmp$N[1,,]),type = 'l',
+       main = as.expression(bquote(Total~"Numbers,"~F~"="~0)),
+       ylim = c(0,1),
+       cex.main = 1.5,
+       ylab = 'Numbers-at-Age',
+       xaxt = 'n',
+       lwd = 2,  )
+  lines(rowSums(tmp$N[2,,]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
+  legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
+  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  
+  FFvec <- c(scen[s,'FMSY_LOCAL_A1'],scen[s,'FMSY_LOCAL_A2'])
+  
+  tmp <- doNAA(F1=FFvec[1],F2=FFvec[2], usedat =datlist[[s]], Sel)
+  
+  ## spawn-src fmsy
+  par(mar = c(4,4,1.5,1))
+  plot(tmp$N[1,,1], lwd = 2,
+       ylim = c(0,1),   xlab = 'Age',type = 'l',     cex.main = 1.5,
+       main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
+       ylab = 'Numbers-per-recruit' );
+  lines(tmp$N[2,,1], lwd = 2, col = 'blue') ## should look reasonable
+  axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
+  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  par(mar = c(4,0,1.5,1))
+  plot(tmp$N[1,,2],type = 'l',
+       cex.main = 1.5,
+       main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~F[MSY])),
+       ylim = c(0,1),
+       yaxt = 'n',
+       ylab = 'Numbers-per-recruit',
+       xlab = 'Age',
+       lwd = 2,  )
+  lines(tmp$N[2,,2],lwd = 2, col = 'blue') ## should look reasonable
+  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  
+  ## TOTAL NS FMSY
+  par(mar = c(4,4,1.5,1))
+  plot(rowSums(tmp$N[1,,]),type = 'l',
+       main = as.expression(bquote(Total~"Numbers,"~F~"="~F[MSY])),
+       ylim = c(0,1),
+       cex.main = 1.5,
+       ylab = 'Numbers-at-Age',
+       # xaxt = 'n',
+       lwd = 2,  )
+  lines(rowSums(tmp$N[2,,]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
+  legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
+  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  
+  dev.off()
+}
 
