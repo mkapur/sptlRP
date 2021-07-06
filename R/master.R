@@ -40,8 +40,8 @@ scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 datlist <- list()
 
 ## run sims ----
-for(s in 1:nrow(scen)){
-# for(s in c(14:24)){
+# for(s in 1:nrow(scen)){
+for(s in c(18:22)){
   #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -72,7 +72,8 @@ for(s in 1:nrow(scen)){
   
   # #* build surface ----
   FMAX <- scen[s,'FMAX']
-  FF.vec = seq(0,FMAX,0.05)
+  # FF.vec = seq(0,FMAX,0.05)
+  FF.vec = seq(0,2,0.25)
   FFs <- expand.grid(FF.vec,FF.vec)
   surface <- array(NA, dim = c(nrow(FFs),7,2),
                    dimnames = list(c(1:nrow(FFs)),
@@ -106,7 +107,6 @@ for(s in 1:nrow(scen)){
                        maxit = 1000,
                        ndeps = rep(1e-4,2)))
   for(k in 1:5){
-  
     ss_global <- optim(par = ss_global$par,
                        dat= dat,
                        assume = 'GLOBAL',
@@ -214,9 +214,6 @@ for(s in 1:nrow(scen)){
              color ='blue',
              label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
     labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
-  #
-  #
-  #
   locl <- data.frame(surface[,,'local']) %>%
     filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
     ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
