@@ -163,11 +163,9 @@ for(s in 1:nrow(scen)){
   
   layout(mat = layout.matrix) 
   
-  WAA <-  matrix(c(dat$dat[Ages+1,'weight',1], dat$dat[Ages+1,'weight',2]),nrow=2,ncol=Nages, byrow = T)
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
-  Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
-  
-  tmp <- doNAA(F1=0,F2=0, usedat =datlist[[s]], Sel)
+
+  tmp <- doNAA2(F1=0,F2=0, usedat =datlist[[s]], Sel)
   # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
   # tmp <- doPR(, FF = c(0,0)) ## defaults, no fishing
   par(mar = c(0,4,1.5,1))
@@ -209,10 +207,9 @@ for(s in 1:nrow(scen)){
   legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
   text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
-  FFvec <- c(scen[s,'FMSY_LOCAL_A1'],scen[s,'FMSY_LOCAL_A2'])
-  
-  tmp <- doNAA(F1=FFvec[1],F2=FFvec[2], usedat =datlist[[s]], Sel)
-  
+  # FFvec <- c(scen[s,'FMSY_LOCAL_A1'],scen[s,'FMSY_LOCAL_A2'])
+  tmp <- doNAA2(F1=10,F2=10, usedat =datlist[[s]], Sel)
+  tmp$N[1,14,1]
   ## spawn-src fmsy
   par(mar = c(4,4,1.5,1))
   plot(tmp$N[1,,1], lwd = 2,
