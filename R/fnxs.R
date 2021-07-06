@@ -105,29 +105,42 @@ doNAA <- function(F1,F2, usedat, Sel){
 doNAA2 <- function(F1,F2, usedat, Sel){
   M <- usedat$M
   h <- usedat$h
-  
+  Q = c(0,0.4)
+  # Q=NULL
+  # Q[1] <- 1-max(usedat$dat[,2,1])
+  # Q[2] <- 1-max(usedat$dat[,2,2])
   ## run area-specific NAA treating all movement as mortality
   Z<- matrix(0,nrow=2,ncol=Nages)
-  for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1*(1-usedat$dat[Iage,"proportion_stay",1])
-  for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2*(1-usedat$dat[Iage,"proportion_stay",2])
+  for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1
+  for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2
   
   N <- array(NA, dim = c(narea,Nages,narea)) 
   ## assign single recruit to each area
   N[,1:2,1] <- c(1,0) #c(dat$input_prop,0)
   N[,1:2,2] <- c(0,1) #c(0,1-dat$input_prop)
   ## survive and move at once
+
   for(slice in 1:narea){
     for(age in 2:Nages){
       for(area in 1:narea){
-        pLeave = NCome = 0
+        # pLeave = NCome = 0
+        term2 = 0
         for(jarea in 1:narea){
           if(area != jarea){
-            pLeave = pLeave + (1-usedat$dat[age,"proportion_stay",area]) ##  leaving for elsewhere
-            NCome = NCome +(1-usedat$dat[age,"proportion_stay",jarea])*
-              N[jarea,age-1,slice]*exp(-Z[jarea, age-1]) ## mortality in other area
+            ## incomings - will be zero if no movement from other area
+            term2 <-  N[jarea,age-1,slice]*exp(-M)*(1-exp(-Sel[jarea,age]*Q[jarea]))
+            # cat(term2,"\n")
+          #   pLeave = pLeave + (1-usedat$dat[age,"proportion_stay",area]) ##  leaving for elsewhere
+          #   NCome = NCome +(1-usedat$dat[age,"proportion_stay",jarea])*
+          #     N[jarea,age-1,slice]*exp(-Z[jarea, age-1]) ## mortality in other area
           } # end i != j
+            N[area,age,slice] <- N[area,age-1,slice]*exp(-M)*exp(-(Z[area,age]))*exp(-Sel[area,age]*Q[area])+term2*exp(-(Z[area,age]))
+            
         }  # end subareas j
-        N[area,age,slice] <- N[area,age-1,slice]*exp(-Z[area, age-1]) 
+          ## bring in migrants & fish them here
+          
+        # N[area,age,slice] <- (1-pLeave)*N[area,age-1,slice]*exp(-Z[area, age-1]) + NCome
+        # N[area,age,slice] <- N[area,age-1,slice]*exp(-Z[area, age-1])  ## comment out pleave ncome
       } ## end sink-area loop
     } ## end ages
   } ## end source-area loop
@@ -158,14 +171,21 @@ runSim <- function(par,
   N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel)$N
   N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel)
   
-  par(mfrow = c(1,3))
-  plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  points(N_F0[2,,1])
-  plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  points(N_F0[2,,2])
-  plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
-  lines(colSums(N_F0[,,2]))
-  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  # par(mfrow = c(2,3))
+  # plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  # lines(N_Z_F$N[2,,1])
+  # plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  # lines(N_Z_F$N[2,,2])
+  # plot(colSums(N_Z_F$N[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  # lines(colSums(N_Z_F$N[,,2]))
+  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  # lines(N_F0[2,,1])
+  # plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  # lines(N_F0[2,,2])
+  # plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  # lines(colSums(N_F0[,,2]))
+  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
 
   ## derived quants on a per-area basis
   ## these are per one recruit (no prop here)
@@ -180,8 +200,6 @@ runSim <- function(par,
     
     for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
-  
-  
 
   req_global <- getEqR(assumption = 'GLOBAL', 
                        Fec = Fec,
