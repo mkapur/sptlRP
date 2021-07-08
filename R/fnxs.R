@@ -15,6 +15,7 @@ logistic <- function(a,a50,a95){
 
 makeDat <- function(nage = 100, 
                     narea =2, 
+                    qq = c(NA,NA),
                     h = steep,
                     input_prop,
                     wa = NULL,  
@@ -58,7 +59,7 @@ makeDat <- function(nage = 100,
       
     } ## end age
   } ## end area
-  return(list('dat' = dat,"h" = h,"input_prop" = input_prop, 'M' = mort))
+  return(list('dat' = dat,"h" = h,"input_prop" = input_prop, 'M' = mort, Q = qq))
 }
 
 
@@ -102,10 +103,10 @@ doNAA <- function(F1,F2, usedat, Sel){
 
 
 ## AEP IDEA - use with src-sink only
-doNAA2 <- function(F1,F2, usedat, Sel){
+doNAA2 <- function(F1,F2, usedat, Sel, Q){
   M <- usedat$M
   h <- usedat$h
-  Q = c(0,0.4)
+  # Q = c(0,0.4)
   # Q=NULL
   # Q[1] <- 1-max(usedat$dat[,2,1])
   # Q[2] <- 1-max(usedat$dat[,2,2])
@@ -156,7 +157,7 @@ doNAA2 <- function(F1,F2, usedat, Sel){
 runSim <- function(par, 
                    dat, 
                    ret = c('opt','vals')[1], 
-                   assume = 'GLOBAL'){
+                   assume = 'GLOBAL', Q = dat$Q){
 
   F1 = exp(par[1])
   F2 = exp(par[2])
@@ -168,8 +169,8 @@ runSim <- function(par,
   # N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
   # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
   
-  N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel)$N
-  N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel)
+  N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel, Q)$N
+  N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel, Q)
   
   # par(mfrow = c(2,3))
   # plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
@@ -207,7 +208,7 @@ runSim <- function(par,
                        N_Z_F = N_Z_F$N,
                        Prop=dat$input_prop, 
                        Steep = mean(dat$h)) 
-  
+  # AAA
   req_local <- getEqR(assumption = 'LOCAL', 
                       Fec = Fec,
                       N_F0 = N_F0,
@@ -233,7 +234,7 @@ runSim <- function(par,
   #print(local_catch)
   # if(round(global_catch,2) != round(local_catch,2)) print(c(F1,F2))
 
-  #AAA
+  # AAA
   
   ## versions that consider propr
   # global_catch <- c(Cat[1]*Recr[1]*dat$input_prop,Cat[2]*Recr[1]*(1-dat$input_prop))
