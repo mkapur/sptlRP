@@ -123,26 +123,31 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
 
   for(slice in 1:narea){
     for(age in 2:Nages){
-      for(area in 1:narea){
+      ## brute force src-sink method (a2 is sink)
+      N[1,age,slice] <- N[1,age-1,slice]*exp(-M)*exp(-(Z[1,age]))*exp(-Sel[1,age]*Q[1])
+      N[2,age,slice] <- N[2,age-1,slice]*exp(-M)*exp(-(Z[2,age]))*exp(-Sel[2,age]*Q[2])+
+        N[1,age-1,slice]*exp(-M)*(1-exp(-Sel[1,age]*Q[1]))*exp(-(Z[1,age]))
+      
+      # for(area in 1:narea){
         # pLeave = NCome = 0
-        term2 = 0
-        for(jarea in 1:narea){
-          if(area != jarea){
+        # term2 = 0
+        # for(jarea in 1:narea){
+          # if(area != jarea){
             ## incomings - will be zero if no movement from other area
-            term2 <-  N[jarea,age-1,slice]*exp(-M)*(1-exp(-Sel[jarea,age]*Q[jarea]))
-            # cat(term2,"\n")
+            # term2 <-  N[jarea,age-1,slice]*exp(-M)*(1-exp(-Sel[jarea,age]*Q[jarea]))
+            # if(age < 20 & jarea == 1) cat(term2,"\n")
           #   pLeave = pLeave + (1-usedat$dat[age,"proportion_stay",area]) ##  leaving for elsewhere
           #   NCome = NCome +(1-usedat$dat[age,"proportion_stay",jarea])*
           #     N[jarea,age-1,slice]*exp(-Z[jarea, age-1]) ## mortality in other area
-          } # end i != j
-            N[area,age,slice] <- N[area,age-1,slice]*exp(-M)*exp(-(Z[area,age]))*exp(-Sel[area,age]*Q[area])+term2*exp(-(Z[area,age]))
+          # } # end i != j
+            # N[area,age,slice] <- N[area,age-1,slice]*exp(-M)*exp(-(Z[area,age]))*exp(-Sel[area,age]*Q[area])+term2*exp(-(Z[area,age]))
             
-        }  # end subareas j
+        # }  # end subareas j
           ## bring in migrants & fish them here
           
         # N[area,age,slice] <- (1-pLeave)*N[area,age-1,slice]*exp(-Z[area, age-1]) + NCome
         # N[area,age,slice] <- N[area,age-1,slice]*exp(-Z[area, age-1])  ## comment out pleave ncome
-      } ## end sink-area loop
+      # } ## end sink-area loop
     } ## end ages
   } ## end source-area loop
   for(slice in 1:narea){
