@@ -124,8 +124,8 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
   for(slice in 1:narea){
     for(age in 2:Nages){
       ## brute force src-sink method (a2 is sink)
-      N[1,age,slice] <- N[1,age-1,slice]*exp(-(Z[1,age]))*exp(-Sel[1,age]*Q[1])
-      N[2,age,slice] <- N[2,age-1,slice]*exp(-(Z[2,age]))*exp(-Sel[2,age]*Q[2])+
+      N[1,age,slice] <- N[1,age-1,slice]*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])
+      N[2,age,slice] <- N[2,age-1,slice]*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
         N[1,age-1,slice]*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
       # for(area in 1:narea){
