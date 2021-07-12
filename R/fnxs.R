@@ -124,53 +124,40 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
   # for(slice in 1:narea){
     for(age in 2:Nages){
       
+      ## Option 1: cheapie version (no move or src-sink dynamic; not symm)
       # https://github.com/mkapur/sptlRP/blob/f2ca3bc972a6d00ed2e93e9521b83aaf48c01a88/R/fnxs.R
-      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])
-      
-      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
-      
-      N[1,age,2] <- 0
-      N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
+      # N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])
+      # N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+      #   N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      # N[1,age,2] <- 0
+      # N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+      #   N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
       
       ## brute force src-sink method (a2 is sink)
-      # for(area in 1:narea)
+      ## with fishing coincident to movement (fished in source area)
+      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+        N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
+      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+        N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
+      N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
-      # N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])#+
-      #   # N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
-      # 
+      
+      ## brute force src-sink method (a2 is sink)
+      ## with fishing AFTER movement (fished in sink area)
+      # N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+      #   N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
       # N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
       #   N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
-      
       # N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
       #   N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
-        
-      # N[1,age,2] <-  0
-      
       # N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
       #   N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
-      
-      # N[,1:15,]
-      # for(area in 1:narea){
-      #   # pLeave = NCome = 0
-      #   term2 = 0
-      #   for(jarea in 1:narea){
-      #     if(area != jarea){
-      #       ## incomings - will be zero if no movement from other area
-      #       term2 <-  N[jarea,age-1,slice]*exp(-M)*(1-exp(-Sel[jarea,age]*Q[jarea]))
-      #       # if(Q[jarea] == 1) term2 <- 0
-      #       # if(age < 20 & jarea == 1) cat(area,jarea,term2,"\n")
-      #     } # end i != j
-      #   }  # end subareas j
-      #   N[area,age,slice] <- N[area,age-1,slice]*exp(-M)*exp(-(Z[area,age]))*exp(-Sel[area,age]*Q[area])+
-      #     term2*exp(-(Z[area,age]))
-      #   
-      #   ## bring in migrants & fish them here
-      # } ## end sink-area loop
     } ## end ages
-  # } ## end source-area loop
+
   for(slice in 1:narea){
     for(area in 1:narea){
       N[area,Nages,slice] <-    N[area,Nages,slice]/(1-exp(-(Z[area,Nages]+M)))
