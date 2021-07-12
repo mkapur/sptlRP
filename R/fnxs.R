@@ -128,7 +128,7 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
       # for(area in 1:narea)
       
       N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-        N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
+        N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
       
       N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
         N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
