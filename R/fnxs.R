@@ -71,7 +71,7 @@ doNAA <- function(F1,F2, usedat, Sel){
   Z<- matrix(0,nrow=2,ncol=Nages)
   for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1
   for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2
-
+  
   N <- array(NA, dim = c(narea,Nages,narea)) 
   ## assign single recruit to each area
   N[,1:2,1] <- c(1,0) #c(dat$input_prop,0)
@@ -111,51 +111,56 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
   # Q[1] <- 1-max(usedat$dat[,2,1])
   # Q[2] <- 1-max(usedat$dat[,2,2])
   ## run area-specific NAA treating all movement as mortality
-  Z<- matrix(0,nrow=2,ncol=Nages)
-  for (Iage in 1:Nages) Z[1,Iage] <- M+Sel[1,Iage]*F1
-  for (Iage in 1:Nages) Z[2,Iage] <- M+Sel[2,Iage]*F2
+  Z <- matrix(0,nrow=2,ncol=Nages)
+  for (Iage in 1:Nages) Z[1,Iage] <- Sel[1,Iage]*F1
+  for (Iage in 1:Nages) Z[2,Iage] <- Sel[2,Iage]*F2
   
   N <- array(NA, dim = c(narea,Nages,narea)) 
   ## assign single recruit to each area
   N[,1:2,1] <- c(1,0) #c(dat$input_prop,0)
   N[,1:2,2] <- c(0,1) #c(0,1-dat$input_prop)
   ## survive and move at once
-
-  for(slice in 1:narea){
+  
+  # for(slice in 1:narea){
     for(age in 2:Nages){
-      ## brute force src-sink method (a2 is sink)
-      N[1,age,slice] <- N[1,age-1,slice]*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])
-      N[2,age,slice] <- N[2,age-1,slice]*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,slice]*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
+      ## brute force src-sink method (a2 is sink)
+      # for(area in 1:narea)
+      
+      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])
+      
+      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      
+      N[1,age,2] <- 0
+      N[2,age,2] <- N[2,age-1,slice]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,slice]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      
+      # N[,1:15,]
       # for(area in 1:narea){
-        # pLeave = NCome = 0
-        # term2 = 0
-        # for(jarea in 1:narea){
-          # if(area != jarea){
-            ## incomings - will be zero if no movement from other area
-            # term2 <-  N[jarea,age-1,slice]*exp(-M)*(1-exp(-Sel[jarea,age]*Q[jarea]))
-            # if(age < 20 & jarea == 1) cat(term2,"\n")
-          #   pLeave = pLeave + (1-usedat$dat[age,"proportion_stay",area]) ##  leaving for elsewhere
-          #   NCome = NCome +(1-usedat$dat[age,"proportion_stay",jarea])*
-          #     N[jarea,age-1,slice]*exp(-Z[jarea, age-1]) ## mortality in other area
-          # } # end i != j
-            # N[area,age,slice] <- N[area,age-1,slice]*exp(-M)*exp(-(Z[area,age]))*exp(-Sel[area,age]*Q[area])+term2*exp(-(Z[area,age]))
-            
-        # }  # end subareas j
-          ## bring in migrants & fish them here
-          
-        # N[area,age,slice] <- (1-pLeave)*N[area,age-1,slice]*exp(-Z[area, age-1]) + NCome
-        # N[area,age,slice] <- N[area,age-1,slice]*exp(-Z[area, age-1])  ## comment out pleave ncome
+      #   # pLeave = NCome = 0
+      #   term2 = 0
+      #   for(jarea in 1:narea){
+      #     if(area != jarea){
+      #       ## incomings - will be zero if no movement from other area
+      #       term2 <-  N[jarea,age-1,slice]*exp(-M)*(1-exp(-Sel[jarea,age]*Q[jarea]))
+      #       # if(Q[jarea] == 1) term2 <- 0
+      #       # if(age < 20 & jarea == 1) cat(area,jarea,term2,"\n")
+      #     } # end i != j
+      #   }  # end subareas j
+      #   N[area,age,slice] <- N[area,age-1,slice]*exp(-M)*exp(-(Z[area,age]))*exp(-Sel[area,age]*Q[area])+
+      #     term2*exp(-(Z[area,age]))
+      #   
+      #   ## bring in migrants & fish them here
       # } ## end sink-area loop
     } ## end ages
-  } ## end source-area loop
+  # } ## end source-area loop
   for(slice in 1:narea){
     for(area in 1:narea){
       N[area,Nages,slice] <-    N[area,Nages,slice]/(1-exp(-Z[area,Nages]))
     }}
   # cat(N[1,2,1],"\n")
-  # plot(N)
+  plot(N)
   return(list('N' = N,'Z' = Z))
 }
 
@@ -163,36 +168,36 @@ runSim <- function(par,
                    dat, 
                    ret = c('opt','vals')[1], 
                    assume = 'GLOBAL', Q = dat$Q){
-
+  
   F1 = exp(par[1])
   F2 = exp(par[2])
   
   WAA <-  matrix(c(dat$dat[Ages+1,'weight',1], dat$dat[Ages+1,'weight',2]),nrow=2,ncol=Nages, byrow = T)
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
   Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
-    
+  
   # N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
   # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
   
   N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel, Q)$N
   N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel, Q)
   
-  # par(mfrow = c(2,3))
-  # plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  # lines(N_Z_F$N[2,,1])
-  # plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  # lines(N_Z_F$N[2,,2])
-  # plot(colSums(N_Z_F$N[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
-  # lines(colSums(N_Z_F$N[,,2]))
-  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
-  # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  # lines(N_F0[2,,1])
-  # plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  # lines(N_F0[2,,2])
-  # plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
-  # lines(colSums(N_F0[,,2]))
-  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
-
+  par(mfrow = c(2,3))
+  plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  lines(N_Z_F$N[2,,1])
+  plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  lines(N_Z_F$N[2,,2])
+  plot(colSums(N_Z_F$N[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  lines(colSums(N_Z_F$N[,,2]))
+  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  lines(N_F0[2,,1])
+  plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  lines(N_F0[2,,2])
+  plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  lines(colSums(N_F0[,,2]))
+  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  
   ## derived quants on a per-area basis
   ## these are per one recruit (no prop here)
   SBPR <- SBPF0 <- Cat <- c(0,0)
@@ -206,7 +211,7 @@ runSim <- function(par,
     
     for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
-
+  
   req_global <- getEqR(assumption = 'GLOBAL', 
                        Fec = Fec,
                        N_F0 = N_F0,
@@ -220,8 +225,8 @@ runSim <- function(par,
                       N_Z_F = N_Z_F$N,
                       Prop=dat$input_prop,
                       Steep = dat$h)
-
-
+  
+  
   Recr_global = c(req_global*dat$input_prop,req_global*(1-dat$input_prop))
   # Recr_local <- c(req_local$par[1]*req_local$par[2],req_local$par[1]*(1-req_local$par[2]))
   # rprop_est = req_local$par[2]
@@ -232,13 +237,13 @@ runSim <- function(par,
   # print(Recr_global)
   # print(Recr_local)
   # print(rprop_est)
- 
+  
   global_catch <-  Cat[1,1]*Recr_global[1]+Cat[2,1]*Recr_global[1]+Cat[1,2]*Recr_global[2]+Cat[2,2]*Recr_global[2]
   local_catch <-   Cat[1,1]*Recr_local[1]+Cat[2,1]*Recr_local[1]+Cat[1,2]*Recr_local[2]+Cat[2,2]*Recr_local[2]
   #print(global_catch)
   #print(local_catch)
   # if(round(global_catch,2) != round(local_catch,2)) print(c(F1,F2))
-
+  
   # AAA
   
   ## versions that consider propr
@@ -247,7 +252,7 @@ runSim <- function(par,
   # cat(global_catch,"\n")
   # cat(local_catch,"\n")
   ## switch for what to return 
-
+  
   # global_sb0_a1 <- SBPF0[1]*Recr[1]*dat$input_prop
   # global_sb0_a2 <- SBPF0[2]*Recr[1]*(1-dat$input_prop)
   # global_tssb0 <-  sum(global_sb0_a1,global_sb0_a2)
@@ -350,7 +355,7 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
     }
     SBPF0 <- sum(SBPF0)
     SSB  <- sum(SBPR)
-
+    
     alpha <- SBPF0*(1-Steep)/(4*Steep)
     beta <- (5*Steep-1)/(4*Steep*GLOBAL_R0)
     req <- max(0.001, (SSB - alpha)/(beta*SSB)) ## a la SS
@@ -371,7 +376,7 @@ getEqR <- function(assumption = 'GLOBAL', Fec, N_F0, N_Z_F, Prop, Steep){
     #   Bot <- (5*Steep[i]-1)*SBPR[i]/SBPF0[i]
     #   Recr[i] <- max(1e-4,Top/Bot)
     # }
-
+    
     # print(Recr)
     # return(list('par' = c(sum(Recr), Recr[1]/Recr[2])))
     ## optimize
