@@ -132,7 +132,7 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
       
       N[1,age,2] <- 0
       N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
       
       
       ## brute force src-sink method (a2 is sink)
