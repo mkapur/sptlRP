@@ -124,21 +124,33 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
   # for(slice in 1:narea){
     for(age in 2:Nages){
       
+      # https://github.com/mkapur/sptlRP/blob/f2ca3bc972a6d00ed2e93e9521b83aaf48c01a88/R/fnxs.R
+      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])
+      
+      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      
+      N[1,age,2] <- 0
+      N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      
+      
       ## brute force src-sink method (a2 is sink)
       # for(area in 1:narea)
       
-      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-        N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
+      # N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])#+
+      #   # N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
+      # 
+      # N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+      #   N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
       
-      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
-      
-      N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-        N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
+      # N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+      #   N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
         
       # N[1,age,2] <-  0
-      N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
+      
+      # N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+      #   N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
       
       # N[,1:15,]
       # for(area in 1:narea){
@@ -187,24 +199,22 @@ runSim <- function(par,
   N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel, Q)$N
   N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel, Q)
   
-  par(mfrow = c(2,3))
-  plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  lines(N_F0[2,,1])
-  plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  lines(N_F0[2,,2])
-  plot(rowSums(N_F0[1,,]), col = 'blue', main = 'totals', ylim = c(0,1))
-  lines(rowSums(N_F0[2,,]))
-  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
-  plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  lines(N_Z_F$N[2,,1])
-  plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  lines(N_Z_F$N[2,,2])
-  plot(rowSums(N_Z_F$N[1,,]), col = 'blue', main = 'totals', ylim = c(0,1))
-  lines(rowSums(N_Z_F$N[2,,]))
-  
-  
-  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
-  
+  # par(mfrow = c(2,3))
+  # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  # lines(N_F0[2,,1])
+  # plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  # lines(N_F0[2,,2])
+  # plot(rowSums(N_F0[1,,]), col = 'blue', main = 'totals', ylim = c(0,1))
+  # lines(rowSums(N_F0[2,,]))
+  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  # plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  # lines(N_Z_F$N[2,,1])
+  # plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  # lines(N_Z_F$N[2,,2])
+  # plot(rowSums(N_Z_F$N[1,,]), col = 'blue', main = 'totals', ylim = c(0,1))
+  # lines(rowSums(N_Z_F$N[2,,]))
+  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+
   
   ## derived quants on a per-area basis
   ## these are per one recruit (no prop here)
@@ -216,7 +226,6 @@ runSim <- function(par,
         N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
     for (Iage in 1:Nages) Cat[area,2] <- Cat[area,2] + WAA[area,Iage]*Sel[area,Iage]*c(F1,F2)[area]*sum(N_Z_F$N[area,Iage,2])/
         N_Z_F$Z[area,Iage]*(1.0-exp(-N_Z_F$Z[area,Iage]))
-    
     for (Iage in 1:Nages) SBPR[area] <- SBPR[area] + Fec[area,Iage]*sum(N_Z_F$N[area,Iage,1:2]) ## does NOT have prop
   }
   
