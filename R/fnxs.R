@@ -159,9 +159,10 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
     for(area in 1:narea){
       N[area,Nages,slice] <-    N[area,Nages,slice]/(1-exp(-(Z[area,Nages]+M)))
     }}
+  Zret = Z+M
   # cat(N[1,2,1],"\n")
   # plot(N)
-  return(list('N' = N,'Z' = Z))
+  return(list('N' = N,'Z' = Zret))
 }
 
 runSim <- function(par, 
@@ -218,7 +219,7 @@ runSim <- function(par,
                        N_Z_F = N_Z_F$N,
                        Prop=dat$input_prop, 
                        Steep = mean(dat$h)) 
-  # AAA
+  # cat(req_global,"\n")
   req_local <- getEqR(assumption = 'LOCAL', 
                       Fec = Fec,
                       N_F0 = N_F0,
