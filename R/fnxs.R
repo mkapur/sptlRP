@@ -132,7 +132,10 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
       N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
         N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
-      N[1,age,2] <- 0
+      N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+        N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
+        
+      # N[1,age,2] <-  0
       N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
         N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
@@ -183,22 +186,22 @@ runSim <- function(par,
   N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel, Q)$N
   N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel, Q)
   
-  # par(mfrow = c(2,3))
-  # plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  # lines(N_Z_F$N[2,,1])
-  # plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  # lines(N_Z_F$N[2,,2])
-  # plot(colSums(N_Z_F$N[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
-  # lines(colSums(N_Z_F$N[,,2]))
-  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
-  # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
-  # lines(N_F0[2,,1])
-  # plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
-  # lines(N_F0[2,,2])
-  # plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
-  # lines(colSums(N_F0[,,2]))
-  # legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
-  
+  par(mfrow = c(2,3))
+  plot(N_Z_F$N[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  lines(N_Z_F$N[2,,1])
+  plot(N_Z_F$N[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  lines(N_Z_F$N[2,,2])
+  plot(colSums(N_Z_F$N[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  lines(colSums(N_Z_F$N[,,2]))
+  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+  plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
+  lines(N_F0[2,,1])
+  plot(N_F0[1,,2], col = 'blue', main = 'spawned in a2', ylim = c(0,1))
+  lines(N_F0[2,,2])
+  plot(colSums(N_F0[,,1]), col = 'blue', main = 'totals', ylim = c(0,1))
+  lines(colSums(N_F0[,,2]))
+  legend('topright', legend = c('present in a1','present in a2'),pch = 1, col = c('blue','black'))
+
   ## derived quants on a per-area basis
   ## these are per one recruit (no prop here)
   SBPR <- SBPF0 <- Cat <- c(0,0)
