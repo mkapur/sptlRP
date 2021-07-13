@@ -165,22 +165,22 @@ for(s in 1:nrow(scen)){
   
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
 
-  tmp <- doNAA2(F1=0,F2=0, usedat =datlist[[s]], Sel)
-  # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
+  # tmp <- doNAA(F1=0,F2=0, usedat =datlist[[s]], Sel)
+  N_Z_F <- doNAA(F1=0, F2=0, usedat = dat, Sel); tmp <- N_Z_F
   # tmp <- doPR(, FF = c(0,0)) ## defaults, no fishing
   par(mar = c(0,4,1.5,1))
   ## spawn-src F0
   plot(tmp$N[1,,1], lwd = 2,
        ylim = c(0,1),   
        xlab = 'Age',
-       xaxt = 'n',
+       xaxt = 'n', yaxt = 'n',
        type = 'l',   
        cex.main = 1.5,
        main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~0)),
        ylab = 'Numbers-per-recruit' );
   lines(tmp$N[2,,1], lwd = 2, col = 'blue') ## should look reasonable
   axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
-  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
   par(mar = c(0,0,1.5,1))
   plot(tmp$N[1,,2],type = 'l',
@@ -192,7 +192,7 @@ for(s in 1:nrow(scen)){
        yaxt = 'n',
        lwd = 2,  )
   lines(tmp$N[2,,2],lwd = 2, col = 'blue') ## should look reasonable
-  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
   ## total Ns F0
   par(mar = c(0,4,1.5,1))
@@ -203,22 +203,24 @@ for(s in 1:nrow(scen)){
        ylab = 'Numbers-at-Age',
        xaxt = 'n',
        lwd = 2,  )
-  lines(rowSums(tmp$N[2,,]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
+  lines(rowSums(tmp$N[2,,]),lwd = 2, col = 'blue', type = 'l') ## should look reasonable
   legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
-  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
   # FFvec <- c(scen[s,'FMSY_LOCAL_A1'],scen[s,'FMSY_LOCAL_A2'])
-  tmp <- doNAA2(F1=10,F2=10, usedat =datlist[[s]], Sel)
-  tmp$N[1,14,1]
+  # tmp <- doNAA2(F1=10,F2=10, usedat =datlist[[s]], Sel)
+  # tmp$N[1,14,1]
+  N_Z_F <- doNAA(F1=0.57, F2=0.02, usedat = dat, Sel); tmp <- N_Z_F
+  
   ## spawn-src fmsy
   par(mar = c(4,4,1.5,1))
   plot(tmp$N[1,,1], lwd = 2,
-       ylim = c(0,1),   xlab = 'Age',type = 'l',     cex.main = 1.5,
+       ylim = c(0,1),   xlab = 'Age',type = 'l',   yaxt = 'n',  cex.main = 1.5,
        main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
        ylab = 'Numbers-per-recruit' );
   lines(tmp$N[2,,1], lwd = 2, col = 'blue') ## should look reasonable
   axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
-  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   par(mar = c(4,0,1.5,1))
   plot(tmp$N[1,,2],type = 'l',
        cex.main = 1.5,
@@ -229,7 +231,7 @@ for(s in 1:nrow(scen)){
        xlab = 'Age',
        lwd = 2,  )
   lines(tmp$N[2,,2],lwd = 2, col = 'blue') ## should look reasonable
-  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
   ## TOTAL NS FMSY
   par(mar = c(4,4,1.5,1))
@@ -240,9 +242,9 @@ for(s in 1:nrow(scen)){
        ylab = 'Numbers-at-Age',
        # xaxt = 'n',
        lwd = 2,  )
-  lines(rowSums(tmp$N[2,,]),lwd = 2, col = 'blue', type = 'p') ## should look reasonable
+  lines(rowSums(tmp$N[2,,]),lwd = 2, col = 'blue', type = 'l') ## should look reasonable
   legend('topright',lwd = 2, legend = c('Present in a2', 'Present in a1'), col = rev(c('black','blue')))
-  text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
+  # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
   dev.off()
 }
