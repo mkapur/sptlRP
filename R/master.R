@@ -41,7 +41,7 @@ datlist <- list()
 
 ## run sims ----
 # for(s in 1:nrow(scen)){
-for(s in c(18:22)){
+for(s in c(1,17,23)){
   #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -73,7 +73,7 @@ for(s in c(18:22)){
   # #* build surface ----
   FMAX <- scen[s,'FMAX']
   # FF.vec = seq(0,FMAX,0.05)
-  FF.vec = seq(0,2,0.25)
+  FF.vec = seq(0,0.75,0.05)
   FFs <- expand.grid(FF.vec,FF.vec)
   surface <- array(NA, dim = c(nrow(FFs),7,2),
                    dimnames = list(c(1:nrow(FFs)),
@@ -252,7 +252,7 @@ for(s in c(18:22)){
          file = paste0(filetemp,"/heatmap.png"),
          width = 8, height = 6, unit = 'in', dpi = 520)
   save(ss_local, file = paste0(filetemp,'/ss_local.RDATA'))
-  save(ss_global, file = paste0(filetemp,'/ss_local.RDATA'))
+  save(ss_global, file = paste0(filetemp,'/ss_global.RDATA'))
   save(surface, file = paste0(filetemp,'/surface.RDATA'))
   rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
 } ## end s in scen
