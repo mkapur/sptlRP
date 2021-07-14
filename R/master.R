@@ -41,7 +41,8 @@ datlist <- list()
 
 ## run sims ----
 # for(s in 1:nrow(scen)){
-for(s in c(1,17,23)){
+idx = 1
+for(s in c(1,17,22)){
   #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -187,33 +188,10 @@ for(s in c(1,17,23)){
   scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
   # 
   # #* plotting ----
-  maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
-  global <- data.frame(surface[,,'global']) %>%
-    filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
-    ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
-    geom_tile() +
-    coord_equal() +
-    ggsidekick::theme_sleek() +
-    theme(legend.position = 'top')+
-    scale_fill_viridis_c() +
-    scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    geom_point(data = NULL,
-               aes(x = exp(ss_global$par[1]), y = exp(ss_global$par[2])),
-               fill = NA, color = 'blue', size = 2, pch =15) +
-    annotate('text',
-             x =0.6*maxf1,
-             y = 0.85*maxf1,
-             size = 3,
-             color = 'blue',
-             label = as.expression(bquote(MSY[Global]~ "="~.(round(refpts_global['tyield_global'],2))))) +
-    annotate('text',
-             x =0.6*maxf1,
-             y = 0.8*maxf1,
-             size = 3,
-             color ='blue',
-             label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
-    labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
+  # maxf1 <- max(data.frame(surface[,"FF_Area1",'global']))
+  maxf1 = 0.75
+
+  
   locl <- data.frame(surface[,,'local']) %>%
     filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
     ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
@@ -222,8 +200,10 @@ for(s in c(1,17,23)){
     ggsidekick::theme_sleek() +
     theme(legend.position = 'top')+
     scale_fill_viridis_c() +
-    scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
-    scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.25), expand = c(0,0)) +
+    scale_x_continuous( expand = c(0,0)) +
+    scale_y_continuous( expand = c(0,0)) +
+    # scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.1), expand = c(0,0)) +
+    # scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.1), expand = c(0,0)) +
     geom_point(data = NULL,
                aes(x = exp(ss_local$par[1]), y = exp(ss_local$par[2])),
                fill = NA, color = 'blue', size = 2, pch =15)+
@@ -239,7 +219,48 @@ for(s in c(1,17,23)){
              size = 3,
              color ='blue',
              label = as.expression(bquote(F[MSY_Local]~"="~.(round(exp(ss_local$par[1]),2))~"Area 1, "~.(round(exp(ss_local$par[2]),2))~"Area 2"))) +
-    labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
+    # labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
+    annotate('text',
+             x =0.05,
+             y = 0.65,
+             size = 5,
+             label = toupper(letters[idx]))+ 
+    labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield')
+  idx = idx +1
+  global <- data.frame(surface[,,'global']) %>%
+    filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
+    ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
+    geom_tile() +
+    coord_equal() +
+    ggsidekick::theme_sleek() +
+    theme(legend.position = 'top')+
+    scale_fill_viridis_c() +
+    scale_x_continuous( expand = c(0,0)) +
+    scale_y_continuous( expand = c(0,0)) +
+    # scale_x_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.1), expand = c(0,0)) +
+    # scale_y_continuous(limits = c(NA,maxf1), breaks = seq(0,maxf1, 0.1), expand = c(0,0)) +
+    geom_point(data = NULL,
+               aes(x = exp(ss_global$par[1]), y = exp(ss_global$par[2])),
+               fill = NA, color = 'blue', size = 2, pch =15) +
+    annotate('text',
+             x =0.6*maxf1,
+             y = 0.85*maxf1,
+             size = 3,
+             color = 'blue',
+             label = as.expression(bquote(MSY[Global]~ "="~.(round(refpts_global['tyield_global'],2))))) +
+    annotate('text',
+             x =0.6*maxf1,
+             y = 0.8*maxf1,
+             size = 3,
+             color ='blue',
+             label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
+    # labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
+    annotate('text',
+             x =0.05,
+             y = 0.65,
+             size = 5,
+             label = toupper(letters[idx]))+ 
+    labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield')
 
 
   ## viewing plots in this manner requires the patchwork() package
@@ -255,6 +276,7 @@ for(s in c(1,17,23)){
   save(ss_global, file = paste0(filetemp,'/ss_global.RDATA'))
   save(surface, file = paste0(filetemp,'/surface.RDATA'))
   rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
+  idx = idx+1
 } ## end s in scen
 
 
