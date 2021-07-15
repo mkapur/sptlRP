@@ -136,26 +136,26 @@ doNAA2 <- function(F1,F2, usedat, Sel, Q){
       
       ## brute force src-sink method (a2 is sink)
       ## with fishing coincident to movement (fished in source area)
-      # N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-      #   N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
-      # N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-      #   N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
-      # N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-      #   N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
-      # N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-      #   N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+        N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
+      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
+      N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+        N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[2,age-1]))
+      N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[1,age-1]))
       
       
       ## brute force src-sink method (a2 is sink)
       ## with fishing AFTER movement (fished in sink area)
-      N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-        N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
-      N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
-      N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
-        N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
-      N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
-        N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
+      # N[1,age,1] <- N[1,age-1,1]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+      #   N[2,age-1,1]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
+      # N[2,age,1] <- N[2,age-1,1]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+      #   N[1,age-1,1]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
+      # N[1,age,2] <- N[1,age-1,2]*exp(-M)*exp(-(Z[1,age-1]))*exp(-Sel[1,age-1]*Q[1])+
+      #   N[2,age-1,2]*exp(-M)*(1-exp(-Sel[2,age-1]*Q[2]))*exp(-(Z[1,age-1]))
+      # N[2,age,2] <- N[2,age-1,2]*exp(-M)*exp(-(Z[2,age-1]))*exp(-Sel[2,age-1]*Q[2])+
+      #   N[1,age-1,2]*exp(-M)*(1-exp(-Sel[1,age-1]*Q[1]))*exp(-(Z[2,age-1]))
     } ## end ages
 
   for(slice in 1:narea){
@@ -180,11 +180,11 @@ runSim <- function(par,
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
   Fec <- matrix(c(Sel[1,]*WAA[1,], Sel[2,]*WAA[2,]),nrow=2,ncol=Nages, byrow = T)
   
-  N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
-  N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
+  # N_F0 <- doNAA(F1=0,F2=0, usedat =dat, Sel)$N
+  # N_Z_F <- doNAA(F1, F2, usedat = dat, Sel)
   
-  # N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel, Q)$N
-  # N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel, Q)
+  N_F0 <- doNAA2(F1=0,F2=0, usedat =dat, Sel, Q)$N
+  N_Z_F <- doNAA2(F1, F2, usedat = dat, Sel, Q)
   
   # par(mfrow = c(2,3))
   # plot(N_F0[1,,1], col = 'blue', main = 'spawned in a1', ylim = c(0,1))
