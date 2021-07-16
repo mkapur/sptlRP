@@ -40,9 +40,9 @@ scen <- cbind(scen, setNames( lapply(coln, function(x) x=NA), coln) )
 datlist <- list()
 
 ## run sims ----
-# for(s in 1:nrow(scen)){
-idx = 1
-for(s in c(1,17,22)){
+for(s in 1:nrow(scen)){
+# idx = 1
+# for(s in c(1,17,22)){
   #* build dat ----
   SCENARIO = scen[s,'SCENARIO_NAME']
   steeps <- c(scen[s,'H1'], scen[s,'H2'])
@@ -76,6 +76,8 @@ for(s in c(1,17,22)){
   # FF.vec = seq(0,FMAX,0.05)
   FF.vec = seq(0,0.75,0.05)
   FFs <- expand.grid(FF.vec,FF.vec)
+
+  
   surface <- array(NA, dim = c(nrow(FFs),7,2),
                    dimnames = list(c(1:nrow(FFs)),
                                    c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
@@ -220,13 +222,13 @@ for(s in c(1,17,22)){
              color ='blue',
              label = as.expression(bquote(F[MSY_Local]~"="~.(round(exp(ss_local$par[1]),2))~"Area 1, "~.(round(exp(ss_local$par[2]),2))~"Area 2"))) +
     # labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
-    annotate('text',
-             x =0.05,
-             y = 0.65,
-             size = 5,
-             label = toupper(letters[idx]))+ 
+    # annotate('text',
+    #          x =0.05,
+    #          y = 0.65,
+    #          size = 5,
+    #          label = toupper(letters[idx]))+ 
     labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield')
-  idx = idx +1
+  # idx = idx +1
   global <- data.frame(surface[,,'global']) %>%
     filter(FF_Area1 <= maxf1 & FF_Area2 <= maxf1) %>%
     ggplot(., aes(x = FF_Area1, y = FF_Area2, fill = tyield)) +
@@ -255,11 +257,11 @@ for(s in c(1,17,22)){
              color ='blue',
              label = as.expression(bquote(F[MSY_Global]~"="~.(round(exp(ss_global$par[1]),2))~"Area 1, "~.(round(exp(ss_global$par[2]),2))~"Area 2"))) +
     # labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield',  title = SCENARIO)
-    annotate('text',
-             x =0.05,
-             y = 0.65,
-             size = 5,
-             label = toupper(letters[idx]))+ 
+    # annotate('text',
+    #          x =0.05,
+    #          y = 0.65,
+    #          size = 5,
+    #          label = toupper(letters[idx]))+ 
     labs(x = 'F in Area 1',   y = 'F in Area 2', fill = 'Total Yield')
 
 
@@ -276,7 +278,7 @@ for(s in c(1,17,22)){
   save(ss_global, file = paste0(filetemp,'/ss_global.RDATA'))
   save(surface, file = paste0(filetemp,'/surface.RDATA'))
   rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
-  idx = idx+1
+  # idx = idx+1
 } ## end s in scen
 
 
