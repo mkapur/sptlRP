@@ -21,7 +21,7 @@ for(s in  1:nrow(scen)){ #c(1,17,22)){
 }
 idx =1;plist=list()
 # for(s in 1:nrow(scen)){
-for(s in c(1,3,6,12)){
+for(s in c(12,1,3,6)){
   cat(idx,"\n")
   SCENARIO = scen[s,'SCENARIO_NAME']
   pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
@@ -114,11 +114,11 @@ for(s in c(1,3,6,12)){
     scale_x_continuous(limits = c(0,0.7), breaks = seq(0,0.7,0.1)) +
     scale_y_continuous(limits = c(0,75), breaks = seq(0,70,10)) +
     labs(x = 'F in Area 1 (F Area 2 = FMSY Area 2)', 
-         y = 'Yield Total', linetype = "assumption")  #+
-  annotate('text', x = 0.05, y = 60, size = 5, label = toupper(letters[idx]))
+         y = 'Yield Total', linetype = "assumption")  +
+  annotate('text', x = 0.05, y = 70, size = 5, label = toupper(letters[idx]))
   
   ggsave(last_plot(),
-         height = 10, width = 8, dpi = 520,
+         height = 6, width = 6, dpi = 520,
          file = paste0(filn,"/F1Yield_F2FMSY.png"))
   idx = idx +1
   
@@ -305,7 +305,8 @@ for(s in 1:nrow(scen)){
        xaxt = 'n', yaxt = 'n',
        type = 'l',   
        cex.main = 1.5,
-       main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~0)),
+       main = 'Spawned in area 1',
+       # main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~0)),
        ylab = 'Numbers-per-recruit' );
   lines(tmp$N[2,,1], lwd = 2, col = 'blue') ## should look reasonable
   axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
@@ -314,7 +315,8 @@ for(s in 1:nrow(scen)){
   par(mar = c(0,0,1.5,1))
   plot(tmp$N[1,,2],type = 'l',
        cex.main = 1.5,
-       main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~0)),
+       main = 'Spawned in area 2',
+       # main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~0)),
        ylim = c(0,1),
        ylab = 'Numbers-per-recruit',
        xaxt = 'n',
@@ -326,7 +328,8 @@ for(s in 1:nrow(scen)){
   ## total Ns F0
   par(mar = c(0,4,1.5,1))
   plot(rowSums(tmp$N[1,,]),type = 'l',
-       main = as.expression(bquote(Total~"Numbers,"~F~"="~0)),
+       main = 'Total Numbers',
+       # main = as.expression(bquote(Total~"Numbers,"~F~"="~0)),
        ylim = c(0,1),
        cex.main = 1.5,
        ylab = 'Numbers-at-Age',
@@ -342,18 +345,18 @@ for(s in 1:nrow(scen)){
   N_Z_F <- doNAA(F1=0.57, F2=0.02, usedat = dat, Sel); tmp <- N_Z_F
   
   ## spawn-src fmsy
-  par(mar = c(4,4,1.5,1))
+  par(mar = c(4,4,0,1))
   plot(tmp$N[1,,1], lwd = 2,
        ylim = c(0,1),   xlab = 'Age',type = 'l',   yaxt = 'n',  cex.main = 1.5,
-       main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
+       # main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
        ylab = 'Numbers-per-recruit' );
   lines(tmp$N[2,,1], lwd = 2, col = 'blue') ## should look reasonable
   axis(side = 2, at = seq(0,1,0.2), labels =seq(0,1,0.2) )
   # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
-  par(mar = c(4,0,1.5,1))
+  par(mar = c(4,0,0,1))
   plot(tmp$N[1,,2],type = 'l',
        cex.main = 1.5,
-       main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~F[MSY])),
+       # main = as.expression(bquote(Spawned~"in"~"a2,"~F~"="~F[MSY])),
        ylim = c(0,1),
        yaxt = 'n',
        ylab = 'Numbers-per-recruit',
@@ -363,9 +366,9 @@ for(s in 1:nrow(scen)){
   # text(x = 50, y = 0.7, label = SCENNAMES[s], cex = 1.5)
   
   ## TOTAL NS FMSY
-  par(mar = c(4,4,1.5,1))
+  par(mar = c(4,4,0,1))
   plot(rowSums(tmp$N[1,,]),type = 'l',
-       main = as.expression(bquote(Total~"Numbers,"~F~"="~F[MSY])),
+       # main = as.expression(bquote(Total~"Numbers,"~F~"="~F[MSY])),
        ylim = c(0,1),
        cex.main = 1.5,
        ylab = 'Numbers-at-Age',
