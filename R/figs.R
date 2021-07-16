@@ -1,3 +1,132 @@
+## yield curve shift illustration ----
+## make isocline surface at F2=MSY for base case & no move
+
+# scen <- read.csv(here("inputscen.csv")) ## setup
+scen <- read.csv(here("vignette_inputscen.csv")) ## setup
+
+idx =1;  msys <- array(NA,dim = c(2,nrow(scen),2)) ## global x local, scen, 2 areas
+for(s in  1:nrow(scen)){ #c(1,17,22)){
+
+  #  strng <- gsub("+","-",scen[s,'SCENARIO_NAME'])
+  dr <- "C:/Users/mkapur/Dropbox/UW/sptlRP/output/vignette_fish_before_move"
+  whch <- grep(scen[s,'SCENARIO_NAME'],list.files(dr))
+  filn <-  list.files(dr, full.names = T)[whch[1]]
+  load(paste0(filn, "/ss_global.RDATA"))
+  load(paste0(filn,  "/ss_local.RDATA"))
+  msys[1,idx,1] <-exp(ss_global$par)[1]
+  msys[2,idx,1] <-exp(ss_local$par)[1]
+  msys[1,idx,2] <-exp(ss_global$par)[2]
+  msys[2,idx,2] <-exp(ss_local$par)[2]
+  idx = idx+1
+}
+idx =1;plist=list()
+# for(s in 1:nrow(scen)){
+for(s in c(1,3,6,12)){
+  cat(idx,"\n")
+  SCENARIO = scen[s,'SCENARIO_NAME']
+  pStayt <- as.numeric(c(scen[s,'PSTAY_A1'],scen[s,'PSTAY_A2']))
+  steeps <- c(scen[s,'H1'], scen[s,'H2'])
+  dat <- makeDat(wa = NULL, ## default wa
+                 mort = scen[s,'NATM'],
+                 h = steeps,
+                 input_prop = scen[s,'PROPR'],
+                 fec_a50 = c(6,6),
+                 fec_a95 = c(12,12),
+                 slx_a50= c(as.numeric(scen[s,'SLX_A50_A1']),9),
+                 slx_a95= c(as.numeric(scen[s,'SLX_A95_A1']),13),
+                 pStay=pStayt,
+                 qq = c(scen[s,'Q1'],scen[s,'Q2']))
+  
+  ## run isocline at FMSY
+  dr <- "C:/Users/mkapur/Dropbox/UW/sptlRP/output/vignette_fish_before_move"
+  whch <- grep(scen[s,'SCENARIO_NAME'],list.files(dr))
+  filn <-  list.files(dr, full.names = T)[whch[1]]
+  load(paste0(filn, "/ss_global.RDATA"))
+  load(paste0(filn,  "/ss_local.RDATA"))
+  
+  ## all combos of FF_area1 + F2MSY
+  FF.vec = seq(0,0.75,0.05)
+  
+  cat(exp(ss_global$par),"\n")
+  cat(exp(ss_local$par),"\n")
+  FFs_g <- expand.grid(FF.vec,exp(ss_global$par)[2])
+  FFs_l <- expand.grid(FF.vec,exp(ss_local$par)[2])
+  
+  surface <- array(NA, dim = c(nrow(FFs_g),7,2),
+                   dimnames = list(c(1:nrow(FFs_g)),
+                                   c("FF_Area1","FF_Area2",'tSSB', 'req','req_prop', 'tSSB0',"tyield"),
+                                   c('local','global')))
+  ## fill local & global separately
+  for(i in 1:nrow(FFs_g)){
+    if(i %% 100 ==0) cat(i,"\n")
+    surface[i,'FF_Area1','global'] <- FFs_g[i,1];  surface[i,'FF_Area2','global'] <- FFs_g[i,2]
+    ## fill in surface
+    useFs <- log(as.numeric(c(FFs_g[i,])))
+    tyields <-  runSim(par =useFs, dat, ret = 'vals', assume = NA)
+    surface[i,'tSSB','global'] <-  tyields['global_tssb'] #tyields$global_tssb
+    surface[i,'tSSB0','global'] <- tyields['global_tssb0'] #tyields$global_tssb0
+    surface[i,'req','global'] <- tyields['req_global'] #tyields$req_global
+    surface[i,'req_prop','global'] <- dat$input_prop
+    surface[i,'tyield','global'] <- tyields['tyield_global'] #tyields$tyield_global
+  } ## end nrow FFs
+  
+  for(i in 1:nrow(FFs_l)){
+    if(i %% 100 ==0) cat(i,"\n")
+    surface[i,'FF_Area1','local'] <- FFs_l[i,1]; 
+    surface[i,'FF_Area2','local'] <- FFs_l[i,2]
+    ## fill in surface
+    useFs <- log(as.numeric(c(FFs_l[i,])))
+    tyields <-  runSim(par =useFs, dat, ret = 'vals', assume = NA)
+    surface[i,'tSSB','local'] <- tyields['local_tssb']
+    surface[i,'tSSB0','local'] <- tyields['local_tssb0'] #tyields$local_tssb0
+    surface[i,'req','local'] <- tyields['req_local'] #tyields$req_local[1]
+    surface[i,'req_prop','local'] <- tyields['req_local_prop'] #tyields$req_local[1]
+    surface[i,'tyield','local'] <- tyields['tyield_local'] #tyields$tyield_local
+  } ## end nrow FFs
+  
+  iso_local <- data.frame(surface[,,'local']) %>%
+    select(FF_Area1,FF_Area2,tyield) %>%
+    reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+    mutate(Area = substr(variable,7,8), yield = value) %>%
+    select(-variable,-value)
+  
+  iso_global <- data.frame(surface[,,'global']) %>%
+    select(FF_Area1,FF_Area2,tyield) %>%
+    reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
+    mutate(Area = substr(variable,7,8), yield = value) %>%
+    select(-variable,-value)
+  
+  ggplot(data = iso_local, aes(y = yield)) +
+    geom_line(aes(x = FF_Area1, linetype = 'LOCAL', color = 'LOCAL'), lwd = 1.1) +
+    geom_line(data = iso_global, aes(x = FF_Area1, linetype = 'GLOBAL', color = 'GLOBAL'), 
+              lwd = 1.1) +
+    
+    ggsidekick::theme_sleek(base_size = 15) +
+    theme(legend.position = 'top')+
+    geom_vline(aes(xintercept =msys[2,s,1],  lty = 'LOCAL', color = 'LOCAL')) +
+    geom_vline(aes(xintercept = msys[1,s,1],  lty = 'GLOBAL', color = 'GLOBAL')) +
+    scale_color_manual(name = "assumption",
+                       values = c('black','blue'), 
+                       labels = c('GLOBAL','LOCAL')) +
+    scale_linetype_manual(name = "assumption",
+                          values = c('solid','dotted'), 
+                          labels = c('GLOBAL','LOCAL')) +
+    scale_x_continuous(limits = c(0,0.7), breaks = seq(0,0.7,0.1)) +
+    scale_y_continuous(limits = c(0,75), breaks = seq(0,70,10)) +
+    labs(x = 'F in Area 1 (F Area 2 = FMSY Area 2)', 
+         y = 'Yield Total', linetype = "assumption")  #+
+  annotate('text', x = 0.05, y = 60, size = 5, label = toupper(letters[idx]))
+  
+  ggsave(last_plot(),
+         height = 10, width = 8, dpi = 520,
+         file = paste0(filn,"/F1Yield_F2FMSY.png"))
+  idx = idx +1
+  
+}
+plist[[1]]
+
+Rmisc::multiplot(plotlist=plist, cols = 3)
+
 ## Wtage----
 png(paste0(filetemp,"/",SCENARIO,"-wtage.png"), width = 6, height = 4, unit = 'in', res = 420)
 plot(dat[,'weight',1], ylim = c(0,max(dat[,'weight',1])), xlab = 'age',ylab = 'weight');lines(dat[,'weight',2])
@@ -18,8 +147,8 @@ outglobal <- data.frame(surface[,,'global'])
 ## Isocline yield curve ----
 
 iso_local <- data.frame(surface[,,'local']) %>%
-  filter( round(FF_Area2,1) == 
-            round(out2_local[which.max(out2_local[,'tyield']),c('FF_Area2')],1) ) %>%
+  filter(round(FF_Area2,1) ==
+           surface[which.max(surface[,'tyield','local'])[[1]],'FF_Area2','local'] ) %>%
   select(FF_Area1,FF_Area2,tyield) %>%
   reshape2::melt(id = c("FF_Area1","FF_Area2")) %>%
   mutate(Area = substr(variable,7,8), yield = value) %>%
@@ -89,7 +218,7 @@ local <- out_use %>%
            x =0.6*maxf1,
            y = 0.85*maxf1,
            size = 5,
-           color = 'gglobal',
+           color = 'global',
            label = as.expression(bquote(MSY[Local]~
                                           "="~.(round(out2_local[which.max(out2_local[,'tyield']),
                                                                  'tyield']))))) +
@@ -164,7 +293,7 @@ for(s in 1:nrow(scen)){
   layout(mat = layout.matrix) 
   
   Sel <- matrix(c(dat$dat[Ages+1,'fishery_selectivity',1], dat$dat[Ages+1,'fishery_selectivity',2]),nrow=2,ncol=Nages, byrow = T)
-
+  
   # tmp <- doNAA(F1=0,F2=0, usedat =datlist[[s]], Sel)
   N_Z_F <- doNAA(F1=0, F2=0, usedat = dat, Sel); tmp <- N_Z_F
   # tmp <- doPR(, FF = c(0,0)) ## defaults, no fishing
