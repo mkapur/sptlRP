@@ -5,7 +5,7 @@
 scen <- read.csv(here("vignette_inputscen.csv")) ## setup
 
 idx =1;  msys <- array(NA,dim = c(2,nrow(scen),2)) ## global x local, scen, 2 areas
-for(s in  1:nrow(scen)){ #c(1,17,22)){
+for(s in c(12,1,3,6)){
 
   #  strng <- gsub("+","-",scen[s,'SCENARIO_NAME'])
   dr <- "C:/Users/mkapur/Dropbox/UW/sptlRP/output/vignette_fish_before_move"
@@ -103,8 +103,8 @@ for(s in c(12,1,3,6)){
     
     ggsidekick::theme_sleek(base_size = 15) +
     theme(legend.position = 'top')+
-    geom_vline(aes(xintercept =msys[2,s,1],  lty = 'LOCAL', color = 'LOCAL')) +
-    geom_vline(aes(xintercept = msys[1,s,1],  lty = 'GLOBAL', color = 'GLOBAL')) +
+    geom_vline(aes(xintercept =msys[2,idx,1],  lty = 'LOCAL', color = 'LOCAL')) +
+    geom_vline(aes(xintercept = msys[1,idx,1],  lty = 'GLOBAL', color = 'GLOBAL')) +
     scale_color_manual(name = "assumption",
                        values = c('black','blue'), 
                        labels = c('GLOBAL','LOCAL')) +
@@ -113,7 +113,9 @@ for(s in c(12,1,3,6)){
                           labels = c('GLOBAL','LOCAL')) +
     scale_x_continuous(limits = c(0,0.7), breaks = seq(0,0.7,0.1)) +
     scale_y_continuous(limits = c(0,75), breaks = seq(0,70,10)) +
-    labs(x = 'F in Area 1 (F Area 2 = FMSY Area 2)', 
+    labs(x =       as.expression(bquote(F~"in"~"area 1,"~F~" in area 2 ="~F[MSY])),
+           
+           'F in Area 1 (F Area 2 = FMSY Area 2)', 
          y = 'Yield Total', linetype = "assumption")  +
   annotate('text', x = 0.05, y = 70, size = 5, label = toupper(letters[idx]))
   
@@ -297,7 +299,7 @@ for(s in 1:nrow(scen)){
   # tmp <- doNAA(F1=0,F2=0, usedat =datlist[[s]], Sel)
   N_Z_F <- doNAA(F1=0, F2=0, usedat = dat, Sel); tmp <- N_Z_F
   # tmp <- doPR(, FF = c(0,0)) ## defaults, no fishing
-  par(mar = c(0,4,1.5,1))
+  par(mar = c(0,4,1.5,0))
   ## spawn-src F0
   plot(tmp$N[1,,1], lwd = 2,
        ylim = c(0,1),   
@@ -345,7 +347,7 @@ for(s in 1:nrow(scen)){
   N_Z_F <- doNAA(F1=0.57, F2=0.02, usedat = dat, Sel); tmp <- N_Z_F
   
   ## spawn-src fmsy
-  par(mar = c(4,4,0,1))
+  par(mar = c(4,4,0,0))
   plot(tmp$N[1,,1], lwd = 2,
        ylim = c(0,1),   xlab = 'Age',type = 'l',   yaxt = 'n',  cex.main = 1.5,
        # main = as.expression(bquote(Spawned~"in"~"a1,"~F~"="~F[MSY])),
