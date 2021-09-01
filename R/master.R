@@ -106,6 +106,7 @@ for(s in 1:nrow(scen)){
                      assume = 'GLOBAL',
                      ret = 'optim',
                      fn=runSim,
+                     hessian = TRUE,
                      control = list(
                        maxit = 1000,
                        ndeps = rep(1e-4,2)))
@@ -115,6 +116,7 @@ for(s in 1:nrow(scen)){
                        assume = 'GLOBAL',
                        ret = 'optim',
                        fn=runSim,
+                       hessian = TRUE,
                        control = list(
                          maxit = 1000,
                          ndeps = rep(1e-4,2)))
@@ -135,6 +137,7 @@ for(s in 1:nrow(scen)){
                     assume = 'LOCAL',
                     ret = 'optim',
                     fn=runSim,
+                    hessian = TRUE,
                     control = list(
                       maxit = 100000,
                       ndeps = rep(1e-4,2)))
@@ -147,6 +150,7 @@ for(s in 1:nrow(scen)){
                       assume = 'LOCAL',
                       ret = 'optim',
                       fn=runSim,
+                      hessian = TRUE,
                       control = list(
                         maxit = 1000,
                         ndeps = rep(1e-4,2)))
