@@ -75,8 +75,8 @@ idx = 1
   
   # #* build surface ----
   FMAX <- scen[s,'FMAX']
-  # FF.vec = seq(0,FMAX,0.05)
-  FF.vec = seq(0,0.75,0.05)
+  FF.vec = seq(0,FMAX,0.05)
+  # FF.vec = seq(0,0.75,0.05)
   FFs <- expand.grid(FF.vec,FF.vec)
 
   
@@ -124,7 +124,7 @@ idx = 1
                          ndeps = rep(1e-4,2)))
   }
 
-  
+
   cat(SCENARIO,"\n")
   cat(dat$h,"\n")
   cat( round(exp(ss_global$par),2),"\n")
@@ -152,22 +152,22 @@ idx = 1
                         maxit = 1000,
                         ndeps = rep(1e-4,2)))
     cat( round(exp(ss_local$par),2),"\n")
-    
+
   }
   cat( round(exp(ss_local$par),2),"\n")
- 
-
-  
-  # dat$h = c(0.6,0.8)
-  # tt <- runSim(par = log(c(0.45,0.45)), dat, ret = 'vals', assume = NA);tt
-  # tt <- runSim(par = c(-1000,-1000), dat, ret = 'vals', assume = NA)
-  # tt['req_local']*c(tt['req_local_prop'],1-tt['req_local_prop'])
-  
+  # 
+  # 
+  # 
+  # # dat$h = c(0.6,0.8)
+  # # tt <- runSim(par = log(c(0.45,0.45)), dat, ret = 'vals', assume = NA);tt
+  # # tt <- runSim(par = c(-1000,-1000), dat, ret = 'vals', assume = NA)
+  # # tt['req_local']*c(tt['req_local_prop'],1-tt['req_local_prop'])
+  # 
   refpts_local <-  runSim(par =ss_local$par,dat, ret = 'vals', assume = NA)
   refpts_global <-  runSim(par =ss_global$par,dat, ret = 'vals', assume = NA)
-  cat(refpts_local['req_local_prop'],"\n")
-  
-  #* fill scen----
+  # cat(refpts_local['req_local_prop'],"\n")
+  # 
+  # #* fill scen----
   scen[s,'FMSY_LOCAL_A1'] <- exp(ss_local$par)[1]
   scen[s,'FMSY_LOCAL_A2'] <- exp(ss_local$par)[2]
   scen[s,'FMSY_GLOBAL_A1'] <-exp(ss_global$par)[1]
@@ -179,8 +179,12 @@ idx = 1
   scen[s,'A1SB0_LOCAL'] <-  refpts_local['local_tssb0']*refpts_local['req_local_prop']
   scen[s,'A2SB0_LOCAL'] <-  refpts_local['local_tssb0']*(1-refpts_local['req_local_prop'])
 
-  scen[s,'A1DEPL_LOCAL'] <-  (refpts_local['local_tssb']*refpts_local['req_local_prop'])/  scen[s,'A1SB0_LOCAL']
-  scen[s,'A2DEPL_LOCAL'] <- (refpts_local['local_tssb']*(1-refpts_local['req_local_prop']))/   scen[s,'A2SB0_LOCAL']
+  scen[s,'A1DEPL_LOCAL'] <-  refpts_local['local_a1ssb']/(refpts_local['local_tssb0']*refpts_local['req_local_prop'])
+  scen[s,'A2DEPL_LOCAL'] <- refpts_local['local_a2ssb']/(refpts_local['local_tssb0']*(1-refpts_local['req_local_prop']))
+  
+  
+  # scen[s,'A1DEPL_LOCAL'] <-  (refpts_local['local_tssb']*refpts_local['req_local_prop'])/  scen[s,'A1SB0_LOCAL']
+  # scen[s,'A2DEPL_LOCAL'] <- (refpts_local['local_tssb']*(1-refpts_local['req_local_prop']))/   scen[s,'A2SB0_LOCAL']
 
   scen[s,'A1SB0_GLOBAL'] <-   refpts_global['global_tssb0']*dat$input_prop
   scen[s,'A2SB0_GLOBAL'] <-  refpts_global['global_tssb0']*(1-dat$input_prop)
@@ -189,8 +193,13 @@ idx = 1
   scen[s,'SBMSY_GLOBAL'] <- refpts_global['global_tssb']
   scen[s,'SBMSY_A1_RATIO'] <- refpts_global['global_a1ssb']/refpts_local['local_a1ssb']
   scen[s,'SBMSY_A2_RATIO'] <- refpts_global['global_a2ssb']/refpts_local['local_a2ssb']
-  scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
-  scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
+  # scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
+  # scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
+  scen[s,'A1DEPL_GLOBAL'] <-  refpts_global['local_a1ssb']/(refpts_global['local_tssb0']*dat$input_prop)
+  scen[s,'A2DEPL_GLOBAL'] <- refpts_global['local_a2ssb']/(refpts_global['local_tssb0']*(1-dat$input_prop))
+  
+  # scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
+  # scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
   scen[s,'GLOBAL_SE_FMSYA1'] <-   exp(c(round(sqrt(abs(diag(solve(ss_global$hessian)))),4))[1])
   scen[s,'GLOBAL_SE_FMSYA2'] <-    exp( c(round(sqrt(abs(diag(solve(ss_global$hessian)))),4))[2])
   scen[s,'LOCAL_SE_FMSYA1'] <-     exp(c(round(sqrt(abs(diag(solve(ss_local$hessian)))),4))[1])
@@ -277,16 +286,16 @@ idx = 1
   # locl   | global
   # 
   # #* save -----
-  filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(steeps[1],"_",steeps[2]),"-",SCENARIO))
-  dir.create(filetemp)
+  # filetemp <- here('output',paste0(Sys.Date(),"-h=",paste0(steeps[1],"_",steeps[2]),"-",SCENARIO))
+  # dir.create(filetemp)
   # ggsave(locl   | global,
   #        file = paste0(filetemp,"/heatmap.png"),
   #        width = 8, height = 6, unit = 'in', dpi = 520)
-  save(ss_local, file = paste0(filetemp,'/ss_local.RDATA'))
-  save(ss_global, file = paste0(filetemp,'/ss_global.RDATA'))
+  # save(ss_local, file = paste0(filetemp,'/ss_local.RDATA'))
+  # save(ss_global, file = paste0(filetemp,'/ss_global.RDATA'))
   # save(surface, file = paste0(filetemp,'/surface.RDATA'))
-  rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
-  idx = idx+1
+  # rm(ss_local); rm(ss_global); rm(surface); rm(locl); rm(global)
+  # idx = idx+1
 } ## end s in scen
 
 
