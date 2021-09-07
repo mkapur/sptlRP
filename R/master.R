@@ -197,9 +197,7 @@ idx = 1
   # scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
   scen[s,'A1DEPL_GLOBAL'] <-  refpts_global['local_a1ssb']/(refpts_global['local_tssb0']*dat$input_prop)
   scen[s,'A2DEPL_GLOBAL'] <- refpts_global['local_a2ssb']/(refpts_global['local_tssb0']*(1-dat$input_prop))
-  
-  # scen[s,'A1DEPL_GLOBAL'] <- refpts_global['global_tssb']*dat$input_prop/  scen[s,'A1SB0_GLOBAL']
-  # scen[s,'A2DEPL_GLOBAL'] <-  refpts_global['global_tssb']*(1-dat$input_prop)/  scen[s,'A2SB0_GLOBAL']
+
   scen[s,'GLOBAL_SE_FMSYA1'] <-   exp(c(round(sqrt(abs(diag(solve(ss_global$hessian)))),4))[1])
   scen[s,'GLOBAL_SE_FMSYA2'] <-    exp( c(round(sqrt(abs(diag(solve(ss_global$hessian)))),4))[2])
   scen[s,'LOCAL_SE_FMSYA1'] <-     exp(c(round(sqrt(abs(diag(solve(ss_local$hessian)))),4))[1])
